@@ -141,6 +141,7 @@ const AdminScanJob = () => {
   const [lastSerialNo, setLastSerialNo] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
+  const [isAutoMode, setIsAutoMode] = useState(true);
   const [showRecognizationModal, setShowRecognizationModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [templateData, setTemplateData] = useState([]);
@@ -360,6 +361,12 @@ const AdminScanJob = () => {
         const row = { ...data };
         if (!row["Serial No"]) row["Serial No"] = num++;
 
+        // ✅ AUTO IMAGE UPDATE ON NEW DATA
+        if (row?.FileName && isAutoMode) {
+          setCurrentImage(row.FileName);
+          setIsViewerOpen(true);
+        }
+
         if (writableRef.current && !headerWrittenRef.current) {
           const headers =
             Object.keys(row)
@@ -413,7 +420,7 @@ const AdminScanJob = () => {
 
     // Cleanup WebSocket on unmount or baseUrl change
     return () => ws.close();
-  }, [baseUrl, pushNewRecords]);
+  }, [baseUrl, pushNewRecords, isAutoMode]);
 
   // useEffect(() => {
   //   if (!baseUrl) return;
@@ -750,6 +757,7 @@ const AdminScanJob = () => {
 
       // 4️⃣ Start scanning
       setScanning(true);
+      setIsAutoMode(true);
       const folderName = localStorage.getItem("folderName");
       const templateId = localStorage.getItem("templateId");
       if (!folderName || !templateId) {
@@ -998,12 +1006,21 @@ const AdminScanJob = () => {
     }
   };
 
-  const onRowSelected = (args) => {
-    const rowData = args.data;
+  // const onRowSelected = (args) => {
+  //   const rowData = args.data;
 
-    setBorderRowId(rowData?.FileName);
+  //   setBorderRowId(rowData?.FileName);
+  //   setIsViewerOpen(true);
+  //   setCurrentImage(rowData?.FileName);
+  // };
+
+  const onRowSelected = (args) => {
+    const selectedRow = args.data;
+
+    setIsAutoMode(false); // 🔥 ADD HERE
+
+    setCurrentImage(selectedRow.FileName);
     setIsViewerOpen(true);
-    setCurrentImage(rowData?.FileName);
   };
 
   const handleGridClick = (e) => {
@@ -1287,81 +1304,84 @@ const AdminScanJob = () => {
             </Rnd>
           )} */}
 
+          {isViewerOpen && (
+            <Rnd
+              default={{
+                width: 600,
+                height: 600,
+                x: window.innerWidth / 2 - 450,
+                y: window.innerHeight / 2 - 450,
+              }}
+              bounds="window"
+              dragHandleClassName="image-viewer-header"
+              enableResizing={true}
+              minWidth={400}
+              minHeight={300}
+              style={{ zIndex: 1000 }}
+            >
+              <div className="image-viewer-container">
+                <div className="image-viewer-header">
+                  <h5 className="image-viewer-title">Image Viewer</h5>
+                </div>
 
+                <button
+                  onClick={closeImageViewer}
+                  className="image-viewer-close"
+                >
+                  ✖
+                </button>
 
+                <ZoomViewer
+                  key={currentImage}
+                  currentImage={currentImage}
+                  baseUrl={baseUrl}
+                  focusBox={obj}
+                  templateData={templateData}
+                />
+              </div>
+            </Rnd>
+          )}
 
-            {isViewerOpen && (
-  <Rnd
-    default={getDefaultPosition()}
-    bounds="window"
-    dragHandleClassName="image-viewer-header"
-    enableResizing
-    style={{ zIndex: 1000 }}
-  >
-    <div className="image-viewer-container">
-      
-      <div className="image-viewer-header">
-        <h5 className="image-viewer-title">Image Viewer</h5>
-      </div>
+          <style jsx>
+            {`
+              .image-viewer-container {
+                background: #fff;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+                height: 100%;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                position: relative;
+              }
 
-      <button
-        onClick={closeImageViewer}
-        className="image-viewer-close"
-      >
-        ✖
-      </button>
+              .image-viewer-header {
+                margin-bottom: 8px;
+                cursor: move;
+              }
 
-      <ZoomViewer
-        currentImage={currentImage}
-        baseUrl={baseUrl}
-        focusBox={obj}
-        templateData={templateData}
-      />
-    </div>
-  </Rnd>
-)}
+              .image-viewer-title {
+                margin: 0;
+                font-weight: 600;
+              }
 
+              .image-viewer-close {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                border: none;
+                background: transparent;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: opacity 0.2s ease;
+              }
 
-<style jsx>
-  {`
-  .image-viewer-container {
-  background: #fff;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  height: 100%;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-.image-viewer-header {
-  margin-bottom: 8px;
-  cursor: move;
-}
-
-.image-viewer-title {
-  margin: 0;
-  font-weight: 600;
-}
-
-.image-viewer-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  border: none;
-  background: transparent;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.image-viewer-close:hover {
-  opacity: 0.7;
-}
-  `}
-</style>
+              .image-viewer-close:hover {
+                opacity: 0.7;
+              }
+            `}
+          </style>
 
           <div>
             <Button
