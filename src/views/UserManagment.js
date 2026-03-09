@@ -202,12 +202,6 @@ const UserManagment = () => {
     setModalShow(true);
   };
 
-  // Function to validate the email format
-  const validateEmail = (email) => {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailPattern.test(email);
-  };
-
   const placeHolderUser = new Array(10).fill(null).map((_, index) => (
     <tr key={index}>
       <td>
@@ -237,8 +231,8 @@ const UserManagment = () => {
         <td>{d?.empEmail}</td>
         <td>{d?.contact}</td>
         <td>{d?.role}</td>
-        <td className="text-right">
-          {isAdmin && (
+        {isAdmin && (
+          <td className="text-right">
             <UncontrolledDropdown>
               <DropdownToggle
                 className="btn-icon-only text-light"
@@ -260,8 +254,8 @@ const UserManagment = () => {
                 </DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>
-          )}
-        </td>
+          </td>
+        )}
       </tr>
     </>
   ));
@@ -277,18 +271,21 @@ const UserManagment = () => {
               <CardHeader className="border-0">
                 <div className="d-flex justify-content-between">
                   <h3 className="mt-2">All Users</h3>
-                  <Button
-                    className=""
-                    color="primary"
-                    type="button"
-                    onClick={() => setCreateModalShow(true)}
-                  >
-                    Create User
-                  </Button>
+
+                  {isAdmin && (
+                    <Button
+                      className=""
+                      color="primary"
+                      type="button"
+                      onClick={() => setCreateModalShow(true)}
+                    >
+                      Create User
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <div style={{ height: "70vh", overflow: "auto" }}>
-                <Table
+                {/* <Table
                   className="align-items-center table-flush mb-5"
                   responsive
                   style={{ borderCollapse: "collapse" }}
@@ -308,7 +305,7 @@ const UserManagment = () => {
                       <th scope="col">Email</th>
                       <th scope="col">Phone Number</th>
                       <th scope="col">Role</th>
-                      <th scope="col" />
+                      {isAdmin && <th scope="col" />}
                     </tr>
                   </thead>
                   <tbody style={{ minHeight: "100rem" }}>
@@ -320,6 +317,46 @@ const UserManagment = () => {
                           style={{ textAlign: "center", width: "100%" }}
                         >
                           No User Present
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table> */}
+
+                <Table
+                  className="align-items-center table-flush mb-45"
+                  responsive
+                >
+                  <thead
+                    className="thead-light"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                    }}
+                  >
+                    <tr>
+                      <th style={{ width: "60px" }}>S.No</th>
+                      <th>Username</th>
+                      <th>Email</th>
+                      <th>Phone Number</th>
+                      <th>Role</th>
+                      {isAdmin && <th style={{ width: "120px" }}>Action</th>}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {/* Loading */}
+                    {loading && placeHolderUser}
+
+                    {/* Data */}
+                    {!loading && ALLUSER.length > 0 && ALLUSER}
+
+                    {/* Empty State */}
+                    {!loading && ALLUSER.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-center py-4 text-muted">
+                          No users found
                         </td>
                       </tr>
                     )}
@@ -449,103 +486,73 @@ const UserManagment = () => {
 
       <Modal
         show={createModalShow}
+        onHide={() => setCreateModalShow(false)}
         size="lg"
-        aria-labelledby="contained-modal-title-vcenter"
         centered
       >
-        <Modal.Header>
-          <Modal.Title id="contained-modal-title-vcenter">
-            Create User
-          </Modal.Title>
+        <Modal.Header closeButton>
+          <Modal.Title>Create User</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
+          {/* Email */}
           <Row className="mb-3">
-            <label
-              htmlFor="example-text-input"
-              className="col-md-2 col-form-label"
-            >
-              Email
-            </label>
+            <label className="col-md-2 col-form-label">Email</label>
             <div className="col-md-10">
               <input
                 type="email"
                 className="form-control"
                 placeholder="Enter Email Id"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => {
-                  const toastId = "email-error-toast";
-                  if (!validateEmail(email)) {
-                    toast.error("Please enter a valid email address.", {
-                      toastId, // Use the same ID for this toast
-                    });
-
-                    emailRef.current.focus();
-                  }
-                }}
                 ref={emailRef}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              {!email && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This feild is required
-                </span>
-              )}
             </div>
           </Row>
+
+          {/* Username */}
           <Row className="mb-3">
-            <label
-              htmlFor="example-text-input"
-              className="col-md-2 col-form-label"
-            >
-              Username
-            </label>
+            <label className="col-md-2 col-form-label">Username</label>
+
             <div className="col-md-10">
               <input
                 type="text"
                 className="form-control"
                 placeholder="Enter User Name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <small style={{ color: "red", display: "block" }}>
-                No space is allowed between username.
-              </small>
-            </div>
-          </Row>
-
-          <Row className="mb-3">
-            <label
-              htmlFor="example-text-input"
-              className="col-md-2 col-form-label"
-            >
-              Phone Number
-            </label>
-            <div className="col-md-10">
-              <input
-                type="Number"
-                className="form-control"
-                placeholder="Enter 10 digit Phone Number "
-                value={phoneNumber}
                 onChange={(e) => {
-                  setPhoneNumber(e.target.value);
+                  const value = e.target.value.replace(/\s/g, "");
+                  setName(value);
                 }}
               />
-
-              {!phoneNumber && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This feild is required
-                </span>
-              )}
             </div>
           </Row>
 
+          {/* Phone */}
           <Row className="mb-3">
-            <label
-              htmlFor="example-text-input"
-              className="col-md-2 col-form-label"
-            >
-              Role
-            </label>
+            <label className="col-md-2 col-form-label">Phone Number</label>
+
+            <div className="col-md-10">
+              <input
+                type="tel"
+                className="form-control"
+                placeholder="Enter 10 digit Phone Number"
+                value={phoneNumber}
+                maxLength={10}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  if (value.length <= 10) {
+                    setPhoneNumber(value);
+                  }
+                }}
+              />
+            </div>
+          </Row>
+
+          {/* Role */}
+          <Row className="mb-3">
+            <label className="col-md-2 col-form-label">Role</label>
+
             <div className="col-md-10">
               <Select
                 value={selectecdRole}
@@ -554,21 +561,13 @@ const UserManagment = () => {
                 getOptionLabel={(option) => option?.roleName || ""}
                 getOptionValue={(option) => option?.roleName?.toString() || ""}
               />
-              {!selectecdRole && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This feild is required
-                </span>
-              )}
             </div>
           </Row>
 
+          {/* Password */}
           <Row className="mb-3">
-            <label
-              htmlFor="example-text-input"
-              className="col-md-2 col-form-label"
-            >
-              Password
-            </label>
+            <label className="col-md-2 col-form-label">Password</label>
+
             <div className="col-md-10">
               <input
                 type="password"
@@ -577,61 +576,44 @@ const UserManagment = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              {!password && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This feild is required
-                </span>
-              )}
             </div>
           </Row>
 
+          {/* Confirm Password */}
           <Row className="mb-3">
-            <label htmlFor="example-text-input" className="col-md-2 ">
-              Confirm Password
-            </label>
+            <label className="col-md-2 col-form-label">Confirm Password</label>
+
             <div className="col-md-10">
               <input
                 type="password"
                 className="form-control"
-                placeholder="Enter Password"
+                placeholder="Enter Confirm Password"
                 value={ConfirmPassword}
                 ref={confirmRef}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                }}
-                onBlur={() => {
-                  if (password !== ConfirmPassword) {
-                    toast.error("Password and confirm password does not match");
-                    // confirmRef.current.focus();
-                  }
-                }}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
-              {!ConfirmPassword && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This feild is required
+
+              {password && ConfirmPassword && password !== ConfirmPassword && (
+                <span style={{ color: "red" }}>
+                  Password and Confirm Password must match
                 </span>
               )}
             </div>
           </Row>
         </Modal.Body>
+
         <Modal.Footer>
-          <Button
-            type="button"
-            color="primary"
-            onClick={() => setCreateModalShow(false)}
-            className="waves-effect waves-light"
-          >
+          <Button color="secondary" onClick={() => setCreateModalShow(false)}>
             Close
-          </Button>{" "}
+          </Button>
+
           <Button
-            type="button"
             color="success"
             disabled={btnLoading}
             onClick={handleCreate}
-            className="waves-effect waves-light d-flex align-items-center justify-content-center"
+            className="d-flex align-items-center justify-content-center"
           >
-            {btnLoading && <Spinner animation="border" role="status" />}
-            {!btnLoading && "Create"}
+            {btnLoading ? <Spinner size="sm" /> : "Create"}
           </Button>
         </Modal.Footer>
       </Modal>

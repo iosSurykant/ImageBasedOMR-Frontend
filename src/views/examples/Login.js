@@ -175,13 +175,14 @@ const Login = () => {
                 </Button>
 
                 {/* Sign Up Button */}
-                <div className=" d-flex justify-content-center">
-                  <Button
+                <div className=" d-flex justify-content-center align-items-center">
+                  <span>Don't have an account?</span>
+                  <Button 
+                  className="m-0 p-1"
                     color="link"
                     type="button"
                     onClick={() => navigate("/auth/signup")}
-                  >
-                    Don't have an account? Sign Up
+                  > Sign Up
                   </Button>
                 </div>
               </div>

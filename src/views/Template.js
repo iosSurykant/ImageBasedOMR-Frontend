@@ -337,6 +337,8 @@ const Template = () => {
   const LoadedTemplates = filteredTemplates?.map((d, i) => {
     const cleanName = d.fileName.split("##")[0];
 
+    console.log(filteredTemplates)
+
     return (
       <tr
         key={i}
@@ -346,9 +348,8 @@ const Template = () => {
         <td>{i + 1}</td>
         <td>{cleanName}</td>
         <td>{d.createAt}</td>
-        <td>{d.updateAt || "N/A"}</td>
+        {/* <td>{d.updateAt || "N/A"}</td> */}
         <td>{d.role}</td>
-        {/* <td>{d.createdBy || "N/A"}</td> */}
 
         <td className="text-right">
           <UncontrolledDropdown>
@@ -379,81 +380,6 @@ const Template = () => {
       </tr>
     );
   });
-
-  //   // 🔹 Get user info
-  // const userData = JSON.parse(localStorage.getItem("userData"));
-  // const loggedInEmpId = String(userData?.empid || "").trim();
-  // const loggedInRole = userData?.role || "";
-
-  // // 🔹 Role-based filtering
-  // const roleBasedTemplates = dataCtx.allTemplates?.filter((t) => {
-
-  //   // ✅ If admin → allow everything
-  //   if (loggedInRole.toLowerCase() === "admin") {
-  //     return true;
-  //   }
-
-  //   // ✅ If not admin → filter by empId
-  //   const match = t.fileName?.match(/##(\d+)$/);
-  //   const empIdFromFile = match ? match[1] : null;
-
-  //   return empIdFromFile === loggedInEmpId;
-  // });
-
-  // const filteredTemplates = roleBasedTemplates?.filter((t) => {
-  //   const name = (t.fileName || "").toLowerCase();
-  //   const createdBy = (t.createdBy || "").toLowerCase();
-  //   const search = searchText.toLowerCase();
-
-  //   return name.includes(search) || createdBy.includes(search);
-  // });
-
-  // const LoadedTemplates = filteredTemplates?.map((d, i) => {
-  //   const cleanName = d.fileName.split("##")[0];
-
-  //   return (
-  //     <tr
-  //       key={i}
-  //       onClick={() => handleRowClick(d, i)}
-  //       style={{ cursor: "pointer" }}
-  //     >
-  //       <td>{i + 1}</td>
-  //       <td>{cleanName}</td>
-  //       <td>{d.createAt}</td>
-  //       <td>{d.updateAt || "N/A"}</td>
-  //       {/* <td>{d.role || "N/A"}</td> */}
-  //       <td>{loggedInRole}</td>
-  //       <td>{d.createdBy || "N/A"}</td>
-
-  //       <td className="text-right">
-  //         <UncontrolledDropdown>
-  //           <DropdownToggle
-  //             className="btn-icon-only text-light"
-  //             href="#pablo"
-  //             role="button"
-  //             size="sm"
-  //             onClick={(e) => e.preventDefault()}
-  //           >
-  //             <i className="fas fa-ellipsis-v" />
-  //           </DropdownToggle>
-
-  //           <DropdownMenu className="dropdown-menu-arrow" right>
-  //             <DropdownItem onClick={() => editHandler(d, i)}>
-  //               Edit
-  //             </DropdownItem>
-
-  //             <DropdownItem
-  //               style={{ color: "red" }}
-  //               onClick={() => deleteHandler(d, i)}
-  //             >
-  //               Delete
-  //             </DropdownItem>
-  //           </DropdownMenu>
-  //         </UncontrolledDropdown>
-  //       </td>
-  //     </tr>
-  //   );
-  // });
 
   const handleCreate = async () => {
     if (!templateName || !templateImage) {
@@ -555,10 +481,9 @@ const Template = () => {
                     <tr>
                       <th>SL no.</th>
                       <th>Template Name</th>
-                      <th>Creation Date</th>
                       <th>Updated Date</th>
+                      {/* <th>Updated Date</th> */}
                       <th>Role</th>
-                      {/* <th>Created By</th> */}
                       <th style={{ width: "70px", textAlign: "right" }}></th>
                     </tr>
                   </thead>

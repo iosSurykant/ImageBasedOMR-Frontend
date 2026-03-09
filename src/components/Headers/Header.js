@@ -38,9 +38,12 @@ const Header = () => {
   }, []);
   return (
     <>
-      <div className="header bg-gradient-info pb-8 pt-5 pt-md-8">
+      <div className="header bg-gradient-info pb-4 pt-5">
+        <div className="d-flex mb-2 align-items-center justify-content-center px-4 py-3 shadow-sm">
+          <h1 className="text-white fw-bold display-3">Dashboard</h1>
+        </div>
         <Container fluid>
-          <div className="header-body">
+          <div className="header-body mb-3">
             {/* Card stats */}
             <Row>
               <Col lg="6" xl="4">

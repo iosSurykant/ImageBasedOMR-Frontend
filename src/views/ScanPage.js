@@ -45,19 +45,6 @@ const ScanPage = () => {
     );
   });
 
-//   const allTemplate = template.map((item, index) => {
-//   // Remove ##empid from display name
-//   const displayName = item.fileName.includes("##")
-//     ? item.fileName.split("##")[0]
-//     : item.fileName;
-
-//   return (
-//     <option key={index} value={item.id}>
-//       {displayName}
-//     </option>
-//   );
-// });
-
 
   console.log(templateId)
   console.log(allTemplate[1])

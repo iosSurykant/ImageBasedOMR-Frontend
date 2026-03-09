@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef } from "react";
 import {
   Button,
   Card,
@@ -9,197 +9,233 @@ import {
   InputGroupAddon,
   InputGroupText,
   InputGroup,
-  Row,
   Col,
-} from 'reactstrap';
-import Spinner from 'react-bootstrap/Spinner';
-import Select from 'react-select';
-import jwtDecode from 'jwt-decode';
-import { toast } from 'react-toastify';
-import { createUser } from 'helper/userManagment_helper';
-import { useNavigate } from 'react-router-dom';
+} from "reactstrap";
+import Spinner from "react-bootstrap/Spinner";
+import Select from "react-select";
+import { toast } from "react-toastify";
+import { createUser } from "helper/userManagment_helper";
+import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 const roles = [
-  { roleName: 'admin' },
-  { roleName: 'moderator' },
-  { roleName: 'operator' },
+  { roleName: "admin" },
+  { roleName: "moderator" },
+  { roleName: "operator" },
 ];
 
+const ROLE_ROUTES = {
+  admin: "/admin/index",
+  moderator: "/moderator/index",
+  operator: "/operator/index",
+};
+
 const Signup = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [role, setRole] = useState(null);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Eye icon toggles
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
-
   const navigate = useNavigate();
   const emailRef = useRef(null);
 
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: null,
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const validateForm = () => {
+    const { name, email, phone, role, password, confirmPassword } = form;
+
+    if (!name || !email || !phone || !role || !password || !confirmPassword) {
+      toast.error("All fields are required.");
+      return false;
+    }
+
+    if (!validateEmail(email)) {
+      toast.error("Invalid email format.");
+      emailRef.current?.focus();
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      role: null,
+      password: "",
+      confirmPassword: "",
+    });
+  };
+
+  console.log(form.phone);
 
   const signupHandler = async (e) => {
     e.preventDefault();
 
-    if (!name || !email || !phoneNumber || !role || !password || !confirmPassword) {
-      toast.error('All fields are required.');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      toast.error('Invalid email format.');
-      emailRef.current.focus();
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match.');
-      return;
-    }
+    if (isLoading) return;
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
 
       const payload = {
-        name: name.trim(),
-        email: email.trim(),
-        cont: phoneNumber.trim(),
-        role: role.roleName.trim(),
-        pwd: password.trim(),
+        name: form.name.trim(),
+        email: form.email.trim(),
+        cont: encodeURIComponent(form.phone),
+        role: form.role?.roleName,
+        pwd: form.password,
       };
+
+      console.log(payload);
 
       const res = await createUser(payload);
 
-      if (res.status) {
-        toast.success(res.message || 'Account created successfully');
-
-        if (role.roleName === 'operator') navigate('/operator/index');
-        else if (role.roleName === 'moderator') navigate('/moderator/index');
-        else navigate('/admin/index');
-
+      if (res?.state !== true) {
+        toast.error(res?.message || "Unable to create account");
         return;
-      } else {
-        toast.error(res?.message || 'Unable to create account');
       }
+
+      toast.success(res?.message || "Account created successfully");
+
+      resetForm();
+
+      navigate(ROLE_ROUTES[form.role.roleName] || ROLE_ROUTES.admin);
     } catch (err) {
-      toast.error('Something went wrong');
+      console.error("Signup Error:", err);
+      toast.error(err?.response?.data?.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Col lg='5' md='7'>
-      <Card className='bg-secondary shadow border-0'>
-        <div className='text-center text-muted mt-4'>
+    <Col lg="5" md="7">
+      <Card className="bg-secondary shadow border-0">
+        <div className="text-center text-muted mt-4">
           <img
-            alt='...'
-            src={require('../../assets/img/brand/ios.png')}
-            height='30rem'
+            alt="..."
+            src={require("../../assets/img/brand/ios.png")}
+            height="30rem"
           />
         </div>
 
-        <CardBody className='px-lg-5 py-lg-3'>
-          <div className='text-center text-muted mb-4'>
+        <CardBody className="px-lg-5 py-lg-3">
+          <div className="text-center text-muted mb-4">
             <h1>Create Account</h1>
           </div>
 
-          <Form role='form' onSubmit={signupHandler}>
+          <Form role="form" onSubmit={signupHandler}>
             {/* Name */}
             <FormGroup>
-              <InputGroup className='input-group-alternative mb-2'>
-                <InputGroupAddon addonType='prepend'>
+              <InputGroup className="input-group-alternative mb-2">
+                <InputGroupAddon addonType="prepend">
                   <InputGroupText>
-                    <i className='ni ni-single-02' />
+                    <i className="ni ni-single-02" />
                   </InputGroupText>
                 </InputGroupAddon>
                 <Input
-                  placeholder='Full Name'
-                  type='text'
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Full Name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
                 />
               </InputGroup>
             </FormGroup>
 
             {/* Email */}
             <FormGroup>
-              <InputGroup className='input-group-alternative mb-2'>
-                <InputGroupAddon addonType='prepend'>
+              <InputGroup className="input-group-alternative mb-2">
+                <InputGroupAddon addonType="prepend">
                   <InputGroupText>
-                    <i className='ni ni-email-83' />
+                    <i className="ni ni-email-83" />
                   </InputGroupText>
                 </InputGroupAddon>
                 <Input
                   ref={emailRef}
-                  placeholder='Email'
-                  type='email'
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => {
-                    if (!validateEmail(email)) {
-                      toast.error('Invalid email format.');
-                      emailRef.current.focus();
-                    }
+                  placeholder="Email"
+                  autoComplete="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                />
+              </InputGroup>
+            </FormGroup>
+
+            <FormGroup>
+              <InputGroup className="input-group-alternative mb-2">
+                <PhoneInput
+                  defaultCountry="in"
+                  value={form.phone}
+                  onChange={(phone) => handleChange("phone", phone)}
+                  style={{ width: "100%" }}
+                  inputStyle={{
+                    border: "none",
+                    height: "38px",
+                    width: "100%",
+                  }}
+                  countrySelectorStyleProps={{
+                    buttonStyle: {
+                      border: "none",
+                      background: "transparent",
+                    },
                   }}
                 />
               </InputGroup>
             </FormGroup>
 
-            {/* Phone */}
-            <FormGroup>
-              <InputGroup className='input-group-alternative mb-2'>
-                <InputGroupAddon addonType='prepend'>
-                  <InputGroupText>
-                    <i className='ni ni-mobile-button' />
-                  </InputGroupText>
-                </InputGroupAddon>
-                <Input
-                  placeholder='Phone Number'
-                  type='tel'
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
-              </InputGroup>
-            </FormGroup>
-
             {/* Role */}
-            <FormGroup className='mb-3'>
+            <FormGroup className="mb-3">
               <Select
                 placeholder="Select Role"
-                value={role}
-                onChange={(value) => setRole(value)}
+                value={form.role}
                 options={roles}
                 getOptionLabel={(opt) => opt.roleName}
                 getOptionValue={(opt) => opt.roleName}
+                onChange={(value) => handleChange("role", value)}
               />
             </FormGroup>
 
             {/* Password */}
             <FormGroup>
-              <InputGroup className='input-group-alternative mb-2'>
-                <InputGroupAddon addonType='prepend'>
+              <InputGroup className="input-group-alternative mb-2">
+                <InputGroupAddon addonType="prepend">
                   <InputGroupText>
-                    <i className='ni ni-lock-circle-open' />
+                    <i className="ni ni-lock-circle-open" />
                   </InputGroupText>
                 </InputGroupAddon>
 
                 <Input
-                  placeholder='Password'
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
                 />
 
-                <InputGroupAddon addonType='append'>
+                <InputGroupAddon addonType="append">
                   <InputGroupText
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -210,23 +246,26 @@ const Signup = () => {
 
             {/* Confirm Password */}
             <FormGroup>
-              <InputGroup className='input-group-alternative mb-2'>
-                <InputGroupAddon addonType='prepend'>
+              <InputGroup className="input-group-alternative mb-2">
+                <InputGroupAddon addonType="prepend">
                   <InputGroupText>
-                    <i className='ni ni-lock-circle-open' />
+                    <i className="ni ni-lock-circle-open" />
                   </InputGroupText>
                 </InputGroupAddon>
 
                 <Input
-                  placeholder='Confirm Password'
-                  type={showConfirmPwd ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  type={showConfirmPwd ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={form.confirmPassword}
+                  onChange={(e) =>
+                    handleChange("confirmPassword", e.target.value)
+                  }
                 />
 
-                <InputGroupAddon addonType='append'>
+                <InputGroupAddon addonType="append">
                   <InputGroupText
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     onClick={() => setShowConfirmPwd(!showConfirmPwd)}
                   >
                     {showConfirmPwd ? <FaEyeSlash /> : <FaEye />}
@@ -235,25 +274,28 @@ const Signup = () => {
               </InputGroup>
             </FormGroup>
 
-            <div className='text-center'>
+            <div className="text-center">
               <Button
-                className='mt-3'
-                color='primary'
-                type='submit'
+                className="my-3"
+                color="primary"
+                type="submit"
                 disabled={isLoading}
-                style={{ minWidth: '120px', minHeight: '48px' }}
+                style={{ minWidth: "120px", minHeight: "48px" }}
               >
-                {isLoading ? <Spinner animation='border' /> : 'Sign Up'}
+                {isLoading ? <Spinner animation="border" /> : "Sign Up"}
               </Button>
             </div>
 
-            <div className='text-center mt-0'>
+            <div className=" d-flex justify-content-center align-items-center">
+              <span>Already have an account?</span>
               <Button
-                color='link'
-                type='button'
-                onClick={() => navigate('/auth/login')}
+                className="m-0 p-1"
+                color="link"
+                type="button"
+                onClick={() => navigate("/auth/login")}
               >
-                Already have an account? Sign In
+                {" "}
+                Sign In
               </Button>
             </div>
           </Form>

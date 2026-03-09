@@ -422,100 +422,7 @@ const AdminScanJob = () => {
     return () => ws.close();
   }, [baseUrl, pushNewRecords, isAutoMode]);
 
-  // useEffect(() => {
-  //   if (!baseUrl) return;
 
-  //   const token = localStorage.getItem("token");
-  //   const ws = new WebSocket(`ws://${baseUrl}/ws?token=${token}`);
-  //   let isHeadSet = false;
-
-  //   // Flags to prevent writing to a closed/closing file
-  //   const fileClosingRef = { current: false };
-
-  //   ws.onopen = () => console.log("WebSocket connected");
-
-  //   ws.onmessage = async (event) => {
-  //     if (event.data === "success") return;
-
-  //     // Skip processing if file is closing
-  //     if (fileClosingRef.current) return;
-
-  //     try {
-  //       const data = JSON.parse(event.data);
-  //       if (!data) return;
-
-  //       // Set frontend table header once
-  //       if (!isHeadSet) {
-  //         setHeadData(Object.keys(data));
-  //         isHeadSet = true;
-  //       }
-
-  //       const row = { ...data };
-  //       if (!row["Serial No"]) row["Serial No"] = num++;
-
-  //       // Write CSV header once
-  //       if (writableRef.current && !headerWrittenRef.current) {
-  //         const headers =
-  //           Object.keys(row)
-  //             .map((h) => `"${h.replace(/"/g, '""')}"`)
-  //             .join(",") + "\n";
-
-  //         try {
-  //           await writableRef.current.write(headers);
-  //           headerWrittenRef.current = true;
-  //         } catch (err) {
-  //           // Ignore InvalidStateError (stream closing)
-  //           if (err.name !== "InvalidStateError") console.error(err);
-  //         }
-  //       }
-
-  //       // Write CSV row safely
-  //       if (writableRef.current && !fileClosingRef.current) {
-  //         const line =
-  //           Object.values(row)
-  //             .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
-  //             .join(",") + "\n";
-
-  //         try {
-  //           await writableRef.current.write(line);
-  //         } catch (err) {
-  //           // Ignore InvalidStateError (stream closing)
-  //           if (err.name !== "InvalidStateError") console.error(err);
-  //         }
-  //       }
-
-  //       // Update frontend table
-  //       pushNewRecords([row]);
-  //     } catch (err) {
-  //       console.error("Failed to parse WS message:", err);
-  //     }
-  //   };
-
-  //   ws.onerror = (error) => console.error("WebSocket error:", error);
-
-  //   ws.onclose = async () => {
-  //     console.log("WebSocket closed");
-
-  //     // Close CSV safely
-  //     if (writableRef.current && !fileClosingRef.current) {
-  //       fileClosingRef.current = true; // lock to prevent further writes
-  //       try {
-  //         await writableRef.current.close();
-  //         console.log("CSV file saved and closed on WebSocket close");
-  //       } catch (err) {
-  //         // Ignore closing errors
-  //         if (err.name !== "InvalidStateError") console.warn(err);
-  //       } finally {
-  //         writableRef.current = null;
-  //       }
-  //     }
-  //   };
-
-  //   // Cleanup WebSocket on unmount or baseUrl change
-  //   return () => ws.close();
-  // }, [baseUrl, pushNewRecords]);
-
-  // --- fetch layout data (no change) ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -711,28 +618,6 @@ const AdminScanJob = () => {
       });
     }, 1000);
   };
-
-  // --------------- Start / Pause / Resume logic (unchanged) ---------------
-  // const handleStart = async () => {
-  //   try {
-  //     setScanning(true);
-  //     const folderName = localStorage.getItem("folderName");
-  //     const templateId = localStorage.getItem("templateId");
-  //     if (!folderName || !templateId) {
-  //       toast.error("Please select a folder and template");
-  //       return;
-  //     }
-  //     const token = localStorage.getItem("token");
-  //     const res = await scanFiles(folderName, templateId, dbState);
-  //   } catch (error) {
-  //     console.log(error);
-  //     if (error?.response?.data) {
-  //       toast.error(error?.response?.data);
-  //     }
-  //   } finally {
-  //     setScanning(false);
-  //   }
-  // };
 
   const handleStart = async () => {
     try {
@@ -1246,69 +1131,11 @@ const AdminScanJob = () => {
             <Inject services={services} />
           </GridComponent>
 
-          {/* {isViewerOpen && (
-            <Rnd
-              default={{
-                x: window.innerWidth / 2 - 250,
-                y: window.innerHeight / 2 - 450,
-                width: "auto",
-                height: 600,
-              }}
-              bounds="window"
-              dragHandleClassName="modal-drag-handle"
-              enableResizing={true}
-              style={{ zIndex: 1000 }}
-            >
-              <div
-                style={{
-                  background: "#fff",
-                  padding: "1rem",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-                  borderRadius: "8px",
-                  height: "100%",
-                  width: "100%",
-                  overflow: "auto",
-                  maxHeight: "90vh",
-                }}
-              >
-                <div
-                  className="modal-drag-handle"
-                  style={{ marginBottom: "8px" }}
-                >
-                  <h5 style={{ margin: 0 }}>Image Viewer</h5>
-                </div>
-
-                <button
-                  onClick={closeImageViewer}
-                  style={{
-                    position: "absolute",
-                    top: 8,
-                    right: 8,
-                    zIndex: 1001,
-                    border: "none",
-                    background: "transparent",
-                    fontSize: "1.2rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  ✖
-                </button>
-
-                <ZoomViewer
-                  currentImage={currentImage}
-                  baseUrl={baseUrl}
-                  focusBox={obj}
-                  templateData={templateData}
-                />
-              </div>
-            </Rnd>
-          )} */}
-
           {isViewerOpen && (
             <Rnd
               default={{
                 width: 600,
-                height: 600,
+                height: 700,
                 x: window.innerWidth / 2 - 450,
                 y: window.innerHeight / 2 - 450,
               }}
@@ -1392,15 +1219,6 @@ const AdminScanJob = () => {
             >
               Refresh Data
             </Button>
-
-            {/* <Button
-              className="mt-2"
-              color="success"
-              disabled={isRefreshing || scanning}
-              onClick={() => gridRef.current.excelExport()}
-            >
-              Save
-            </Button> */}
 
             <div className="m-2" style={{ float: "right" }}>
               <Button
