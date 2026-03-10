@@ -269,7 +269,7 @@ const TemplateEditor = () => {
     // 🔁 Update mergedFields childrenIds
     setMergedFields((prev) =>
       prev.map((m) =>
-        m.mergeId === activeMergeEditor.mergeId
+        m.mergeId === activeMergeEditor?.mergeId
           ? {
               ...m,
               childrenIds: updated.map((x) => x.id),
@@ -534,8 +534,6 @@ const TemplateEditor = () => {
     toast.success("Fields merged safely");
   };
 
-  // console.log(mergedFields);
-
   useEffect(() => {
     const handleKeyCopyPaste = (e) => {
       if (e.ctrlKey && e.key === "c") {
@@ -604,7 +602,7 @@ const TemplateEditor = () => {
           setBoxes(restored);
 
           // ✅ Restore mergedFields array
-          setMergedFields(res?.data?.mergedFields || []);
+          setMergedFields(res?.data?.mergedfields || []);
         }
       } catch (error) {
         console.error("Error fetching JSON data:", error);
@@ -861,8 +859,6 @@ const TemplateEditor = () => {
 
     return bubbles;
   };
-
-  console.log(currentBoxData);
 
   function transformPositions(arr) {
     const result = {};
@@ -1330,15 +1326,14 @@ const TemplateEditor = () => {
 
                           // Cleanup merged fields
                           setMergedFields((prev) =>
-                            prev
-                              .map((m) => ({
+                            prev.map((m) => ({
                                 ...m,
                                 childrenIds: m.childrenIds.filter(
                                   (id) => id !== deletedId,
                                 ),
                               }))
                               .filter((m) => m.childrenIds.length >= 2),
-                          );
+                          ); 
 
                           // Remove active selection
                           if (activeBox === index) {
@@ -1484,27 +1479,12 @@ const TemplateEditor = () => {
                 style={{
                   display: windowWidth <= 1400 ? "block" : "none",
                   fontSize: "1.5rem",
-                  // paddingBottom: "3px",
                   border: "none",
                 }}
               >
                 <MdAdd />
               </button>
             </div>
-
-            // <button
-            //   type='button'
-            //   className='btn me-2 btn-primary'
-            //   onClick={() => {
-            //     if (referenceBoxes.length >= 4) {
-            //       toast.error('You can only add 4 reference boxes.');
-            //       return;
-            //     }
-            //     setModalOpen(true);
-            //   }}
-            // >
-            //   Add
-            // </button>
           )}
 
           <span style={{ fontSize: 35 }}>|</span>
@@ -1519,10 +1499,6 @@ const TemplateEditor = () => {
               type="button"
               className="btn btn-primary"
               style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-              // onClick={() => {
-              //   setCurrentBoxData({});
-              //   setIsOpen(true);
-              // }}
             >
               Add Box
             </button>
@@ -1534,24 +1510,10 @@ const TemplateEditor = () => {
                 paddingBottom: "3px",
                 border: "none",
               }}
-              // onClick={() => {
-              //     setCurrentBoxData({});
-              //     setIsOpen(true);}}
             >
               <MdOutlineGrid4X4 />
             </button>
           </div>
-
-          {/* <button
-            type='button'
-            className='btn btn-primary me-2'
-            onClick={() => {
-              setCurrentBoxData({});
-              setIsOpen(true);
-            }}
-          >
-            Add Box
-          </button> */}
 
           {/* copy button */}
 
@@ -1576,13 +1538,6 @@ const TemplateEditor = () => {
               <FaCopy />
             </button>
           </div>
-          {/* <button
-            className='btn btn-info me-2'
-            onClick={copyBox}
-            disabled={activeBox === null}
-          >
-            Copy
-          </button> */}
 
           {/* Paste Button*/}
 
@@ -1607,13 +1562,6 @@ const TemplateEditor = () => {
               <FaPaste />
             </button>
           </div>
-          {/* <button
-            className='btn btn-secondary me-2'
-            onClick={pasteBox}
-            disabled={!copiedBox}
-          >
-            Paste
-          </button> */}
 
           {/* Duplicate Button */}
 
@@ -1726,63 +1674,6 @@ const TemplateEditor = () => {
               <MdMerge />
             </Button>
           </div>
-
-          {/* <div className="dropup me-2" style={{ position: "relative" }}>
-            <buttonPast
-              Button
-              className="btn btn-warning dropdown-toggle"
-              onClick={() => setShowMergeMenu((p) => !p)}
-            >
-              Links
-            </buttonPast>
-
-            {showMergeMenu && (
-              <div
-                className="dropdown-menu show p-2"
-                style={{
-                  minWidth: 220,
-                  position: "absolute",
-                  bottom: "100%",
-                  transform: "translateY(-8px)",
-                  zIndex: 999999,
-                }}
-              >
-                {boxes
-                  .filter((b) => b.merge === true && !b.isMerged)
-                  .map((box) => (
-                    <div key={box.id} className="form-check">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedMergeBoxes.includes(box.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMergeBoxes((p) => [...p, box.id]); // ✅ FIXED
-                          } else {
-                            setSelectedMergeBoxes(
-                              (p) => p.filter((id) => id !== box.id) // ✅ FIXED
-                            );
-                          }
-                        }}
-                      />
-                      <label className="form-check-label">
-                        {box.fieldName || "Unnamed"}
-                      </label>
-                    </div>
-                  ))}
-
-                <Button
-                  size="sm"
-                  className="mt-2 w-100"
-                  onClick={handleMergeSelected}
-                >
-                  Links Selected
-                </Button>
-              </div>
-            )}
-          </div> */}
-
-          {/* Save Teemplate */}
 
           <div>
             <button
