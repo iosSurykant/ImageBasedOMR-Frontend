@@ -376,7 +376,7 @@ const TemplateEditor = () => {
       x: copiedBox.x + OFFSET,
       y: copiedBox.y + OFFSET,
       isMerged: false, // ✅ MERGE RESET
-      mergedInto: null,
+      mergedInto: "N/A",
       merge: false,
     };
 
@@ -449,7 +449,7 @@ const TemplateEditor = () => {
       y: source.y + 25,
       fieldName: updatedFieldName,
       isMerged: false,
-      mergedInto: null,
+      mergedInto: "N/A",
       merge: false,
     };
 
@@ -522,7 +522,7 @@ const TemplateEditor = () => {
           ? {
               ...b,
               isMerged: true,
-              mergedInto: baseFieldName,
+              mergedInto: baseFieldName || "N/A",
               merge: false, // ✅ lock toggle automatically
             }
           : b,
