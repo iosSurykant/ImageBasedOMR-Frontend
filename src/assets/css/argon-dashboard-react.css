@@ -16309,6 +16309,7 @@ a.btn-icon-only {
 
 .main-content {
   position: relative;
+  overflow: visible !important;
 }
 .main-content .navbar-top {
   position: absolute;

@@ -74,6 +74,8 @@ const Login = () => {
         localStorage.setItem("token", res.token);
         const decoded = jwtDecode(res.token);
 
+        console.log(decoded)
+
         const role = decoded.role;
         const empid = decoded.nameid;
 

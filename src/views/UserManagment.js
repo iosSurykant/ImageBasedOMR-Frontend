@@ -22,6 +22,7 @@ import { fetchAllUsers } from "helper/userManagment_helper";
 import { updateUser } from "helper/userManagment_helper";
 import { removeUser } from "helper/userManagment_helper";
 import Placeholder from "ui/Placeholder";
+import { GiCrossMark } from "react-icons/gi";
 
 const roles = [
   { roleName: "admin" },
@@ -61,7 +62,7 @@ const UserManagment = () => {
   }, []);
 
   useEffect(() => {
-    // setAllUsers([]);
+    setAllUsers([]);
     fetchUsers();
   }, [fetchUsers]);
 
@@ -285,44 +286,6 @@ const UserManagment = () => {
                 </div>
               </CardHeader>
               <div style={{ height: "70vh", overflow: "auto" }}>
-                {/* <Table
-                  className="align-items-center table-flush mb-5"
-                  responsive
-                  style={{ borderCollapse: "collapse" }}
-                >
-                  <thead
-                    className="thead-light"
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "#f8f9fa", // Adjust to match your table's background color
-                      zIndex: 10, // Ensure the header stays on top of other content
-                    }}
-                  >
-                    <tr>
-                      <th scope="col">Sno.</th>
-                      <th scope="col">Username</th>
-                      <th scope="col">Email</th>
-                      <th scope="col">Phone Number</th>
-                      <th scope="col">Role</th>
-                      {isAdmin && <th scope="col" />}
-                    </tr>
-                  </thead>
-                  <tbody style={{ minHeight: "100rem" }}>
-                    {loading ? placeHolderUser : ALLUSER}
-                    {ALLUSER.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="100%"
-                          style={{ textAlign: "center", width: "100%" }}
-                        >
-                          No User Present
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Table> */}
-
                 <Table
                   className="align-items-center table-flush mb-45"
                   responsive
@@ -484,14 +447,27 @@ const UserManagment = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Create User Model */}
       <Modal
         show={createModalShow}
         onHide={() => setCreateModalShow(false)}
         size="lg"
         centered
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Create User</Modal.Title>
+        <Modal.Header>
+          <Modal.Title >Create User</Modal.Title>
+
+          <button
+          onClick={() => setCreateModalShow(false)}
+            style={{
+              border: "none",
+              background: "transparent",
+              fontSize: "22px",
+              cursor: "pointer",
+            }}
+          >
+            <GiCrossMark />
+          </button>
         </Modal.Header>
 
         <Modal.Body>
@@ -503,7 +479,7 @@ const UserManagment = () => {
                 type="email"
                 className="form-control"
                 placeholder="Enter Email Id"
-                value={email}
+                // value={email}
                 ref={emailRef}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -519,7 +495,7 @@ const UserManagment = () => {
                 type="text"
                 className="form-control"
                 placeholder="Enter User Name"
-                value={name}
+                // value={name}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\s/g, "");
                   setName(value);
@@ -537,7 +513,7 @@ const UserManagment = () => {
                 type="tel"
                 className="form-control"
                 placeholder="Enter 10 digit Phone Number"
-                value={phoneNumber}
+                // value={phoneNumber}
                 maxLength={10}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, "");
@@ -549,31 +525,33 @@ const UserManagment = () => {
             </div>
           </Row>
 
-          {/* Role */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Role</label>
+          <Row className="mb-3 align-items-center">
+            <label htmlFor="roleSelect" className="col-md-2 col-form-label">
+              Role
+            </label>
 
             <div className="col-md-10">
               <Select
-                value={selectecdRole}
+                inputId="roleSelect"
+                // value={selectedRole}
                 onChange={handleSelectRole}
                 options={roles}
-                getOptionLabel={(option) => option?.roleName || ""}
-                getOptionValue={(option) => option?.roleName?.toString() || ""}
+                getOptionLabel={(role) => role.roleName}
+                getOptionValue={(role) => String(role.roleId)}
+                placeholder="Select Role"
+                isClearable
               />
             </div>
           </Row>
 
-          {/* Password */}
           <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Password</label>
+            <label className="col-md-2 col-form-label">Confirm Password</label>
 
             <div className="col-md-10">
               <input
                 type="password"
                 className="form-control"
                 placeholder="Enter Password"
-                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
@@ -588,7 +566,7 @@ const UserManagment = () => {
                 type="password"
                 className="form-control"
                 placeholder="Enter Confirm Password"
-                value={ConfirmPassword}
+                // value={ConfirmPassword}
                 ref={confirmRef}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />

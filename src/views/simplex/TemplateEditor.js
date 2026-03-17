@@ -1326,14 +1326,15 @@ const TemplateEditor = () => {
 
                           // Cleanup merged fields
                           setMergedFields((prev) =>
-                            prev.map((m) => ({
+                            prev
+                              .map((m) => ({
                                 ...m,
                                 childrenIds: m.childrenIds.filter(
                                   (id) => id !== deletedId,
                                 ),
                               }))
                               .filter((m) => m.childrenIds.length >= 2),
-                          ); 
+                          );
 
                           // Remove active selection
                           if (activeBox === index) {
@@ -1643,8 +1644,18 @@ const TemplateEditor = () => {
                           }
                         }}
                       />
-                      <label className="form-check-label">
+                      {/* <label className="form-check-label">
                         {box.fieldName || "Unnamed"}
+                      </label> */}
+
+                         <label className="form-check-label">
+                        {box.fieldName}
+                        {box.subName && (
+                          <span className="text-muted ml-2">
+                            ({box.subName})
+                          </span>
+                        )}
+                        
                       </label>
                     </div>
                   ))}
@@ -1807,6 +1818,7 @@ const TemplateEditor = () => {
           left: 180,
           top: 720,
           border: "none",
+          zIndex:99999
         }}
         type="button"
         onClick={toggleDropdown}

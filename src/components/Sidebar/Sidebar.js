@@ -3,6 +3,9 @@ import { NavLink as NavLinkRRD, Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { useScan } from "context/ScanningContext";
+import logoImg from "../../assets/img/brand/ios.png";
+import { IoIosArrowBack } from "react-icons/io";
+import { IoIosArrowForward } from "react-icons/io";
 
 import {
   Button,
@@ -25,6 +28,8 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 const Sidebar = (props) => {
   const { isScanning, isPausedContext } = useScan();
   const [collapseOpen, setCollapseOpen] = useState(false); // ✅ default false
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   const sidebarRef = useRef(null);
 
   // Toggle collapse
@@ -37,36 +42,39 @@ const Sidebar = (props) => {
     setCollapseOpen(false);
   };
 
+  //Toggle Sidebar
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   // Create sidebar links
-const createLinks = (routes) => {
-  return routes
-    .filter((prop) => prop.showInSidebar !== false) // 👈 hide route
-    .map((prop, key) => (
-      <NavItem key={key}>
-        <NavLink
-          to={isScanning ? "#" : prop.layout + prop.path}
-          tag={NavLinkRRD}
-          onClick={(e) => {
-            if (isScanning && !isPausedContext) {
-              e.preventDefault();
-              toast.info("Pause the scanning to navigate");
-            }
-            closeCollapse();
-          }}
-          style={{
-            opacity: isScanning && !isPausedContext ? 0.5 : 1,
-            cursor:
-              isScanning && !isPausedContext
-                ? "not-allowed"
-                : "pointer",
-          }}
-        >
-          <i className={prop.icon} />
-          {prop.name}
-        </NavLink>
-      </NavItem>
-    ));
-};
+  const createLinks = (routes) => {
+    return routes
+      .filter((prop) => prop.showInSidebar !== false) // 👈 hide route
+      .map((prop, key) => (
+        <NavItem key={key}>
+          <NavLink
+            to={isScanning ? "#" : prop.layout + prop.path}
+            tag={NavLinkRRD}
+            onClick={(e) => {
+              if (isScanning && !isPausedContext) {
+                e.preventDefault();
+                toast.info("Pause the scanning to navigate");
+              }
+              closeCollapse();
+            }}
+            style={{
+              opacity: isScanning && !isPausedContext ? 0.5 : 1,
+              cursor:
+                isScanning && !isPausedContext ? "not-allowed" : "pointer",
+            }}
+          >
+            <i className={prop.icon} style={{fontSize:15}}/>
+            {!isSidebarCollapsed && <span className="ml-2">{prop.name}</span>}
+          </NavLink>
+        </NavItem>
+      ));
+  };
 
   const { routes, logo } = props;
 
@@ -86,11 +94,34 @@ const createLinks = (routes) => {
 
   return (
     <Navbar
-      className="navbar-vertical fixed-left navbar-light bg-white"
+      className={`navbar-vertical fixed-left navbar-light bg-white ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
       expand="md"
       id="sidenav-main"
       ref={sidebarRef}
+      style={{ overflow: "visible" }}
     >
+      <style jsx>
+        {`
+          .sidebar-collapsed {
+            width: 80px !important;
+          }
+
+          .sidebar-collapsed .nav-link span {
+            display: none;
+          }
+
+          .sidebar-collapsed .navbar-brand-img {
+            width: 40px;
+          }
+
+          .navbar-vertical {
+            transition: width 0.3s ease;
+          }
+        `}
+      </style>
+
       <Container fluid>
         {/* Toggler */}
         <button
@@ -104,13 +135,33 @@ const createLinks = (routes) => {
         {/* Brand (UNCHANGED as you requested) */}
         {logo ? (
           <NavbarBrand className="pt-0" {...navbarBrandProps}>
-            <img
-              alt={"IOS"}
-              className="navbar-brand-img"
-              src={require("../../assets/img/brand/ios.png")}
-            />
+            <img alt={"IOS"} className="navbar-brand-img" src={logoImg} />
           </NavbarBrand>
         ) : null}
+
+        {/* Sidebar Collaps */}
+        <div
+          onClick={toggleSidebar}
+          style={{
+            position: "absolute",
+            right: "-15px",
+            top: "55px",
+            width: "40px",
+            height: "40px",
+            background: "#fff",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            border: "1px solid #ddd",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            fontSize:"20px",
+            fontWeight:900
+          }}
+        >
+          {isSidebarCollapsed ? <IoIosArrowForward /> : <IoIosArrowBack />}
+        </div>
 
         <Collapse navbar isOpen={collapseOpen}>
           <Button
@@ -118,7 +169,7 @@ const createLinks = (routes) => {
             type="button"
             onClick={toggleCollapse}
           >
-            <i className="fa-solid fa-xmark"></i> 
+            <i className="fa-solid fa-xmark"></i>
           </Button>
 
           {/* Mobile Search */}
@@ -139,9 +190,7 @@ const createLinks = (routes) => {
           </Form>
 
           {/* Navigation */}
-          <Nav navbar>
-            {routes && routes.length > 0 && createLinks(routes)}
-          </Nav>
+          <Nav navbar>{routes && routes.length > 0 && createLinks(routes)}</Nav>
         </Collapse>
       </Container>
     </Navbar>
