@@ -22,7 +22,7 @@ const FormData = forwardRef(
     ref,
   ) => {
     const [customInput, setCustomInput] = useState("");
-    console.log(currentBoxData);
+   
 
     useEffect(() => {
       if (isNewBox) {
@@ -34,7 +34,10 @@ const FormData = forwardRef(
       if (Array.isArray(currentBoxData?.Custom)) {
         setCustomInput(currentBoxData.Custom.join(", "));
       }
-    }, []);
+    }, [currentBoxData]);
+
+    console.log(currentBoxData?.Custom)
+    console.log(customInput)
 
     const QUESTION_NAME_REGEX = /^([qQ])(\d+)-([qQ])(\d+)$/;
 
@@ -57,8 +60,6 @@ const FormData = forwardRef(
         gap: end - start + 1,
       };
     }
-
-    console.log(subName);
 
     const onSubmitHandler = (e) => {
       e.preventDefault();

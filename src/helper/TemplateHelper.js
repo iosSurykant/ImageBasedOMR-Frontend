@@ -105,6 +105,7 @@ export const updateTemplate = async (FileName, jsonFile) => {
 
   // ✅ Append empid only once
   const updatedFileName = `${baseFileName}##${empid}`;
+  console.log(updatedFileName)
   
 
   const endpoint = `${urls.UPDATE_TEMPLATE}?FileName=${encodeURIComponent(updatedFileName)}`;

@@ -887,6 +887,11 @@ const TemplateEditor = () => {
   const saveTemplate = async () => {
     if (isLoading) return; // ✅ Prevent double click
 
+    if(referenceOptions >= 0){
+      toast.success("Cannot Save without reference boxes")
+      return
+    }
+
     try {
       setIsLoading(true); // ✅ DISABLE BUTTON IMMEDIATELY
 

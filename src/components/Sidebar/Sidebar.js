@@ -48,33 +48,77 @@ const Sidebar = (props) => {
   };
 
   // Create sidebar links
+  // const createLinks = (routes) => {
+  //   return routes
+  //     .filter((prop) => prop.showInSidebar !== false) // 👈 hide route
+  //     .map((prop, key) => (
+  //       <NavItem key={key}>
+  //         <NavLink
+  //           to={isScanning ? "#" : prop.layout + prop.path}
+  //           tag={NavLinkRRD}
+  //           onClick={(e) => {
+  //             if (isScanning && !isPausedContext) {
+  //               e.preventDefault();
+  //               toast.info("Pause the scanning to navigate");
+  //             }
+  //             closeCollapse();
+  //           }}
+  //           style={{
+  //             opacity: isScanning && !isPausedContext ? 0.5 : 1,
+  //             cursor:
+  //               isScanning && !isPausedContext ? "not-allowed" : "pointer",
+  //           }}
+  //         >
+  //           <i className={prop.icon} style={{fontSize:15}}/>
+  //           {!isSidebarCollapsed && <span className="ml-2">{prop.name}</span>}
+  //         </NavLink>
+  //       </NavItem>
+  //     ));
+  // };
+
   const createLinks = (routes) => {
     return routes
-      .filter((prop) => prop.showInSidebar !== false) // 👈 hide route
-      .map((prop, key) => (
-        <NavItem key={key}>
-          <NavLink
-            to={isScanning ? "#" : prop.layout + prop.path}
-            tag={NavLinkRRD}
-            onClick={(e) => {
-              if (isScanning && !isPausedContext) {
-                e.preventDefault();
-                toast.info("Pause the scanning to navigate");
-              }
-              closeCollapse();
-            }}
-            style={{
-              opacity: isScanning && !isPausedContext ? 0.5 : 1,
-              cursor:
-                isScanning && !isPausedContext ? "not-allowed" : "pointer",
-            }}
-          >
-            <i className={prop.icon} style={{fontSize:15}}/>
-            {!isSidebarCollapsed && <span className="ml-2">{prop.name}</span>}
-          </NavLink>
-        </NavItem>
-      ));
+      ?.filter(({ showInSidebar }) => showInSidebar !== false)
+      ?.map((route, index) => {
+        const isDisabled = isScanning && !isPausedContext;
+
+        return (
+          <NavItem key={route.path || index}>
+            <NavLink
+              to={isDisabled ? "#" : `${route.layout}${route.path}`}
+              tag={NavLinkRRD}
+              onClick={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  toast.info("Pause the scanning to navigate");
+                  return;
+                }
+                closeCollapse();
+              }}
+              className={isDisabled ? "disabled-link" : ""}
+            >
+              <i className={route.icon} style={{ fontSize: "18px", marginLeft:"8px" }} />
+
+              {!isSidebarCollapsed && (
+                <span className="ml-2">{route.name || "Unnamed"}</span>
+              )}
+            </NavLink>
+          </NavItem>
+          
+        );
+      });
   };
+
+    <style jsx>
+    {`
+      .disabled-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: auto; /* allow click to show toast */
+      }
+    `}
+  </style>;
+
 
   const { routes, logo } = props;
 
@@ -156,8 +200,8 @@ const Sidebar = (props) => {
             cursor: "pointer",
             border: "1px solid #ddd",
             boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            fontSize:"20px",
-            fontWeight:900
+            fontSize: "20px",
+            fontWeight: 900,
           }}
         >
           {isSidebarCollapsed ? <IoIosArrowForward /> : <IoIosArrowBack />}
