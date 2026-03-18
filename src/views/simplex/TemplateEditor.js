@@ -846,16 +846,8 @@ const TemplateEditor = () => {
         };
 
         bubbles.push(bubble);
-
-        // console.log(
-        //   `Bubble (${row}, ${col}): center=(${bubble.cx}, ${bubble.cy}), r=${bubble.r}, box=(${bubble.x}, ${bubble.y}, ${bubble.width}x${bubble.height})`
-        // );
       }
     }
-
-    // console.log(
-    //   `Box at (${x}, ${y}), size: ${width}x${height}, grid: ${totalCol}x${totalRow}, cell: ${cellWidth}x${cellHeight}, radius: ${radius}`
-    // );
 
     return bubbles;
   };
@@ -887,9 +879,9 @@ const TemplateEditor = () => {
   const saveTemplate = async () => {
     if (isLoading) return; // ✅ Prevent double click
 
-    if(referenceOptions >= 0){
-      toast.success("Cannot Save without reference boxes")
-      return
+    if (referenceBoxes.length < 3) {
+      toast.error("Set at least 2 Reference Box");
+      return;
     }
 
     try {
@@ -1004,9 +996,19 @@ const TemplateEditor = () => {
             const displayW = Math.round(box.width * effectiveScale);
             const displayH = Math.round(box.height * effectiveScale);
 
+            //tooltips for reference Boxes
+            const getTooltip = (index) => {
+              const box = referenceBoxes[index];
+              return (
+                referenceOptions.find((opt) => opt.id === box?.position)?.label ||
+                `${box.position}`
+              );
+            };
+
             return (
               <Rnd
                 key={index}
+                title={getTooltip(index)}
                 size={{ width: displayW, height: displayH }}
                 position={{ x: displayX, y: displayY }}
                 tabIndex={0}
@@ -1093,6 +1095,7 @@ const TemplateEditor = () => {
                   });
                 }}
                 bounds="parent"
+                
                 style={{
                   border:
                     currentReferenceBox !== index
@@ -1653,14 +1656,13 @@ const TemplateEditor = () => {
                         {box.fieldName || "Unnamed"}
                       </label> */}
 
-                         <label className="form-check-label">
+                      <label className="form-check-label">
                         {box.fieldName}
                         {box.subName && (
                           <span className="text-muted ml-2">
                             ({box.subName})
                           </span>
                         )}
-                        
                       </label>
                     </div>
                   ))}
@@ -1823,7 +1825,7 @@ const TemplateEditor = () => {
           left: 180,
           top: 720,
           border: "none",
-          zIndex:99999
+          zIndex: 99999,
         }}
         type="button"
         onClick={toggleDropdown}

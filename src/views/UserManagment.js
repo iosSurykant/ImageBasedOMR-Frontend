@@ -23,6 +23,8 @@ import { updateUser } from "helper/userManagment_helper";
 import { removeUser } from "helper/userManagment_helper";
 import Placeholder from "ui/Placeholder";
 import { GiCrossMark } from "react-icons/gi";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 const roles = [
   { roleName: "admin" },
@@ -364,7 +366,7 @@ const UserManagment = () => {
           </Row>
 
           {/* Phone Number */}
-          <Row className="mb-3">
+          {/* <Row className="mb-3">
             <label className="col-md-2 col-form-label">Phone Number</label>
             <div className="col-md-10">
               <input
@@ -374,6 +376,27 @@ const UserManagment = () => {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
               />
+              {!phoneNumber && (
+                <span style={{ color: "red", display: spanDisplay }}>
+                  This field is required
+                </span>
+              )}
+            </div>
+          </Row> */}
+
+          <Row className="mb-3">
+            <label className="col-md-2 col-form-label">Phone Number</label>
+
+            <div className="col-md-10">
+              <PhoneInput
+                defaultCountry="in"
+                value={phoneNumber}
+                onChange={(phone) => setPhoneNumber(phone)}
+                className="w-100"
+                inputClassName="form-control w-100"
+                placeholder="Enter Phone Number"
+              />
+
               {!phoneNumber && (
                 <span style={{ color: "red", display: spanDisplay }}>
                   This field is required
@@ -455,10 +478,10 @@ const UserManagment = () => {
         centered
       >
         <Modal.Header>
-          <Modal.Title >Create User</Modal.Title>
+          <Modal.Title>Create User</Modal.Title>
 
           <button
-          onClick={() => setCreateModalShow(false)}
+            onClick={() => setCreateModalShow(false)}
             style={{
               border: "none",
               background: "transparent",

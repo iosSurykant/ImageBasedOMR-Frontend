@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { updateUser } from "helper/userManagment_helper";
 import { jwtDecode } from "jwt-decode";
 import { toast, ToastContainer } from "react-toastify";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
+
 import {
   Container,
   Row,
@@ -12,11 +15,12 @@ import {
   FormGroup,
   Label,
   Input,
+  InputGroup,
   Button,
 } from "reactstrap";
 
 const Profile = () => {
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     empid: "",
     name: "",
@@ -32,7 +36,6 @@ const Profile = () => {
     data.pwd.trim() !== "" &&
     data.cont.trim() !== "" &&
     data.role.trim() !== "";
-
 
   // ✅ Load user data
   useEffect(() => {
@@ -51,7 +54,7 @@ const Profile = () => {
 
     if (token) {
       const decoded = jwtDecode(token);
-      console.log(decoded)
+      console.log(decoded);
 
       setData((prev) => ({
         ...prev,
@@ -91,52 +94,56 @@ const Profile = () => {
   };
 
   return (
-   <Container fluid className="d-flex justify-content-center align-items-center min-vh-100">
-  <ToastContainer />
+    <Container
+      fluid
+      className="d-flex justify-content-center align-items-center min-vh-100"
+    >
+      <ToastContainer />
 
-  <Row className="w-100 justify-content-center">
-    <Col lg="6" md="8">
-      <Card className="shadow">
-        <CardBody>
-          <h3 className="text-center mb-4">Update Profile</h3>
+      <Row className="w-100 justify-content-center">
+        <Col lg="6" md="8">
+          <Card className="shadow">
+            <CardBody>
+              <h3 className="text-center mb-4">Update Profile</h3>
 
-          <Form onSubmit={handleUpdate}>
-            <Input type="hidden" name="empid" value={data.empid} />
+              <Form onSubmit={handleUpdate}>
+                <Input type="hidden" name="empid" value={data.empid} />
 
-            <FormGroup>
-              <Label>Name</Label>
-              <Input
-                type="text"
-                name="name"
-                value={data.name}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup>
+                <FormGroup>
+                  <Label>Name</Label>
+                  <Input
+                    type="text"
+                    name="name"
+                    value={data.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
 
-            {/* <FormGroup>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                name="email"
-                value={data.email}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup> */}
+                <FormGroup>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    disabled
+                    name="email"
+                    value={data.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
 
-            <FormGroup>
-              <Label>Password</Label>
-              <Input
-                type="password"
-                name="pwd"
-                value={data.pwd}
-                onChange={handleChange}
-                placeholder="Enter new password"
-              />
-            </FormGroup>
+                <FormGroup>
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    name="pwd"
+                    value={data.pwd}
+                    onChange={handleChange}
+                    placeholder="Enter new password"
+                  />
+                </FormGroup>
 
-            <FormGroup>
+                {/* <FormGroup>
               <Label>Contact Number</Label>
               <Input
                 type="text"
@@ -144,35 +151,52 @@ const Profile = () => {
                 value={data.cont}
                 onChange={handleChange}
               />
-            </FormGroup>
+            </FormGroup> */}
 
-            {/* <FormGroup>
+                <FormGroup>
+                  <Label>Contact Number</Label>
+
+                  <PhoneInput
+                  inputClassName="w-100"
+                    defaultCountry="in" // India by default 🇮🇳
+                    value={data.cont}
+                    onChange={(phone) =>
+                      setData((prev) => ({
+                        ...prev,
+                        cont: phone,
+                      }))
+                    }
+                  />
+                </FormGroup>
+
+                <FormGroup>
               <Label>Role</Label>
               <Input
                 type="select"
+                disabled
                 name="role"
                 value={data.role}
                 onChange={handleChange}
               >
-                <option value="Admin">Admin</option>
-                <option value="Moderator">Moderator</option>
-                <option value="Operator">Operator</option>
+                <option value="admin">Admin</option>
+                <option value="moderator">Moderator</option>
+                <option value="operator">Operator</option>
               </Input>
-            </FormGroup> */}
+            </FormGroup>
 
-            <Button
-              color="primary"
-              block
-              disabled={loading || !isFormValid}
-            >
-              {loading ? "Updating..." : "Update Profile"}
-            </Button>
-          </Form>
-        </CardBody>
-      </Card>
-    </Col>
-  </Row>
-</Container>
+                <Button
+                  color="primary"
+                  block
+                  disabled={loading || !isFormValid}
+                >
+                  {loading ? "Updating..." : "Update Profile"}
+                </Button>
+              </Form>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
