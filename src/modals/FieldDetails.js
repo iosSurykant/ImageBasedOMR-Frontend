@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Modal, Button } from "react-bootstrap";
-import DataContext from "store/DataContext";
+import DataContext from "../WebData/Store/DataContext"
 import Placeholder from "ui/Placeholder";
 import {
   DropdownMenu,

@@ -50,6 +50,8 @@ const initializeUrls = async () => {
     GET_TOTAL_EXCEL_ROW: `${baseUrl}GetTotalExcelRow`,
     TOTAL_SCANNING : `${baseUrl}api/showRecord/Dash_AllRec`,
    ACCURACY_RATE : `${baseUrl}api/showRecord/Dash_Avrage`,
+   GETCSVHEADER : `${baseUrl}api/OmrProcessing/GetCSVHeader`,
+   GENERATE_RESULT : `${baseUrl}api/AmityDemand/GenerateResultExcel`,
     MAIN_URL: baseUrl,
   };
 };

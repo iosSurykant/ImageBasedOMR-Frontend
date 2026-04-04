@@ -74,7 +74,7 @@ const TemplateEditor = () => {
   // const boxRef = useRef(null);
   // const [isDragging, setIsDragging] = useState(false);
   // const dragOffsetRef = useRef({ x: 1, y: 0 });
-  const [newboxPos, setNewBoxPos] = useState({ s: 100, y: 100 });
+  const [newboxPos, setNewBoxPos] = useState({ x: 100, y: 100 });
 
   const handleResize = () => {
     setWindowWidth(window.innerWidth);
@@ -879,7 +879,7 @@ const TemplateEditor = () => {
   const saveTemplate = async () => {
     if (isLoading) return; // ✅ Prevent double click
 
-    if (referenceBoxes.length < 3) {
+    if (referenceBoxes.length <= 1) {
       toast.error("Set at least 2 Reference Box");
       return;
     }
@@ -954,6 +954,16 @@ const TemplateEditor = () => {
     }
   };
 
+  useEffect(() => {
+    const usedPositions = referenceBoxes.map((b) => b.position);
+
+    const filteredOptions = referenceOptions.filter(
+      (opt) => !usedPositions.includes(opt.id),
+    );
+
+    setOptions(filteredOptions);
+  }, [referenceBoxes]);
+
   // Compute container dimensions
   const containerDisplayWidth = baseDisplaySize.width
     ? Math.round(baseDisplaySize.width * zoomScale)
@@ -1000,8 +1010,8 @@ const TemplateEditor = () => {
             const getTooltip = (index) => {
               const box = referenceBoxes[index];
               return (
-                referenceOptions.find((opt) => opt.id === box?.position)?.label ||
-                `${box.position}`
+                referenceOptions.find((opt) => opt.id === box?.position)
+                  ?.label || `${box.position}`
               );
             };
 
@@ -1095,7 +1105,6 @@ const TemplateEditor = () => {
                   });
                 }}
                 bounds="parent"
-                
                 style={{
                   border:
                     currentReferenceBox !== index

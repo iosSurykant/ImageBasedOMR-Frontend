@@ -9,7 +9,7 @@ import { Modal, Button, Col, Badge, Container } from "react-bootstrap";
 import { Row } from "reactstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import classes from "./DesignTemplate.module.css";
-import DataContext from "store/DataContext";
+import DataContext from "../../store/DataContext"
 import { MultiSelect } from "react-multi-select-component";
 import { createTemplate } from "helper/TemplateHelper";
 import { getLayoutDataById } from "helper/TemplateHelper";

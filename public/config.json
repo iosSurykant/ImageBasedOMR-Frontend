@@ -1,3 +1,6 @@
 {
-  "backendUrl": "https://2fgm615c-5001.inc1.devtunnels.ms/"
+  "backendUrl": "https://2fgm615c-5001.inc1.devtunnels.ms/",
+  "SERVER_IP": "http://localhost:4000",
+  "APP_IP": "localhost"
 }
+  

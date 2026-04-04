@@ -15,7 +15,7 @@ import {
 } from "reactstrap";
 import classes from "./ImageCropper.module.css";
 import { toast } from "react-toastify";
-import DataContext from "store/DataContext";
+import DataContext from "WebData/store/DataContext";
 const ImageCropper = ({ imageSrc, handleImage, backImageSrc ,selectedCoordinateData}) => {
   const dataCtx = useContext(DataContext);
   const cropperRef = useRef(null);

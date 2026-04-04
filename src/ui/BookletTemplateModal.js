@@ -36,7 +36,7 @@ import {
   printCustomOption,
   printOrientationOption,
 } from "data/helperData";
-import DataContext from "store/DataContext";
+import DataContext from "WebData/store/DataContext";
 import Select, { components } from "react-select";
 import { useNavigate } from "react-router-dom";
 import ShadesOfGrey from "./shadesOfGrey";

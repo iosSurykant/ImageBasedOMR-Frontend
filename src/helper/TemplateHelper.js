@@ -78,8 +78,7 @@ export const createTemplate = async (templateName, image, empId) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
-      // ❌ DO NOT manually set Content-Type for FormData
-      // Browser will set correct boundary automatically
+
     },
   };
 

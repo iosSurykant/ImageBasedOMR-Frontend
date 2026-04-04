@@ -29,6 +29,7 @@ const Sidebar = (props) => {
   const { isScanning, isPausedContext } = useScan();
   const [collapseOpen, setCollapseOpen] = useState(false); // ✅ default false
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null);
 
   const sidebarRef = useRef(null);
 
@@ -47,69 +48,55 @@ const Sidebar = (props) => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  // Create sidebar links
-  // const createLinks = (routes) => {
-  //   return routes
-  //     .filter((prop) => prop.showInSidebar !== false) // 👈 hide route
-  //     .map((prop, key) => (
-  //       <NavItem key={key}>
-  //         <NavLink
-  //           to={isScanning ? "#" : prop.layout + prop.path}
-  //           tag={NavLinkRRD}
-  //           onClick={(e) => {
-  //             if (isScanning && !isPausedContext) {
-  //               e.preventDefault();
-  //               toast.info("Pause the scanning to navigate");
-  //             }
-  //             closeCollapse();
-  //           }}
-  //           style={{
-  //             opacity: isScanning && !isPausedContext ? 0.5 : 1,
-  //             cursor:
-  //               isScanning && !isPausedContext ? "not-allowed" : "pointer",
-  //           }}
-  //         >
-  //           <i className={prop.icon} style={{fontSize:15}}/>
-  //           {!isSidebarCollapsed && <span className="ml-2">{prop.name}</span>}
-  //         </NavLink>
-  //       </NavItem>
-  //     ));
-  // };
-
   const createLinks = (routes) => {
     return routes
-      ?.filter(({ showInSidebar }) => showInSidebar !== false)
-      ?.map((route, index) => {
-        const isDisabled = isScanning && !isPausedContext;
+      ?.filter((route) => route.showInSidebar !== false) // ✅ filter parent
+      .map((route, index) => {
+        const hasChildren = route.children;
 
         return (
-          <NavItem key={route.path || index}>
-            <NavLink
-              to={isDisabled ? "#" : `${route.layout}${route.path}`}
-              tag={NavLinkRRD}
-              onClick={(e) => {
-                if (isDisabled) {
-                  e.preventDefault();
-                  toast.info("Pause the scanning to navigate");
-                  return;
-                }
-                closeCollapse();
-              }}
-              className={isDisabled ? "disabled-link" : ""}
-            >
-              <i className={route.icon} style={{ fontSize: "18px", marginLeft:"8px" }} />
+          <div key={index}>
+            {/* Parent */}
+            <NavItem>
+              <NavLink
+                to={hasChildren ? "#" : `${route.layout}${route.path}`}
+                tag={NavLinkRRD}
+                onClick={(e) => {
+                  if (hasChildren) {
+                    e.preventDefault();
+                    setOpenMenu(openMenu === index ? null : index);
+                  }
+                }}
+              >
+                <i className={route.icon} />
 
-              {!isSidebarCollapsed && (
-                <span className="ml-2">{route.name || "Unnamed"}</span>
-              )}
-            </NavLink>
-          </NavItem>
-          
+                {!isSidebarCollapsed && <>{route.name}</>}
+              </NavLink>
+            </NavItem>
+
+            {/* Children */}
+            {hasChildren && openMenu === index && (
+              <div style={{ paddingLeft: "25px" }}>
+                {route.children
+                  ?.filter((child) => child.showInSidebar !== false) // ✅ FIX HERE
+                  .map((child, i) => (
+                    <NavItem key={i}>
+                      <NavLink
+                        to={`${child.layout}${child.path}`}
+                        tag={NavLinkRRD}
+                      >
+                        {!isSidebarCollapsed && child.name}
+                      </NavLink>
+                    </NavItem>
+                  ))}
+              </div>
+            )}
+          </div>
         );
       });
   };
 
-    <style jsx>
+  <style jsx>
     {`
       .disabled-link {
         opacity: 0.5;
@@ -118,7 +105,6 @@ const Sidebar = (props) => {
       }
     `}
   </style>;
-
 
   const { routes, logo } = props;
 

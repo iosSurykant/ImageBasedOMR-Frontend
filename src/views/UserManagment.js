@@ -63,6 +63,7 @@ const UserManagment = () => {
     }
   }, []);
 
+
   useEffect(() => {
     setAllUsers([]);
     fetchUsers();

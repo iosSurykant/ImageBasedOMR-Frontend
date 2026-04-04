@@ -17,7 +17,9 @@ import {
 import classes from "./ImageCropper.module.css";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
-import DataContext from "store/DataContext";
+// import DataContext from "WebData/store/DataContext";
+import DataContext from "../WebData/Store/DataContext";
+
 const EditImageCropper = ({
   imageSrc,
   handleImage,

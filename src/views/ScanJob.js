@@ -127,45 +127,6 @@ const ScanJob = () => {
     }
   }, [location]);
 
-
-  // useEffect(() => {
-  //     const interval = setInterval(() => {
-  //         setItems(prevItems => {
-  //             const nextIndex = prevItems.length;
-  //             if (nextIndex < data.length) {
-  //                 return [...prevItems, data[nextIndex]];
-  //             } else {
-  //                 clearInterval(interval);
-  //                 return prevItems;
-  //             }
-  //         });
-  //     }, 1000);
-
-  //     return () => clearInterval(interval); // Cleanup on unmount
-  // }, [data]);
-
-  // useEffect(() => {
-  //   const token = localStorage.getItem("token");
-  //   if (token) {
-  //     const decoded = jwtDecode(token);
-  //     if (decoded.Role === "Operator") {
-  //       setToolbar([
-  //         "Add",
-  //         "Edit",
-  //         "Delete",
-  //         "Update",
-  //         "Cancel",
-  //         "ExcelExport",
-  //         "CsvExport",
-  //       ]);
-  //       setServices([Sort, Toolbar, ExcelExport, Filter, Edit]);
-  //     } else {
-  //       setToolbar(["ExcelExport", "CsvExport"]);
-  //       setServices([Sort, Toolbar, ExcelExport, Filter]);
-  //     }
-  //   }
-  // }, []);
-
   const getScanData = async () => {
     try {
       const token = localStorage.getItem('token');
