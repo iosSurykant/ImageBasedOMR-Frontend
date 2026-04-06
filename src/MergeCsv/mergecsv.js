@@ -1,87 +1,118 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
-import { TextField, Box, Button, Paper, Chip, Typography } from "@mui/material";
-import axios from "axios";
+import {
+  TextField,
+  Box,
+  Button,
+  Paper,
+  Chip,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { toast } from "react-toastify";
+import { fetchCsvHeader, mergerCsv } from "helper/ResultGenerationHelper";
 
 const MergeCsvComponent = () => {
   const [csv1, setCsv1] = useState(null);
   const [csv2, setCsv2] = useState(null);
+
   const [headers1, setHeaders1] = useState([]);
   const [headers2, setHeaders2] = useState([]);
+
   const [key1, setKey1] = useState(null);
   const [key2, setKey2] = useState(null);
+
   const [ignoreColumns, setIgnoreColumns] = useState([]);
   const [filterKey, setFilterKey] = useState("");
-  const [resultBlob, setResultBlob] = useState(null);
-  const [tableHeaders, setTableHeaders] = useState([]);
-  const [tableData, setTableData] = useState([]);
+
   const [loading, setLoading] = useState(false);
+  const [loading1, setLoading1] = useState(false);
+  const [loading2, setLoading2] = useState(false);
 
   const navigate = useNavigate();
 
-  // parse CSV headers
-  const parseCsvHeaders = (file, setHeaders) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target.result;
-      const [headerLine] = text.split("\n");
-      const headers = headerLine.split(",").map((h) => h.trim());
-      setHeaders(headers);
-    };
-    reader.readAsText(file);
+  // ✅ Fetch Headers CSV1
+  const handleCsvOneHeaders = async (file) => {
+    try {
+      setLoading1(true);
+      const res = await fetchCsvHeader(file);
+      setHeaders1(res || []);
+      setKey1(null);
+    } catch {
+      toast.error("Failed to load CSV1 headers");
+    } finally {
+      setLoading1(false);
+    }
   };
 
-  const handleCsv1Upload = (file) => {
-    setCsv1(file);
-    parseCsvHeaders(file, setHeaders1);
-    setKey1(null);
+  // ✅ Fetch Headers CSV2
+  const handleCsvTwoHeaders = async (file) => {
+    try {
+      setLoading2(true);
+      const res = await fetchCsvHeader(file);
+      setHeaders2(res || []);
+      setKey2(null);
+    } catch {
+      toast.error("Failed to load CSV2 headers");
+    } finally {
+      setLoading2(false);
+    }
   };
 
-  const handleCsv2Upload = (file) => {
-    setCsv2(file);
-    parseCsvHeaders(file, setHeaders2);
-    setKey2(null);
-  };
+  // ✅ Check if keys match
+const isKeyValid = key1 && key2 && key1 === key2;
 
+  // ✅ Process Merge
   const handleProcess = async () => {
-    if (!csv1 || !csv2) return toast.error("Please upload both CSVs");
-    if (!key1 || !key2) return toast.error("Please select keys for both CSVs");
+    if (!csv1 || !csv2) return toast.error("Upload both CSV files");
+
+    if (!key1 || !key2) return toast.error("Select both keys");
 
     try {
       setLoading(true);
+
+  if (!isKeyValid)
+     return toast.error("Keys must match!");
 
       const formData = new FormData();
       formData.append("CSV1", csv1);
       formData.append("CSV2", csv2);
       formData.append("CommonKey", key1);
-      formData.append("ignoreColumns", ignoreColumns.join(","));
-      formData.append("Filer_key", filterKey);
+      formData.append("ignoreColumns", ignoreColumns.join(",") || null);
+      formData.append("Filer_key", filterKey || null);
 
-      const response = await axios.post("/api/merge-csv", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await mergerCsv(formData);
 
-      toast.success("CSV merged successfully");
+      console.log("RAW RESPONSE:", response);
 
-      const blob = new Blob([response.data], { type: "text/csv" });
-      setResultBlob(blob);
+      // Convert Blob → Text
+      const text = await response.text();
 
-      const text = await blob.text();
-      const rows = text.split("\n").map((row) => row.split(","));
-      const headers = rows[0];
-      const data = rows.slice(1).map((row) => {
-        const obj = {};
-        headers.forEach((h, i) => (obj[h.trim()] = row[i]));
-        return obj;
-      });
+      // Convert Text → JSON
+      const finalData = JSON.parse(text);
 
-      setTableHeaders(headers);
-      setTableData(data);
+      console.log("FINAL DATA:", finalData);
+
+      // Validate
+      if (!Array.isArray(finalData)) {
+        toast.error("Invalid data format");
+        return;
+      }
+
+      // ✅ Extract headers
+      const headers = Object.keys(finalData[0] || {});
+      const tableData = finalData;
+
+      console.log(headers);
+      console.log(tableData);
 
       navigate("/admin/result-table", {
-        state: { tableHeaders: headers, tableData: data, resultBlob: blob },
+        state: {
+          tableHeaders: headers,
+          tableData: tableData,
+          resultBlob: response
+        },
       });
     } catch (err) {
       console.error(err);
@@ -90,6 +121,8 @@ const MergeCsvComponent = () => {
       setLoading(false);
     }
   };
+
+  const allHeaders = [...new Set([...headers1, ...headers2])];
 
   return (
     <Box
@@ -103,6 +136,7 @@ const MergeCsvComponent = () => {
       }}
     >
       <Paper
+        elevation={6}
         sx={{
           width: "100%",
           maxWidth: 900,
@@ -112,82 +146,106 @@ const MergeCsvComponent = () => {
           flexDirection: "column",
           gap: 3,
         }}
-        elevation={6}
       >
-        <Typography variant="h4" align="center" sx={{ fontWeight: 700 }}>
-          Merge CSV Files
+        <Typography variant="h4" align="center" fontWeight={700}>
+          Merge CSV Files 
         </Typography>
 
-        {/* CSV Uploads */}
+        {/* Upload Section */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <Button
-            variant="outlined"
             component="label"
-            sx={{ flex: 1, height: 56, borderRadius: 2 }}
+            variant="outlined"
+            fullWidth
+            color={csv1 ? "success" : "primary"}
           >
             {csv1 ? csv1.name : "Upload CSV 1"}
             <input
+              hidden
               type="file"
               accept=".csv"
-              hidden
-              onChange={(e) => handleCsv1Upload(e.target.files[0])}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setCsv1(file);
+                handleCsvOneHeaders(file);
+              }}
             />
           </Button>
 
           <Button
-            variant="outlined"
             component="label"
-            sx={{ flex: 1, height: 56, borderRadius: 2 }}
+            variant="outlined"
+            fullWidth
+            color={csv2 ? "success" : "primary"}
           >
             {csv2 ? csv2.name : "Upload CSV 2"}
             <input
+              hidden
               type="file"
               accept=".csv"
-              hidden
-              onChange={(e) => handleCsv2Upload(e.target.files[0])}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setCsv2(file);
+                handleCsvTwoHeaders(file);
+              }}
             />
           </Button>
         </Box>
+
+        {/* Header Loading */}
+        {(loading1 || loading2) && (
+          <Box textAlign="center">
+            <CircularProgress size={24} />
+            <Typography variant="body2">Extracting headers...</Typography>
+          </Box>
+        )}
 
         {/* Key Selection */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <Autocomplete
-            sx={{ flex: 1 }}
+            fullWidth
             options={headers1}
             value={key1}
-            onChange={(event, newValue) => setKey1(newValue)}
-            renderInput={(params) => <TextField {...params} label="Key for CSV 1" />}
+            disabled={!headers1.length}
+            onChange={(e, v) => setKey1(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Key CSV 1" />
+            )}
           />
+
           <Autocomplete
-            sx={{ flex: 1 }}
+            fullWidth
             options={headers2}
             value={key2}
-            onChange={(event, newValue) => setKey2(newValue)}
-            renderInput={(params) => <TextField {...params} label="Key for CSV 2" />}
+            disabled={!headers2.length}
+            onChange={(e, v) => setKey2(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Key CSV 2" />
+            )}
           />
         </Box>
 
-        {/* Ignore Columns + Filter Key */}
+        {/* Ignore + Filter */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <Autocomplete
             multiple
-            sx={{ flex: 1 }}
-            options={[...headers1, ...headers2]}
+            fullWidth
+            options={allHeaders}
             value={ignoreColumns}
-            onChange={(event, newValue) => setIgnoreColumns(newValue)}
+            onChange={(e, v) => setIgnoreColumns(v)}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
                 <Chip label={option} {...getTagProps({ index })} key={option} />
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Ignore Columns" placeholder="Select columns" />
+              <TextField {...params} label="Ignore Columns" />
             )}
           />
+
           <TextField
-            sx={{ flex: 1 }}
+            fullWidth
             label="Filter Key"
-            variant="outlined"
             value={filterKey}
             onChange={(e) => setFilterKey(e.target.value)}
           />
@@ -196,13 +254,11 @@ const MergeCsvComponent = () => {
         {/* Process Button */}
         <Button
           variant="contained"
-          color="primary"
           size="large"
-          sx={{ borderRadius: 3, textTransform: "none", fontWeight: 600 }}
           onClick={handleProcess}
           disabled={loading}
         >
-          {loading ? "Processing..." : "Process Merge"}
+          {loading ? "Processing..." : "Merge CSV"}
         </Button>
       </Paper>
     </Box>

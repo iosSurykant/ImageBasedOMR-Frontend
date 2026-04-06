@@ -52,6 +52,7 @@ const initializeUrls = async () => {
    ACCURACY_RATE : `${baseUrl}api/showRecord/Dash_Avrage`,
    GETCSVHEADER : `${baseUrl}api/OmrProcessing/GetCSVHeader`,
    GENERATE_RESULT : `${baseUrl}api/AmityDemand/GenerateResultExcel`,
+   MERGECSV : `${baseUrl}api/AmityDemand/MargeCSV`,
     MAIN_URL: baseUrl,
   };
 };

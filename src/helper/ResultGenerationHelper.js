@@ -38,3 +38,12 @@ export const generateResult = async (formData) => {
 //     responseType: "blob",
 //   });
 // };
+
+
+export const mergerCsv = async (formData) => {
+  const urls = await url.getUrls();
+
+  return post(urls.MERGECSV, formData, {
+    responseType: "blob",
+  })
+}
