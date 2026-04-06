@@ -163,7 +163,7 @@ const Assignee = () => {
               <h3 className="fw-bold text-dark">Assign Tasks</h3>
 
               <div className="d-flex gap-2 mt-3 mt-md-0">
-                <span className="badge bg-primary fs-6 px-3 py-2">
+                <span className="badge mx-3 bg-primary text-white fs-6 px-3 py-2">
                   Remaining - {state && location.state.data - taskValue.min + 1}
                 </span>
                 <span className="badge bg-success fs-6 px-3 py-2">

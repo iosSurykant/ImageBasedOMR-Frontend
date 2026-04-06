@@ -210,11 +210,6 @@ const ImageScanner = () => {
     const response = await API_NODE.post(
       `${window.SERVER_IP}/get/duplicate/data`,
       obj,
-      {
-        headers: {
-          token: token,
-        },
-      }
     );
 
     console.log(response.data.data);

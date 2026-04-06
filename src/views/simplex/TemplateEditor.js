@@ -1767,8 +1767,8 @@ const TemplateEditor = () => {
           bounds="window"
           enableResizing={false}
           dragHandleClassName="drag-handle"
-          style={{ position: "absolute" }}
-          className="z-[100] bg-white shadow-lg rounded-lg border"
+          style={{ position: "absolute", zIndex:1500 }}
+          className="z-[100] bg-white shadow-lg rounded-lg border "
         >
           <div className="flex flex-col w-full" style={{ cursor: "move" }}>
             <div className="bg-primary text-white px-3 py-2 rounded-top d-flex align-items-center justify-content-between drag-handle">

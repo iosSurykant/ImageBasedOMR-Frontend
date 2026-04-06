@@ -9,12 +9,12 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   console.log("RAW HEADERS:", tableHeaders);
   console.log("RAW DATA:", tableData);
 
-  // ✅ 1. Clean Headers
+  // 1. Clean Headers
   const cleanHeaders = tableHeaders.map((h) =>
-    h?.toString().replace(/"/g, "").replace(/\r/g, "").trim()
+    h?.toString().replace(/"/g, "").replace(/\r/g, "").trim(),
   );
 
-  // ✅ 2. Clean Data
+  // 2. Clean Data
   const cleanData = tableData.map((row) => {
     const newRow = {};
 
@@ -27,10 +27,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
 
       let cleanValue = value;
       if (typeof cleanValue === "string") {
-        cleanValue = cleanValue
-          .replace(/"/g, "")
-          .replace(/\r/g, "")
-          .trim();
+        cleanValue = cleanValue.replace(/"/g, "").replace(/\r/g, "").trim();
       }
 
       newRow[cleanKey] = cleanValue;
@@ -59,7 +56,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
         val !== undefined &&
         val.toString().toLowerCase().includes(search.toLowerCase())
       );
-    })
+    }),
   );
 
   // ✅ 5. Download Clean CSV
@@ -69,7 +66,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
     const csvHeaders = cleanHeaders.join(",");
 
     const csvRows = cleanData.map((row) =>
-      cleanHeaders.map((h) => row[h] ?? "").join(",")
+      cleanHeaders.map((h) => row[h] ?? "").join(","),
     );
 
     const csvContent = [csvHeaders, ...csvRows].join("\n");
@@ -90,9 +87,9 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
 
   return (
     <div className="container-fluid mt-4">
-      {/* 🔥 HEADER */}
+      {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="fw-bold">📊 Result Table</h5>
+        <h5 className="fw-bold">Result Table</h5>
 
         <input
           type="text"
@@ -103,7 +100,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
         />
       </div>
 
-      {/* 🔥 TABLE CARD */}
+      {/* TABLE CARD */}
       <div
         className="card shadow-sm border-0 rounded-4"
         style={{ overflow: "hidden" }}

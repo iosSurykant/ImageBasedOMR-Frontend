@@ -43,7 +43,7 @@ const AssigningTask = ({
       <h3 className="fw-bold mb-0">Assign Tasks</h3>
 
       <div className="card border-0 shadow-sm p-3">
-        <div className="d-flex flex-wrap align-items-center gap-3">
+        <div className="d-flex flex-wrap align-items-end">
 
           {/* Task Name */}
           <div>
@@ -59,7 +59,7 @@ const AssigningTask = ({
           </div>
 
           {/* Remaining Data */}
-          <span className="badge bg-primary fs-6 px-3 py-2">
+          <span className="badge bg-primary text-white fs-6 px-3 mx-3 py-2">
             Remaining:{" "}
             {remaingData - taskValue.max > 0
               ? remaingData - taskValue.max - taskValue.min + 1

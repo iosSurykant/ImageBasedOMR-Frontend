@@ -3,30 +3,18 @@ import Profile from "views/examples/Profile.js";
 import UserManagment from "views/UserManagment";
 import Template from "views/Template";
 import FolderStructure from "views/FolderStructure";
-// import TaskAssign from "components/WebData/TaskAssign";
-// import UserTasks from "components/WebData/UserTasks";
 import ImageUpload from "WebData/pages/ImageUploader/ImageUploader";
 import ScanPage from "views/ScanPage";
 import ImageScanner from "WebData/pages/ImageScanner/ImageScanner";
-// import ImageScanner from "WebData/pages/ImageScanner/ImageScanner";
 import CsvUploader from "WebData/pages/CsvUploader/CsvUploader";
-// import DataMatching from "WebData/pages/DataMatching/DataMatching";
-// import UserTaskAssined from "WebData/pages/DataMatching/UserTaskAssined";
-
-// import { IoMdCreate } from "react-icons/io";
-// import { PiFileCsvLight } from "react-icons/pi";
 import CsvHomepage from "WebData/pages/CSV Comparer/CsvHomepage";
 import MergeDuplicateDetect from "WebData/pages/MergeDuplicateDetect/MergeDuplicateDetect";
 import FieldDecision from "WebData/pages/FieldDecision/FieldDecision";
 import TemplateMapping from "WebData/pages/TemplateMapping/TemplateMapping";
 import UserCorrectionData from "WebData/pages/CSV Comparer/UserCorrectionData";
 import Assignee from "WebData/pages/CSV Comparer/Assignee";
-import UserTaskAssined from "WebData/pages/DataMatching/UserTaskAssined";
-import DataMatching from "WebData/pages/DataMatching/DataMatching";
 import ResultGeneration from "ResultGeneration/ResultGeneration";
 import Mergecsv from "MergeCsv/mergecsv";
-import ResultTable from "ResultGeneration/ResultTable";
-
 
 const role = JSON.parse(localStorage.getItem("userData"))?.role;
 console.log(role);
@@ -39,14 +27,6 @@ var routes = [
     component: <Index />,
     layout: "/admin",
   },
-  // {
-  //   path: "/jobs",
-  //   name: "Job Management",
-  //   icon: "ni ni-briefcase-24 text-yellow",
-  //   component: <Jobs />,
-  //   layout: "/admin",
-  // },
-
   {
     path: "/template",
     name: "Template Manager",
@@ -80,21 +60,14 @@ var routes = [
   {
     path: "/result-generation",
     name: "Result Generation",
-    icon: "ni ni-settings-gear-65 text-primary",
+    icon: "ni ni-paper-diploma text-danger",
     component: <ResultGeneration />,
     layout: "/admin",
   },
-  // {
-  //   path: "/result-table",
-  //   name: "Result Table",
-  //   icon: "ni ni-settings-gear-65 text-primary",
-  //   component: <ResultTable />,
-  //   layout: "/admin",
-  // },
   {
     path: "/mergecsv",
     name: "Merge CSV",
-    icon: "ni ni-settings-gear-65 text-primary",
+    icon: "ni ni-archive-2 text-primary",
     component: <Mergecsv />,
     layout: "/admin",
   },
@@ -180,8 +153,6 @@ var routes = [
       },
       {
         path: "comparecsv/assign_operator/:id",
-        // name: "Field Decision",
-        // icon: "ni ni-briefcase-24 text-primary",
         component: <Assignee />,
         layout: "/admin",
         showInSidebar: false,
@@ -189,29 +160,6 @@ var routes = [
     ],
   },
 
-  // {
-  //   path: "/application-ip",
-  //   name: "App Management",
-  //   icon: "ni ni-bullet-list-67 text-red",
-  //   component: <AppManagement />,
-  //   layout: "/admin",
-  // },
-
-  // {
-  //   path: "/maps",
-  //   name: "Maps",
-  //   icon: "ni ni-pin-3 text-orange",
-  //   component: <Maps />,
-  //   layout: "/admin",
-  // },
-
-  // {
-  //   path: "/user-profile",
-  //   name: "About",
-  //   icon: "ni ni-support-16 text-black",
-  //   component: <About />,
-  //   layout: "/admin",
-  // },
   {
     path: "/user-profile",
     name: "Profile",
@@ -220,26 +168,5 @@ var routes = [
     layout: "/admin",
     showInSidebar: false,
   },
-  // {
-  //   path: "/tables",
-  //   name: "Tables",
-  //   icon: "ni ni-bullet-list-67 text-red",
-  //   component: <Tables />,
-  //   layout: "/admin",
-  // },
-  // {
-  //   path: "/login",
-  //   name: "Login",
-  //   icon: "ni ni-key-25 text-info",
-  //   component: <Login />,
-  //   layout: "/auth",
-  // },
-  // {
-  //   path: "/register",
-  //   name: "Register",
-  //   icon: "ni ni-circle-08 text-pink",
-  //   component: <Register />,
-  //   layout: "/auth",
-  // },
 ];
 export default routes;

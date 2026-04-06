@@ -22,7 +22,6 @@ const FormData = forwardRef(
     ref,
   ) => {
     const [customInput, setCustomInput] = useState("");
-   
 
     useEffect(() => {
       if (isNewBox) {
@@ -36,8 +35,8 @@ const FormData = forwardRef(
       }
     }, [currentBoxData]);
 
-    console.log(currentBoxData?.Custom)
-    console.log(customInput)
+    console.log(currentBoxData?.Custom);
+    console.log(customInput);
 
     const QUESTION_NAME_REGEX = /^([qQ])(\d+)-([qQ])(\d+)$/;
 
@@ -60,6 +59,18 @@ const FormData = forwardRef(
         gap: end - start + 1,
       };
     }
+
+    const handleCustomBlur = () => {
+  const parsedArray = customInput
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  setCurrentBoxData((prev) => ({
+    ...prev,
+    Custom: parsedArray,
+  }));
+};
 
     const onSubmitHandler = (e) => {
       e.preventDefault();
@@ -255,7 +266,7 @@ const FormData = forwardRef(
 
             .shake {
               border: 2px solid red !important;
-               box-shadow: 0 0 5px red !important; 
+              box-shadow: 0 0 5px red !important;
               animation: shake 0.3s ease;
             }
           `}
@@ -491,19 +502,23 @@ const FormData = forwardRef(
                 <Form.Control
                   as="input"
                   value={customInput}
+                  // onChange={(e) => {
+                  //   const inputValue = e.target.value;
+                  //   setCustomInput(inputValue); // allow free typing
+
+                  //   const parsedArray = inputValue
+                  //     .split(",")
+                  //     .map((item) => item.trim())
+                  //     .filter((item) => item.length > 0);
+
+                  //   setCurrentBoxData((prev) => ({
+                  //     ...prev,
+                  //     Custom: parsedArray,
+                  //   }));
+                  // }}
+                  onBlur={handleCustomBlur}
                   onChange={(e) => {
-                    const inputValue = e.target.value;
-                    setCustomInput(inputValue); // allow free typing
-
-                    const parsedArray = inputValue
-                      .split(",")
-                      .map((item) => item.trim())
-                      .filter((item) => item.length > 0);
-
-                    setCurrentBoxData((prev) => ({
-                      ...prev,
-                      Custom: parsedArray,
-                    }));
+                    setCustomInput(e.target.value);
                   }}
                 ></Form.Control>
               </Form.Group>
@@ -541,7 +556,8 @@ const FormData = forwardRef(
           <Col md={6}>
             <Form.Group controlId="intensity">
               <Form.Label>
-                Intensity: <strong>{currentBoxData?.bubbleIntensity ?? 14.5}</strong>
+                Intensity:{" "}
+                <strong>{currentBoxData?.bubbleIntensity ?? 14.5}</strong>
               </Form.Label>
               <Form.Control
                 className="bubble-range"
@@ -620,7 +636,7 @@ const FormData = forwardRef(
                       i === activeBox ? { ...b, best_bubble: newValue } : b,
                     ),
                   );
-                  console.log(currentBoxData?.best_bubble)
+                  console.log(currentBoxData?.best_bubble);
                 }}
                 style={{
                   cursor: "pointer",

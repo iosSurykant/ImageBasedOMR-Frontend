@@ -156,8 +156,8 @@ const AdminCompareTasks = ({
     ))}
 
     {compareTask?.length === 0 && (
-      <div className="text-center text-muted py-3">
-        No tasks available
+      <div className="text-center text-muted">
+        {/* No tasks available */}
       </div>
     )}
 
