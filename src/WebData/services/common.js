@@ -140,16 +140,12 @@ export const fetchHeadersInDuplicate = async (templateId) => {
 };
 
 export const checkMappedDataExits = async (templateId) => {
-  const token = JSON.parse(localStorage.getItem("userData"));
+  // const token = JSON.parse(localStorage.getItem("userData"));
   // http://localhost:4000/getcsvheaders?templateId=1
   try {
-    const response = await axios.get(
+    const response = await API_NODE.get(
       `${window.SERVER_IP}/checkmappeddataexits?templateId=${templateId}`,
-      {
-        headers: {
-          token: token,
-        },
-      }
+
     );
     return response.data;
   } catch (error) {
@@ -163,7 +159,7 @@ export const submitMappedData = async (mappedData) => {
   // http://localhost:4000/getcsvheaders?templateId=1
   
   try {
-    const templateId = await JSON.parse(localStorage.getItem("templeteId"));
+    // const templateId = await JSON.parse(localStorage.getItem("templeteId"));
     const response = await API_NODE.post(
       `${window.SERVER_IP}/data`,
       mappedData,

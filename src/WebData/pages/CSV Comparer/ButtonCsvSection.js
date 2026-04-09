@@ -10,7 +10,7 @@ const ButtonCsvSection = ({
   imageUrls,
 }) => {
   return (
-    <div className="bg-white shadow-sm rounded-4 px-4 py-3 d-flex flex-wrap align-items-center justify-content-between">
+    <div className="bg-white rounded-4 px-4 d-flex flex-wrap  justify-content-between">
 
       {/* LEFT */}
       <div className="d-flex flex-column">
@@ -21,7 +21,7 @@ const ButtonCsvSection = ({
       </div>
 
       {/* CENTER CONTROLS */}
-      <div className="d-flex align-items-center gap-2 bg-light rounded-pill px-3 py-2">
+      <div className="d-flex ml-3  align-items-center gap-2 bg-light rounded-pill px-3 py-2">
 
         <button
           onClick={zoomOutHandler}

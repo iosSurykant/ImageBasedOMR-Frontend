@@ -12,7 +12,7 @@ const ButtonSection = ({
   return (
     <div className="d-flex justify-content-between align-items-center">
 
-      <h3 className="ms-3 fs-5 fw-semibold py-2 text-white">
+      <h3 className="ms-3 fs-5 fw-semibold py-2">
         Data No : {currentIndex} out of {csvData.length - 1}
       </h3>
 
@@ -39,7 +39,7 @@ const ButtonSection = ({
         </button>
       </div>
 
-      <h3 className="fs-5 fw-semibold py-2 text-white">
+      <h3 className="fs-5 fw-semibold py-2">
         Image : {currentImageIndex + 1} Out of {imageUrls.length}
       </h3>
 

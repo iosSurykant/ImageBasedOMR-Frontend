@@ -1,21 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchTemplateFormData } from "../../services/common";
-
-const CSVFormDataSection = ({
-  formCsvData,
-  // correctionData,
-  // csvData,
-  // headerData,
-  // templateHeaders,
-  // imageColName,
-  // currentFocusIndex,
-  // inputRefs,
-  // handleKeyDownJump,
-  // changeCurrentCsvDataHandler,
-  // imageFocusHandler,
-  // templeteId,
-  // filterResults,
-}) => {
+const CSVFormDataSection = ({ formCsvData }) => {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
@@ -24,51 +8,70 @@ const CSVFormDataSection = ({
     }
   }, [formCsvData]);
 
-  const AllFormData = Object.entries(formCsvData).map(([key, value], i) => {
+  const AllFormData = Object.entries(formData || {}).map(([key, value], i) => {
     return (
       <div
         key={i}
-        className="w-100 px-3 px-lg-0 py-1 d-flex flex-column align-items-center fw-bold"
+        className="d-flex justify-content-between align-items-center px-3 py-2 rounded-2"
+        style={{
+          borderBottom: "1px solid #f1f3f5",
+        }}
       >
-        <label className="w-100 rounded py-2 shadow-sm text-center">
-          <span className="small text-light fw-bold d-flex justify-content-center">
-            {key?.toUpperCase()}
-          </span>
-        </label>
+        {/* Key */}
+        <span className="text-muted small fw-semibold">
+          {key?.toUpperCase()}
+        </span>
 
-        <input
-          type="text"
-          className={`form-control text-center mt-1 ${
-            formCsvData[key] &&
-            typeof formCsvData[key] === "string" &&
-            formCsvData[key].includes(" ")
-              ? "bg-danger text-white"
-              : ""
-          }`}
-          style={{ maxWidth: "180px" }}
-          value={formCsvData[key] || ""}
-        />
+        {/* Value */}
+        <span
+          className="text-dark small fw-semibold text-end"
+          style={{
+            maxWidth: "120px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={value || ""}
+        >
+          {value || "-"}
+        </span>
       </div>
     );
   });
 
   return (
-    <div className="border-end order-lg-1" style={{ width: "240px" }}>
-      <div className="overflow-hidden">
-        <article
-          style={{
-            scrollbarWidth: "thin",
-            height: "80vh",
-            width: "95%",
-          }}
-          className="py-4 mt-4 mt-lg-5 shadow mx-auto overflow-auto rounded d-flex flex-row flex-lg-column align-items-lg-center bg-primary"
-        >
-          {formData && AllFormData}
-        </article>
+    <div
+      className="h-100 d-flex flex-column"
+      style={{
+        width: "260px",
+        borderRight: "1px solid #e9ecef",
+        background: "#ffffff",
+        overflowY: "hidden",
+        maxHeight: "700px",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-3 py-2 d-flex justify-content-between align-items-center"
+        style={{
+          borderBottom: "1px solid #eef1f4",
+          background: "#fafbfc",
+        }}
+      >
+        <span className="fw-semibold small">CSV Fields</span>
+        <span className="text-muted small">
+          {/* {Object.keys(formData || {}).length} */}Data
+        </span>
       </div>
-      {/* View image */}
+
+      {/* Data */}
+      <div
+        className="flex-grow-1 overflow-auto"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        {formData && AllFormData}
+      </div>
     </div>
   );
 };
-
 export default CSVFormDataSection;

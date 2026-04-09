@@ -52,18 +52,7 @@ const ModalWithLoadingBar = ({ isOpen, onClose, progress, message }) => {
                       </span>
                     </div>
                   </div>
-
                 </div>
-
-                {/* OPTIONAL FOOTER */}
-                {/* 
-                <div className="modal-footer border-0 justify-content-center">
-                  <button className="btn btn-outline-secondary btn-sm" onClick={onClose}>
-                    Close
-                  </button>
-                </div> 
-                */}
-
               </div>
             </div>
           </div>

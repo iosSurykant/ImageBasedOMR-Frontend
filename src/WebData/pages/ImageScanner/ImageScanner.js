@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import ImageNotFound from "../../components/ImageNotFound/ImageNotFound";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import dataContext from "../../../WebData/Store/DataContext";
 import RemoveTemplate from "./RemoveTemplate";
 import TemplateData from "./TemplateData";
@@ -37,12 +36,7 @@ const ImageScanner = () => {
   const dataCtx = useContext(dataContext);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedtemplate, setselectedtemplate] = useState("");
-  const [patternSelection, setpatternSelection] = useState({
-    pattern: "",
-    blank: "",
-    empty: "",
-  });
-  // const { startAutoScroll, stopAutoScroll } = useAutoScroll();
+
   const [templatePermissions, setTemplatePermissions] = useState({
     blankDefination: "",
     patternDefinition: "",
@@ -68,7 +62,6 @@ const ImageScanner = () => {
 
   const [settingModel, setsettingModel] = useState(false);
 
-  // const token = JSON.parse(localStorage.getItem("userData"));
   const token = localStorage.getItem("token");
   console.log(token);
 
@@ -78,8 +71,6 @@ const ImageScanner = () => {
   const imageRef = useRef(null);
   const navigate = useNavigate();
   const imageURL = JSON.parse(localStorage.getItem("images"));
-  const templateOption =
-    JSON.parse(localStorage.getItem("templateOption")) || "creating";
 
   console.log(templateId);
   // console.log(templatePermissions);
@@ -87,7 +78,7 @@ const ImageScanner = () => {
     if (imageURL && imageURL.length > 0) {
       setImage(imageURL[currentImageIndex]);
     }
-  }, [currentImageIndex]);
+  }, [currentImageIndex, imageURL]);
 
   useEffect(() => {
     const handlekeyDown = (e) => {
@@ -142,14 +133,7 @@ const ImageScanner = () => {
 
     updateScroll(e.clientY);
 
-    //   const container = imageRef.current.parentElement;
-    //   if (offsetY > container.clientHeight - 10) {
-    //     container.scrollBy({
-    //   top: 30,             // amount to scroll
-    //   left: 0,
-    //   behavior: "smooth",  // enables smooth scrolling
-    // });
-    //   }
+
 
     setSelection({
       coordinateX: Math.min(dragStart.x, offsetX),
@@ -173,6 +157,35 @@ const ImageScanner = () => {
     setInputField("");
     setOpen(false);
   };
+  
+  // get templalte mapping data
+  useEffect(() => {
+  if (!dataCtx?.templateData) return;
+
+  let metaData = [];
+
+  // CASE 1: correct structure
+  if (dataCtx.templateData.metaData) {
+    metaData = dataCtx.templateData.metaData;
+  }
+  // CASE 2: direct array (your current case)
+  else if (Array.isArray(dataCtx.templateData)) {
+    metaData = dataCtx.templateData;
+  }
+
+  const formattedData = metaData.map((item) => ({
+    ...item,
+    fId: item.fId || item.id,
+    coordinateX: Number(item.coordinateX),
+    coordinateY: Number(item.coordinateY),
+    width: Number(item.width),
+    height: Number(item.height),
+    pageNo: Number(item.pageNo),
+    fieldLength: Number(item.fieldLength),
+  }));
+
+  setSelectedCoordinates(formattedData);
+}, [dataCtx?.templateData]);
 
   // Function to submit drag selection and name of options like -> Roll Number , or Subject
   const onSelectedHandler = () => {
@@ -318,27 +331,7 @@ const ImageScanner = () => {
     toast.success("Coordinate successfully added.");
   };
 
-  // const onRemoveSelectedHandler = async () => {
-  //   const newArray = selectedCoordinates.filter(
-  //     (data) => data.fId !== removeId.fId,
-  //   );
-  //   // console.log(removeId)
-  //   const response = await API_NODE.delete(
-  //     `${window.SERVER_IP}/delete/templatedata/${removeId.Id}`,
-  //     // {
-  //     //   headers: {
-  //     //     token: token,
-  //     //   },
-  //     // },
-  //   );
-  //   console.log(removeId);
-  //   console.log(response.data);
-  //   setSelectedCoordinates(newArray);
-  //   toast.success("Successfully deleted coordinate.");
-  //   setRemoveId("");
-  //   setRemoveModal(false);
-  //   setSelection(null);
-  // };
+
 const onRemoveSelectedHandler = async () => {
   if (!removeId || !removeId.fId) {
     toast.error("Invalid remove ID");
@@ -367,13 +360,6 @@ const onRemoveSelectedHandler = async () => {
   }
 };
 
-  console.log(removeId.fId)
-
-
-
- 
-
-  console.log(selectedCoordinates);
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -694,7 +680,7 @@ const onRemoveSelectedHandler = async () => {
       ) : (
         <div style={{ width: "75%" }}>
           <div className="container-fluid px-2 px-sm-3 px-lg-4">
-            <h1 className="text-center my-3 text-white fw-bold">
+            <h1 className="text-center my-3  fw-bold">
               {currentImageIndex + 1} out of {imageURL.length}
             </h1>
 
@@ -723,7 +709,7 @@ const onRemoveSelectedHandler = async () => {
 
                     <>
                       {selectedCoordinates
-                        .filter((data) => data.pageNo === currentImageIndex)
+                        .filter((data) => data.pageNo === currentImageIndex)  
                         .map((data, index) => (
                           <div
                             key={index}

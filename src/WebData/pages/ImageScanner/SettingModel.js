@@ -13,6 +13,7 @@ const SettingModel = ({
   selectedCoordinates,
 }) => {
   const [templateData, settemplateData] = useState();
+  
 
   useEffect(() => {
     const fetchTempData = async () => {

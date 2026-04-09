@@ -226,7 +226,7 @@ const ImageScanner = () => {
       if (response?.success) {
         navigate(`/admin/csvuploader/templatemap/${id}`);
       } else {
-        // toast.error("Cannot move to mapped page!!")
+        toast.error("Cannot move to mapped page!!")
       }
     } catch (error) {
       toast.error(error?.message);
@@ -239,10 +239,10 @@ const ImageScanner = () => {
       <Loader />
     ) : (
       <div
-        className="d-flex justify-content-center align-items-center w-100"
+        className="d-flex justify-content-center align-items-center w-100 px-8"
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(to right, #60a5fa, #2563eb)",
+          // background: "linear-gradient(to right, #60a5fa, #2563eb)",
         }}
       >
         {showDuplicates ? (

@@ -43,8 +43,6 @@ const CsvUploader = () => {
   const data = allTemplates?.find((item) => item.id === selectedId);
   localStorage.setItem("editModel", editModal);
 
-
-
   // Tab Button disabled
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -65,8 +63,6 @@ const CsvUploader = () => {
     const fetchTemplate = async () => {
       try {
         const response = await onGetTemplateHandler();
-        // const user = await onGetVerifiedUserHandler();
-        // setCurrentUser(user.user);
         const csvTemplates = response.filter(
           (data) => data.TempleteType === "Data Entry",
         );
@@ -83,9 +79,8 @@ const CsvUploader = () => {
     template.name.toLowerCase().includes(templateName.toLowerCase()),
   );
 
-  console.log(data)
-  console.log(templateName) 
-
+  console.log(filteredTemplates);
+  console.log(templateName);
 
   const onCsvFileHandler = (event) => {
     const fileInput = event.target.files[0];
@@ -225,7 +220,6 @@ const CsvUploader = () => {
 
       // navigate(`admin/csvuploader/duplicatedetector/${fileId.templeteId}`);
       navigate(`/admin/csvuploader/duplicatedetector/${fileId.templeteId}`);
-      
     } catch (error) {
       toast.error(error.message);
       console.log(error.message);
@@ -239,11 +233,6 @@ const CsvUploader = () => {
       const response = await API_NODE.post(
         `${window.SERVER_IP}/edit/template/${id}`,
         {},
-        // {
-        //   headers: {
-        //     token: token,
-        //   },
-        // },
       );
 
       if (response.data.imagePaths.length === 0) {
@@ -252,6 +241,7 @@ const CsvUploader = () => {
       }
       console.log(response.data);
       const data = response.data.template;
+
       const templateData = {
         templateData: {
           name: data.name,
@@ -264,6 +254,9 @@ const CsvUploader = () => {
         },
         metaData: [...data.templetedata],
       };
+
+      console.log(templateData);
+
       dataCtx.modifyTemplateData(templateData);
       localStorage.setItem("templateOption", JSON.stringify("updating"));
       localStorage.setItem("images", JSON.stringify(response.data.imagePaths));
@@ -277,15 +270,7 @@ const CsvUploader = () => {
 
   const onTemplateRemoveHandler = async (id) => {
     try {
-      await API_NODE.post(
-        `${window.SERVER_IP}/delete/template/${id}`,
-        {},
-        // {
-        //   headers: {
-        //     token: token,
-        //   },
-        // },
-      );
+      await API_NODE.post(`${window.SERVER_IP}/delete/template/${id}`, {});
       const filteredTemplates = allTemplates.filter((data) => data.id !== id);
       setAllTemplates(filteredTemplates);
       setRemoveModal(false);
@@ -431,14 +416,12 @@ const CsvUploader = () => {
         },
         header: true,
         skipEmptyLines: true,
-        
       });
     } catch (error) {
       console.error(error);
       toast.error("Error fetching CSV headers.");
     }
   };
-
 
   return (
     <div className="container-fluid">

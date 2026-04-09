@@ -19,7 +19,7 @@ const ButtonDataEntrySection = ({
   return (
   <div className="d-flex justify-content-between align-items-center w-100 px-3" style={{ height: "64px" }}>
     
-    <h3 className="ms-3 small fw-semibold  mb-0">
+    <h3 className="ms-3 small fw-semibold text-black  mb-0">
       Data No: {currentIndex} out of {totalErrors}
     </h3>
 

@@ -872,7 +872,7 @@ const DataMatching = () => {
  return (
   <>
     {(userRole === "operator" || userRole === "moderator") && (
-      <div className="container-fluid min-vh-100 py-4 bg-primary bg-gradient">
+      <div className="container-fluid min-vh-100 py-4">
         <div className="row g-3">
 
           {/* LEFT SECTION */}

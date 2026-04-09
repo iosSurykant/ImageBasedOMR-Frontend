@@ -151,16 +151,6 @@ export default function Navbar() {
     },
   ];
 
-  // {
-  //   name: "Logout",
-  //   onClick: () => {
-  //     localStorage.clear();
-  //     setUserData({});
-  //     datactx.modifyIslogin(false);
-  //     navigate("/");
-  //     setIsUserMenuOpen(false);
-  //   },
-  // },
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

@@ -1,4 +1,5 @@
 import { Button } from "@mui/material";
+import NormalHeader from "components/Headers/NormalHeader";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -39,7 +40,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   console.log("CLEAN HEADERS:", cleanHeaders);
   console.log("CLEAN DATA SAMPLE:", cleanData[0]);
 
-  // ✅ 3. Handle Empty Case
+  // 3. Handle Empty Case
   if (!cleanHeaders.length || !cleanData.length) {
     return (
       <div className="text-center mt-5 text-danger fw-semibold">
@@ -48,7 +49,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
     );
   }
 
-  // ✅ 4. Filter Logic
+  // 4. Filter Logic
   const filteredData = cleanData.filter((row) =>
     cleanHeaders.some((header) => {
       const val = row[header];
@@ -59,7 +60,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
     }),
   );
 
-  // ✅ 5. Download Clean CSV
+  // 5. Download Clean CSV
   const handleDownload = () => {
     if (!cleanData.length) return;
 
@@ -86,77 +87,80 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   };
 
   return (
-    <div className="container-fluid mt-4">
-      {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="fw-bold">Result Table</h5>
+    <div className="bg-white">
+      <NormalHeader />
+      <div className="container-fluid mt-4  w-75 border p-5 rounded">
+        {/* HEADER */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="fw-bold">Result Table</h5>
 
-        <input
-          type="text"
-          className="form-control w-25"
-          placeholder="Search anything..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+          <input
+            type="text"
+            className="form-control w-25"
+            placeholder="Search anything..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-      {/* TABLE CARD */}
-      <div
-        className="card shadow-sm border-0 rounded-4"
-        style={{ overflow: "hidden" }}
-      >
+        {/* TABLE CARD */}
         <div
-          className="table-responsive"
-          style={{ maxHeight: "500px", overflowY: "auto" }}
+          className="card shadow-sm border-0 rounded-4"
+          style={{ overflow: "hidden" }}
         >
-          <table className="table table-hover align-middle mb-0">
-            {/* HEADER */}
-            <thead
-              className="table-dark"
-              style={{
-                position: "sticky",
-                top: 0,
-                zIndex: 2,
-              }}
-            >
-              <tr>
-                {cleanHeaders.map((header, index) => (
-                  <th key={index} className="text-nowrap">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* BODY */}
-            <tbody>
-              {filteredData.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {cleanHeaders.map((header, colIndex) => (
-                    <td key={colIndex}>
-                      {row[header] !== undefined && row[header] !== null
-                        ? row[header]
-                        : "-"}
-                    </td>
+          <div
+            className="table-responsive"
+            style={{ maxHeight: "500px", overflowY: "auto" }}
+          >
+            <table className="table table-hover align-middle mb-0">
+              {/* HEADER */}
+              <thead
+                className="table-dark"
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 2,
+                }}
+              >
+                <tr>
+                  {cleanHeaders.map((header, index) => (
+                    <th key={index} className="text-nowrap">
+                      {header}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
 
-        {/* FOOTER */}
-        <div className="p-2 text-end small text-muted">
-          Showing {filteredData.length} of {cleanData.length} records
-        </div>
+              {/* BODY */}
+              <tbody>
+                {filteredData.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {cleanHeaders.map((header, colIndex) => (
+                      <td key={colIndex}>
+                        {row[header] !== undefined && row[header] !== null
+                          ? row[header]
+                          : "-"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        <div className="p-2 d-flex gap-2 justify-content-end">
-          <Button variant="contained" onClick={handleDownload}>
-            Download
-          </Button>
-          <Button variant="outlined" onClick={handleOkay}>
-            Submit
-          </Button>
+          {/* FOOTER */}
+          <div className="p-2 text-end small text-muted">
+            Showing {filteredData.length} of {cleanData.length} records
+          </div>
+
+          <div className="p-2 d-flex gap-2 justify-content-end">
+            <Button variant="contained" onClick={handleDownload}>
+              Download
+            </Button>
+            <Button variant="outlined" onClick={handleOkay}>
+              Submit
+            </Button>
+          </div>
         </div>
       </div>
     </div>

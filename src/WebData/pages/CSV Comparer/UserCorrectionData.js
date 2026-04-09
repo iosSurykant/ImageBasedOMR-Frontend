@@ -520,14 +520,14 @@ const imageFocusHandler = async (headerName) => {
  return (
   <>
     {!popUp && (
-      <div className="container-fluid py-4 dataEntry bg-light min-vh-100">
+      <div className="container-fluid p-5 dataEntry  min-vh-100 d-flex justify-content-center">
 
         <div className="row g-4">
 
           {/* LEFT SECTION */}
           {formData && (
-            <div className="col-lg-3 d-flex justify-content-center">
-              <div className="card shadow-sm border-0 rounded-4 h-100">
+            <div className="col-lg-3 ">
+              <div className="card shadow-sm border-0 rounded-4">
                 <div className="card-header bg-white fw-bold fs-5 border-0">
                   CSV Data
                 </div>
@@ -544,14 +544,14 @@ const imageFocusHandler = async (headerName) => {
             <div className="card shadow-sm border-0 rounded-4">
 
               {/* HEADER */}
-              <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+              <div className="card-header bg-white border-0 d-flex justify-content-between align-items-start">
                 <h4 className="fw-bold mb-0">Image Matching Panel</h4>
 
                 <div>
                   {Number(task.max) === currIndex && (
                     <button
                       onClick={onTaskCompleteHandler}
-                      className="btn btn-success rounded-pill px-4 me-2"
+                      className="btn btn-success rounded-pill px-4"
                     >
                       Submit Task
                     </button>
@@ -583,7 +583,7 @@ const imageFocusHandler = async (headerName) => {
                   <>
                     {/* TOP CONTROL BAR */}
                     <div className="mb-4">
-                      <div className="card border-0 bg-light rounded-3 p-3">
+                      <div className="card border-0 rounded-3 p-3">
                         <ButtonCsvSection
                           currentIndex={currIndex}
                           csvData={csvData}

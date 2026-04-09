@@ -10,9 +10,7 @@ const ResultTablePage = () => {
   const resultBlob = location.state?.resultBlob || [];
 
   return (
-    <div className="container mt-4">
-      <h4 className="mb-3">Result Table</h4>
-
+    <div style={{ maxHeight:"60%"}}>
       <ResultTable
         tableHeaders={tableHeaders}
         tableData={tableData}

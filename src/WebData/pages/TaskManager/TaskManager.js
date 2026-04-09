@@ -27,32 +27,6 @@ const TemplateMapping = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { fileId } = JSON.parse(localStorage.getItem("fileId")) || "";
-  // const token = JSON.parse(localStorage.getItem("userData"));
-
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     try {
-  //       const response = await onGetAllUsersHandler();
-  //       setAllUsers(response.users);
-  //     } catch (error) {
-  //       console.error("Error fetching users:", error);
-  //     }
-  //   };
-
-  //   fetchUsers();
-  // }, [selectedUser]);
-
-    // const fetchUsers = useCallback(async () => {
-    //   try {
-    //     setLoading(true);
-    //     const data = await fetchAllUsers();
-    //     setAllUsers(data?.result || []);
-    //   } catch (error) {
-    //     toast.error("Something went wrong");
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -68,6 +42,8 @@ const TemplateMapping = () => {
 
 
   console.log(allUsers)
+  console.log()
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -141,7 +117,7 @@ const TemplateMapping = () => {
       newMinValue = taskValue.min;
     }
 
-    if (taskValue.max == totalData) {
+    if (taskValue.max === totalData) {
       setShowModal(true);
     }
     setTaskValue({ ...taskValue, min: newMinValue, max: "" });

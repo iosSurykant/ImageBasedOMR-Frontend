@@ -34,7 +34,7 @@ const UploadSection = ({
 
   localStorage.setItem("templeteId", selectedId);
 
-  const changeHandler = (index) => {};
+
   return (
     <div className="container-fluid py-4">
       <div className="row justify-content-center g-4">

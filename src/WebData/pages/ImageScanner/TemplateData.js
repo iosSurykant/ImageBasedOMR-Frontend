@@ -20,6 +20,7 @@ const TemplateData = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const editFlag = localStorage.getItem("editModel");
 
+  console.log("Temp Name",templateData.name)
   const onCheckHandler = () => {
     if (!templatePermissions.patternDefinition) {
       setPermissionModal(true);
