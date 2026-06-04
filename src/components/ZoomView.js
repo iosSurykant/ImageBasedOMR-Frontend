@@ -1,52 +1,64 @@
-import { useEffect, useRef, useState } from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { Rnd } from 'react-rnd';
-import classes from './ZoomView.module.css';
-const ZoomViewer = ({ currentImage, baseUrl, focusBox, templateData }) => {
-  const [scaledBox, setScaledBox] = useState(null);
-  const [boxes, setBoxes] = useState([]);
+import { useEffect, useRef } from "react";
+
+const ZoomViewer = ({ currentImage, baseUrl, focusBox }) => {
   const imgRef = useRef(null);
   const containerRef = useRef(null);
-  useEffect(() => {
-    setBoxes(templateData);
-  }, [templateData]);
 
-  // Auto-scroll to focusBox
+  // Auto-scroll to selected focus area
   useEffect(() => {
     if (focusBox && containerRef.current) {
       containerRef.current.scrollTo({
-        left: focusBox.x - 20, // optional padding
-        top: focusBox.y - 20,
-        behavior: 'smooth',
+        left: (focusBox.x || 0) - 20,
+        top: (focusBox.y || 0) - 20,
+        behavior: "auto", 
       });
     }
   }, [focusBox]);
 
+  console.log("ZoomViewer Props:", { currentImage});
+
+  // Cleanup image on unmount
+useEffect(() => {
+  return () => {
+    const img = imgRef.current;
+
+    if (img) {
+      img.src = "";
+    }
+  };
+}, []);
+
+  // Prevent rendering empty image
+  if (!currentImage) return null;
+
   return (
-    <>
-      <div
-        ref={containerRef}
+    <div
+      ref={containerRef}
+      style={{
+        position: "relative",
+        display: "inline-block",
+        border: "1px solid #ccc",
+        overflow: "auto",
+        transformOrigin: "top left",
+        maxHeight: "80vh",
+        maxWidth: "100%",
+      }}
+    >
+      <img
+        ref={imgRef}
+        src={`http://${baseUrl}/${currentImage}?t=${Date.now()}`}
+        alt="Scanned Sheet"
+        loading="lazy"
+        draggable={false}
         style={{
-          position: 'relative',
-          display: 'inline-block',
-          border: '1px solid #ccc',
-          // scale: zoomScale,
-          overflow: 'hidden',
-          transformOrigin: 'top left', // Zoom from top-left
+          display: "block",
+          maxWidth: "100%",
+          height: "auto",
+          userSelect: "none",
         }}
-      >
-        <img
-          ref={imgRef}
-          src={`http://${baseUrl}/${currentImage}`}
-          alt='to crop'
-          style={{
-            display: 'block',
-            maxWidth: '100%',
-            height: '80vh',
-          }}
-        />
-      </div>
-    </>
+      />
+    </div>
   );
 };
+
 export default ZoomViewer;

@@ -34,11 +34,10 @@ const StyledWrapper = styled.div`
     justify-content: center;
     align-items: center;
     padding: 6px 12px;
-    gap: 8px;
     height: 56px;
     width: 220px;
     border: none;
-    background: #5e41de33;
+    background: white;
     border-radius: 20px;
     cursor: pointer;
   }
@@ -51,9 +50,9 @@ const StyledWrapper = styled.div`
     letter-spacing: 1px;
   }
 
-  .button:hover {
-    background: #5e41de4d;
-  }
+  // .button:hover {
+  //   background: #5e41de4d;
+  // }
 
   .button:hover .svg-icon {
     animation: spin 2s linear infinite;

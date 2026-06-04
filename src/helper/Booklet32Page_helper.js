@@ -11,9 +11,7 @@ export const fetchProcessData = async () => {
 
 
 
-
-
-export const scanFiles = async (selectedValue, userId, saveDb = true) => {
+export const scanFiles = async (selectedValue, userId, saveDb ) => {
   const urls = await url.getUrls();
   const token = localStorage.getItem('token');
 
@@ -97,4 +95,9 @@ export const pauseScanning = async () => {
 export const resumeScanning = async () => {
   const urls = await url.getUrls();
   return post(`${urls.RESUME_SCAN}`);
+};
+
+export const resetScanApi = async () => {
+  const urls = await url.getUrls();
+  return post(`${urls.SCAN_API_RESET}`);
 };

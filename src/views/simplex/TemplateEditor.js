@@ -62,23 +62,22 @@ const TemplateEditor = () => {
   const initialPosRef = useRef({ x: -1000, y: 100 });
   const { Id } = useParams();
   const navigate = useNavigate();
-  // const INITIAL_X = -1000;
-  // Image natural size and base display size
+
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [baseDisplaySize, setBaseDisplaySize] = useState({
     width: 0,
     height: 0,
   });
+  const isTablet = window.innerWidth <= 1024 && window.innerWidth >= 768;
   const [isDOpen, setIsDOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth); //window size related
-  // const boxRef = useRef(null);
-  // const [isDragging, setIsDragging] = useState(false);
-  // const dragOffsetRef = useRef({ x: 1, y: 0 });
+
   const [newboxPos, setNewBoxPos] = useState({ x: 100, y: 100 });
 
   const handleResize = () => {
     setWindowWidth(window.innerWidth);
   };
+
   useEffect(() => {
     window.addEventListener("resize", handleResize);
 
@@ -278,7 +277,7 @@ const TemplateEditor = () => {
       ),
     );
 
-    // 🔁 Reorder boxes physically (important)
+    // 🔁 Reorder boxes physically (important) 
     setBoxes((prev) => {
       const others = prev.filter((b) => !updated.some((u) => u.id === b.id));
       const reordered = updated.map((u) => prev.find((b) => b.id === u.id));
@@ -318,7 +317,7 @@ const TemplateEditor = () => {
     window.addEventListener("scroll", onScroll);
 
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [scrollY]);
 
   // 2. When user drags → remember new position + mark as dragged
   const handleDragStop = (e, d) => {
@@ -327,7 +326,6 @@ const TemplateEditor = () => {
     setBoxPos({ x: d.x, y: d.y });
   };
 
-  // 3. Border lione box that indigate the outer box line of merge feilds --
 
   const getMergeBoundary = (merge) => {
     const children = boxes.filter((b) => merge.childrenIds.includes(b.id));
@@ -347,46 +345,55 @@ const TemplateEditor = () => {
     };
   };
 
+  
+
   const copyBox = () => {
-    if (activeBox === null) {
-      toast.warn("Select a field first");
-      return;
-    }
+  if (activeBox === null) {
+    toast.warn("Select a field first");
+    return;
+  }
 
-    const boxToCopy = boxes[activeBox];
+  const boxToCopy = boxes[activeBox];
 
-    // Deep clone to prevent mutation
-    const cloned = JSON.parse(JSON.stringify(boxToCopy));
+  // remove id so copiedBox becomes a pure template
+  const { id, ...rest } = boxToCopy;
 
-    setCopiedBox(cloned);
-    toast.success("Field Copied");
+  const cloned = JSON.parse(JSON.stringify(rest));
+
+  setCopiedBox(cloned);
+  toast.success("Field Copied");
+};
+
+const pasteBox = () => {
+  if (!copiedBox) {
+    toast.warn("No copied field found");
+    return;
+  }
+
+  const OFFSET = 20;
+
+  const newBox = {
+    ...copiedBox,
+    id: uuidv4(),
+    x: (copiedBox.x || 0) + OFFSET,
+    y: (copiedBox.y || 0) + OFFSET,
+    isMerged: false,
+    mergedInto: "N/A",
+    merge: false,
   };
 
-  const pasteBox = () => {
-    if (!copiedBox) {
-      toast.warn("No copied field found");
-      return;
-    }
+  setBoxes((prev) => {
+    const updated = [...prev, newBox];
 
-    const OFFSET = 20;
+    setActiveBox(updated.length); 
 
-    const newBox = {
-      ...copiedBox,
-      id: uuidv4(), // ✅ NEW UNIQUE ID
-      x: copiedBox.x + OFFSET,
-      y: copiedBox.y + OFFSET,
-      isMerged: false, // ✅ MERGE RESET
-      mergedInto: "N/A",
-      merge: false,
-    };
+    return updated;
+  });
 
-    setBoxes((prev) => [...prev, newBox]);
+  toast.success("Field Pasted");
+};
 
-    setActiveBox(boxes.length); // Focus new box
-    toast.success("Field Pasted");
-  };
 
-  // already exists in TemplateEditor.jsx
   const QUESTION_NAME_REGEX = /^([qQ])(\d+)-([qQ])(\d+)$/;
 
   function parseQuestionRange(name) {
@@ -402,7 +409,7 @@ const TemplateEditor = () => {
     return { prefix, start, end, gap: end - start + 1 };
   }
 
-  // ✅ ADD THIS JUST BELOW IT
+  //  ADD THIS JUST BELOW IT
   function getNextQuestionRangeFromBoxes(boxes, baseFieldName) {
     const parsedBase = parseQuestionRange(baseFieldName);
     if (!parsedBase) return baseFieldName;
@@ -476,13 +483,13 @@ const TemplateEditor = () => {
       return;
     }
 
-    // ✅ Prevent merging already merged boxes
+    //  Prevent merging already merged boxes
     if (selected.some((b) => b.isMerged)) {
       toast.error("One or more fields are already merged");
       return;
     }
 
-    // ✅ Enforce same Field Name
+    //  Enforce same Field Name
     const normalize = (v) => (v || "").toString().trim().toLowerCase();
 
     const baseFieldName = normalize(selected[0].fieldName);
@@ -496,7 +503,7 @@ const TemplateEditor = () => {
       return;
     }
 
-    // ✅ Enforce same Field Type
+    //  Enforce same Field Type
     const type = selected[0].fieldType;
     const invalidType = selected.some((b) => b.fieldType !== type);
 
@@ -505,7 +512,7 @@ const TemplateEditor = () => {
       return;
     }
 
-    // ✅ Auto sort LEFT → RIGHT by X position
+    //  Auto sort LEFT → RIGHT by X position
     const sorted = [...selected].sort((a, b) => a.x - b.x);
 
     const newMerge = {
@@ -523,7 +530,7 @@ const TemplateEditor = () => {
               ...b,
               isMerged: true,
               mergedInto: baseFieldName || "N/A",
-              merge: false, // ✅ lock toggle automatically
+              merge: false, //  lock toggle automatically
             }
           : b,
       ),
@@ -582,7 +589,7 @@ const TemplateEditor = () => {
           const field = res?.data?.fields || [];
           const fieldDetails = res?.data?.referenceCoordinate;
 
-          // ✅ Restore reference boxes
+          //  Restore reference boxes
           if (fieldDetails && Object.keys(fieldDetails).length > 0) {
             setReferenceBoxes(fieldDetails);
             setShowReferenceBox(true);
@@ -590,10 +597,10 @@ const TemplateEditor = () => {
             setShowReferenceBox(false);
           }
 
-          // ✅ STEP 2 — RESTORE MERGE STATE SAFELY
+          //  STEP 2 — RESTORE MERGE STATE SAFELY
           const restored = (field || []).map((b) => ({
             id: b.id || uuidv4(),
-            // ✅ AUTO-FIX OLD DATA
+            //  AUTO-FIX OLD DATA
             ...b,
             merge: !!b.merge,
             isMerged: !!b.isMerged,
@@ -601,7 +608,7 @@ const TemplateEditor = () => {
 
           setBoxes(restored);
 
-          // ✅ Restore mergedFields array
+          //  Restore mergedFields array
           setMergedFields(res?.data?.mergedfields || []);
         }
       } catch (error) {
@@ -615,16 +622,16 @@ const TemplateEditor = () => {
   // Delete key handling
   useEffect(() => {
     const handleDeleteKey = (e) => {
-      // ✅ DELETE FIELD BOX (WITH MERGE CLEANUP)
+      //  DELETE FIELD BOX (WITH MERGE CLEANUP)
       if (e.key === "Delete" && activeBox !== null) {
         const res = window.confirm("Are you sure you want to delete this box?");
         if (res) {
           const deletedId = boxes[activeBox]?.id;
 
-          // ✅ Remove field safely
+          //  Remove field safely
           setBoxes((prev) => prev.filter((b) => b.id !== deletedId));
 
-          // ✅ CLEAN MERGED FIELDS (STEP 5)
+          //  CLEAN MERGED FIELDS (STEP 5)
           setMergedFields((prev) =>
             prev
               .map((m) => ({
@@ -638,7 +645,7 @@ const TemplateEditor = () => {
         }
       }
 
-      // ✅ DELETE REFERENCE BOX (UNCHANGED)
+      //  DELETE REFERENCE BOX (UNCHANGED)
       if (e.key === "Delete" && currentReferenceBox !== null) {
         const res = window.confirm(
           "Are you sure you want to delete this reference box?",
@@ -650,7 +657,7 @@ const TemplateEditor = () => {
           setReferenceBoxes(updatedBoxes);
           setCurrentReferenceBox(null);
 
-          // ✅ Recalculate available options
+          //  Recalculate available options
           const usedPositions = updatedBoxes.map((b) => b.position);
           const availableOptions = referenceOptions.filter(
             (opt) => !usedPositions.includes(opt.id),
@@ -721,7 +728,6 @@ const TemplateEditor = () => {
   };
 
   //Draggable selected Box by using Arrow Key
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       const tag = e.target.tagName;
@@ -770,39 +776,6 @@ const TemplateEditor = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentBoxData, activeBox, effectiveScale]);
-
-  const addBox = () => {
-    setBoxes((prev) => [
-      ...prev,
-      {
-        id: uuidv4(), // ✅ PERMANENT ID
-        x: 100,
-        y: 100,
-        width: 150,
-        height: 100,
-        totalCol: 8,
-        totalRow: 10,
-        gap: 1,
-        merge: false,
-        isMerged: false,
-      },
-    ]);
-  };
-
-  const removeBox = (index) => {
-    setBoxes((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Get corner coordinates in natural pixels
-  const getCornerCoordinates = (box) => {
-    const { x, y, width, height } = box;
-    return {
-      topLeft: { x: x, y: y, width: 60, height: 60 },
-      topRight: { x: x + width, y: y, width: 60, height: 60 },
-      bottomLeft: { x: x, y: y + height, width: 60, height: 60 },
-      bottomRight: { x: x + width, y: y + height, width: 60, height: 60 },
-    };
-  };
 
   // Sanitize reference box coordinates
   const getRefCoordinates = (boxes) => {
@@ -877,7 +850,7 @@ const TemplateEditor = () => {
 
   // Save template
   const saveTemplate = async () => {
-    if (isLoading) return; // ✅ Prevent double click
+    if (isLoading) return; //  Prevent double click
 
     if (referenceBoxes.length <= 1) {
       toast.error("Set at least 2 Reference Box");
@@ -885,7 +858,7 @@ const TemplateEditor = () => {
     }
 
     try {
-      setIsLoading(true); // ✅ DISABLE BUTTON IMMEDIATELY
+      setIsLoading(true); //  DISABLE BUTTON IMMEDIATELY
 
       let referenceField = [];
       if (showReferenceBox) {
@@ -950,7 +923,7 @@ const TemplateEditor = () => {
       console.error(err);
       toast.error("Something went wrong while saving.");
     } finally {
-      setIsLoading(false); // ✅ ALWAYS RE-ENABLE BUTTON
+      setIsLoading(false); //  ALWAYS RE-ENABLE BUTTON
     }
   };
 
@@ -1135,7 +1108,7 @@ const TemplateEditor = () => {
             }}
           />
 
-          {/* ✅ MERGED FIELD OUTLINES */}
+          {/*  MERGED FIELD OUTLINES */}
           {mergedFields.map((merge) => {
             const boundary = getMergeBoundary(merge);
             if (!boundary) return null;
@@ -1456,7 +1429,7 @@ const TemplateEditor = () => {
       {/* Controls */}
       <div
         className="d-flex w-100 position-fixed bottom-0 bg-white"
-        style={{ zIndex: 10000, maxHeight: 60 }} // ✅ HARD OVERRIDE
+        style={{ zIndex: 10000, maxHeight: 60 }} //  HARD OVERRIDE
       >
         <div className="d-flex justify-content-around align-items-center  p-2 w-75 bg-white bottom-0 ">
           <div className="custom-control custom-switch">
@@ -1606,15 +1579,6 @@ const TemplateEditor = () => {
           </div>
 
           <span style={{ fontSize: 35 }}>|</span>
-          {/* <button
-            className="btn btn-dark me-2"
-            onClick={duplicateBox}
-            disabled={activeBox === null}
-          >
-            Duplicate
-          </button> */}
-
-          {/* Merge Dropdown button */}
 
           {/* MERGE DROPDOWN BUTTON */}
           {/* MERGE DROPDOWN BUTTON */}
@@ -1653,10 +1617,10 @@ const TemplateEditor = () => {
                         checked={selectedMergeBoxes.includes(box.id)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedMergeBoxes((p) => [...p, box.id]); // ✅ FIXED
+                            setSelectedMergeBoxes((p) => [...p, box.id]); //  FIXED
                           } else {
                             setSelectedMergeBoxes(
-                              (p) => p.filter((id) => id !== box.id), // ✅ FIXED
+                              (p) => p.filter((id) => id !== box.id), //  FIXED
                             );
                           }
                         }}
@@ -1731,7 +1695,7 @@ const TemplateEditor = () => {
             </Button>
           </div>
 
-          <div style={{ marginLeft: 12 }}>
+          <div style={{ marginLeft: 20 }} className="d-flex align-items-center">
             <button
               className="btn-none ms-1 p-0"
               style={{ background: "none", color: "black", border: "none" }}
@@ -1767,7 +1731,7 @@ const TemplateEditor = () => {
           bounds="window"
           enableResizing={false}
           dragHandleClassName="drag-handle"
-          style={{ position: "absolute", zIndex:1500 }}
+          style={{ position: "absolute", zIndex: 1500 }}
           className="z-[100] bg-white shadow-lg rounded-lg border "
         >
           <div className="flex flex-col w-full" style={{ cursor: "move" }}>
@@ -1881,14 +1845,21 @@ const TemplateEditor = () => {
           ref={fieldNameBox.ref}
           style={{
             position: "fixed",
-            top: newboxPos.y + "px",
-            left: newboxPos.x + "px",
-            width: "18%",
-            maxHeight: "600px",
+            top: isTablet ? "10%" : newboxPos.y + "px",
+            left: isTablet ? "50%" : newboxPos.x + "px",
+            transform: isTablet ? "translateX(-50%)" : "none",
+
+            width: isTablet ? "60%" : "18%",
+            maxWidth: "500px",
+            minWidth: "280px",
+
+            maxHeight: isTablet ? "70vh" : "600px",
+
             backgroundColor: "white",
             border: "1px solid #ddd",
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            borderRadius: "5px",
+            borderRadius: "8px",
+
             zIndex: 100000,
             display: "flex",
             flexDirection: "column",
@@ -1898,10 +1869,9 @@ const TemplateEditor = () => {
             className="btn-primary"
             onMouseDown={fieldNameBox.handleMouseDown}
             style={{
-              display: "fixed",
               userSelect: "none",
-              fontSize: "20px",
-              padding: "12px 18px",
+              fontSize: isTablet ? "18px" : "20px",
+              padding: "10px",
               margin: 0,
               cursor: "grab",
               textAlign: "center",
@@ -1913,10 +1883,10 @@ const TemplateEditor = () => {
           <ul
             style={{
               listStyle: "none",
-              padding: "7px 10px",
-              margin: "15px 15px",
-              overflowX: "auto",
-              scrollbarWidth: "none",
+              padding: "10px",
+              margin: "10px",
+              overflowY: "auto",
+              maxHeight: "60vh",
             }}
           >
             {visualList.map((item, index) => (
@@ -1991,7 +1961,17 @@ const TemplateEditor = () => {
             </span>
           </div>
 
-          <ul style={{ listStyle: "none", padding: 10, margin: 0 }}>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 10,
+              margin: 0,
+              maxHeight: "35vh",
+              overflowY: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
+            {" "}
             {mergedEditorList.map((item, index) => (
               <li
                 key={item.id}

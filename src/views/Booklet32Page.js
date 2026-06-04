@@ -318,14 +318,7 @@ const Booklet32Page = () => {
     }
   };
 
-  const handleRefresh = () => {
-    try {
-      refreshScanner();
-    } catch (error) {
-      console.log(error);
-      toast.error("Error in Refresh");
-    }
-  };
+
 
   const handleToolbarClick = (args) => {
     if (args.item.id.includes("excelexport")) {
@@ -352,20 +345,6 @@ const Booklet32Page = () => {
       ></ColumnDirective>
     );
   });
-
-  // ****************function without scrolling behaviour will give u data in real time*********
-
-  // const dataBound = () => {
-  //   if (gridRef.current) {
-  //     const grid = gridRef.current;
-  //     const lastIndex = grid.dataSource.length - 1;
-  //     const row = grid.getRowByIndex(lastIndex);
-  //     if (row) {
-  //       row.scrollIntoView();
-  //     }
-  //   }
-  // }
-  // *************************************************************************************************
 
   const dataBound = () => {
     if (gridRef.current) {
@@ -450,14 +429,7 @@ const Booklet32Page = () => {
             {!starting && !scanning && "Start"}
             {scanning && "Scanning"}
           </Button>
-          {/* <Button
-            className=""
-            color="danger"
-            type="button"
-            onClick={handleRefresh}
-          >
-            Refresh
-          </Button> */}
+  
           {scanning && (
             <Button
               className=""

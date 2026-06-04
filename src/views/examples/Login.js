@@ -17,7 +17,6 @@
 */
 
 // reactstrap components
-import { fetchAllUsers } from "helper/userManagment_helper";
 import { login } from "helper/userManagment_helper";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";

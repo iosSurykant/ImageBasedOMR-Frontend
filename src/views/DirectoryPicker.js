@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   FileManagerComponent,
-  Toolbar,
-  DetailsView,
-  NavigationPane,
+
 } from "@syncfusion/ej2-react-filemanager";
 import { FileOpenEventArgs } from "@syncfusion/ej2-filemanager";
-import SmallHeader from "components/Headers/SmallHeader";
-import { MAIN_URL } from "helper/url_helper";
 import { getUrls } from "helper/url_helper";
 
 

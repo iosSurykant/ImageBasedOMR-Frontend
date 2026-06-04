@@ -49,6 +49,7 @@ const UserManagment = () => {
   // const [toggle, setToggle] = useState(false);
   const [loading, setLoading] = useState(false);
   const emailRef = useRef(null); // Reference to the input element
+  const [isValid, setIsValid] = useState(true);
   const confirmRef = useRef(null);
 
   const fetchUsers = useCallback(async () => {
@@ -62,7 +63,6 @@ const UserManagment = () => {
       setLoading(false);
     }
   }, []);
-
 
   useEffect(() => {
     setAllUsers([]);
@@ -116,11 +116,66 @@ const UserManagment = () => {
     }
   };
 
+  // const handleCreate = async () => {
+  //   if (ConfirmPassword !== password) {
+  //     alert("Password and confirm password do not match");
+  //     return;
+  //   }
+  //   if (!isValid) {
+  //     toast.warn("Invalid Email")
+  //     return;
+  //   }
+  //   if (
+  //     !name ||
+  //     !email ||
+  //     !phoneNumber ||
+  //     !selectecdRole ||
+  //     !password ||
+  //     !ConfirmPassword
+  //   ) {
+  //     setSpanDisplay("inline");
+  //   } else {
+  //     if (password !== ConfirmPassword) {
+  //       toast.error("Passwod did not match");
+  //     }
+
+  //     try {
+  //       setBtnLoading(true);
+  //       let userRole = selectecdRole.roleName;
+  //       const userName = name;
+  //       const data = await createUser({
+  //         name: userName.trim(),
+  //         email: email.trim(),
+  //         cont: phoneNumber.trim(),
+  //         role: userRole.trim(),
+  //         pwd: password.trim(),
+  //       });
+  //       console.log(data);
+  //       if (data?.status) {
+  //         console.log(data.message);
+  //         toast.success(data?.message);
+  //         setName("");
+  //         setEmail("");
+  //         setPhoneNumber("");
+  //         setSelectedRole(null);
+  //         setPassword("");
+  //         setConfirmPassword("");
+  //         setCreateModalShow(false);
+  //         await fetchUsers();
+  //       } else {
+  //         toast.success("User Created Successfully");
+  //         setCreateModalShow(false);
+  //       }
+  //     } catch (error) {
+  //       toast.error("Something went wrong");
+  //     } finally {
+  //       setBtnLoading(false); // ✅ Spinner stops here
+  //     }
+  //   }
+  // };
+
   const handleCreate = async () => {
-    if (ConfirmPassword !== password) {
-      alert("Password and confirm password do not match");
-      return;
-    }
+    // Required field validation
     if (
       !name ||
       !email ||
@@ -130,45 +185,57 @@ const UserManagment = () => {
       !ConfirmPassword
     ) {
       setSpanDisplay("inline");
-    } else {
-      if (password !== ConfirmPassword) {
-        toast.error("Passwod did not match");
-      }
+      return;
+    }
 
-      try {
-        setBtnLoading(true);
-        let userRole = selectecdRole.roleName;
-        const userName = name;
-        const data = await createUser({
-          name: userName.trim(),
-          email: email.trim(),
-          cont: phoneNumber.trim(),
-          role: userRole.trim(),
-          pwd: password.trim(),
-        });
-        console.log(data);
-        if (data?.status) {
-          console.log(data.message);
-          toast.success(data?.message);
-          setName("");
-          setEmail("");
-          setPhoneNumber("");
-          setSelectedRole(null);
-          setPassword("");
-          setConfirmPassword("");
-          setCreateModalShow(false);
-          // setToggle((prev) => !prev);
-          await fetchUsers();
-        } else {
-          console.log();
-          toast.success("User Created Successfully");
-          setCreateModalShow(false);
-        }
-      } catch (error) {
-        toast.error("Something went wrong");
-      } finally {
-        setBtnLoading(false); // ✅ Spinner stops here
+    if (!isValid) {
+      toast.warn("Invalid Email");
+      return;
+    }
+
+    // Password match
+    if (password !== ConfirmPassword) {
+      toast.error("Password did not match");
+      return;
+    }
+
+    try {
+      setBtnLoading(true);
+
+      const payload = {
+        name: name.trim(),
+        email: email.trim(),
+        cont: phoneNumber.trim(),
+        role: selectecdRole?.roleName?.trim(),
+        pwd: password.trim(),
+      };
+
+      console.log("Sending:", payload); // 🔍 debug
+
+      const data = await createUser(payload);
+
+      if (data?.status) {
+        toast.success(data.message || "User Created Successfully");
+
+        setName("");
+        setEmail("");
+        setPhoneNumber("");
+        setSelectedRole(null);
+        setPassword("");
+        setConfirmPassword("");
+        setCreateModalShow(false);
+
+        await fetchUsers();
+      } else {
+        toast.warn(data.message);
       }
+    } catch (error) {
+      console.error(error);
+
+      // show real backend error
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    } finally {
+      setBtnLoading(false);
     }
   };
 
@@ -197,7 +264,7 @@ const UserManagment = () => {
     setEmail(d.empEmail);
     setPhoneNumber(d.contact);
 
-    // 🔥 convert string role to object for Select
+    // convert string role to object for Select
     setSelectedRole({ roleName: d.role });
 
     setPassword(d.password); // never prefill password
@@ -334,6 +401,7 @@ const UserManagment = () => {
         </Row>
       </Container>
 
+      {/* User Edit Model */}
       <Modal
         show={modalShow}
         size="lg"
@@ -367,23 +435,6 @@ const UserManagment = () => {
           </Row>
 
           {/* Phone Number */}
-          {/* <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Phone Number</label>
-            <div className="col-md-10">
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Enter Phone Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-              {!phoneNumber && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This field is required
-                </span>
-              )}
-            </div>
-          </Row> */}
 
           <Row className="mb-3">
             <label className="col-md-2 col-form-label">Phone Number</label>
@@ -501,11 +552,17 @@ const UserManagment = () => {
             <div className="col-md-10">
               <input
                 type="email"
-                className="form-control"
+                className={`form-control ${!isValid ? "is-invalid" : ""}`}
                 placeholder="Enter Email Id"
-                // value={email}
                 ref={emailRef}
-                onChange={(e) => setEmail(e.target.value)}
+                value={email}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setEmail(value);
+
+                  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  setIsValid(regex.test(value) || value === "");
+                }}
               />
             </div>
           </Row>
@@ -533,18 +590,13 @@ const UserManagment = () => {
             <label className="col-md-2 col-form-label">Phone Number</label>
 
             <div className="col-md-10">
-              <input
-                type="tel"
-                className="form-control"
+              <PhoneInput
+                defaultCountry="in"
+                inputClassName="form-control w-100"
                 placeholder="Enter 10 digit Phone Number"
                 // value={phoneNumber}
                 maxLength={10}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  if (value.length <= 10) {
-                    setPhoneNumber(value);
-                  }
-                }}
+                onChange={(phone) => setPhoneNumber(phone)}
               />
             </div>
           </Row>

@@ -1,29 +1,14 @@
 // core components
-import Header from "components/Headers/Header.js";
 import NormalHeader from "components/Headers/NormalHeader";
-import { Modal } from "react-bootstrap";
 import { useEffect, useState } from "react";
 
 import {
-  Badge,
   Card,
   CardHeader,
-  CardFooter,
-  DropdownMenu,
-  DropdownItem,
-  UncontrolledDropdown,
-  DropdownToggle,
-  Media,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
-  Progress,
   Table,
   Container,
   Row,
-  UncontrolledTooltip,
   Button,
-  Col,
 } from "reactstrap";
 import { getAssignedJob } from "helper/job_helper";
 import { jwtDecode } from "jwt-decode";
@@ -89,23 +74,6 @@ const AdminJobQueue = () => {
         <td>{item.jobStatus}</td>
         <td>{item.imageType ? item.imageType : "Disabled"}</td>
         <td className="text-right">
-          {/* <UncontrolledDropdown>
-                    <DropdownToggle
-                        className="btn-icon-only text-light"
-                        href="#pablo"
-                        role="button"
-                        size="sm"
-                        color=""
-                        onClick={(e) => e.preventDefault()}
-                    >
-                        <i className="fas fa-ellipsis-v" />
-                    </DropdownToggle>
-                    <DropdownMenu className="dropdown-menu-arrow" right>
-                        <DropdownItem >Assign</DropdownItem>
-                        <DropdownItem  >Edit</DropdownItem>
-                        <DropdownItem >Delete</DropdownItem>
-                    </DropdownMenu>
-                </UncontrolledDropdown> */}
 
           {item.jobStatus === "Completed" && (
             <Button disabled color="default" onClick={() => startHandler(item)}>

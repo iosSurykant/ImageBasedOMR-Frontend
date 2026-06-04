@@ -11,13 +11,11 @@ import {
 // core components
 import NormalHeader from "components/Headers/NormalHeader";
 import { Modal, Button, Row, Col, Spinner } from "react-bootstrap";
-import {useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DataContext from "store/DataContext";
-import axios from "axios";
 import { fetchAllTemplate } from "helper/TemplateHelper";
 import { deleteTemplate } from "helper/TemplateHelper";
-import CryptoJS from "crypto-js";
 import Swal from "sweetalert2";
 
 import { toast } from "react-toastify";
@@ -27,18 +25,6 @@ import CloneTemplateHandler from "services/CloneTemplate";
 import { createTemplate } from "helper/TemplateHelper";
 
 import { fetchAllUsers } from "helper/userManagment_helper";
-
-const base64ToFile = (base64, filename) => {
-  const byteString = atob(base64.split(",")[1]);
-  const mimeString = base64.split(",")[0].split(":")[1].split(";")[0];
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-  const blob = new Blob([ab], { type: mimeString });
-  return new File([blob], filename, { type: mimeString });
-};
 
 const Template = () => {
   const [modalShow, setModalShow] = useState(false);
@@ -50,7 +36,6 @@ const Template = () => {
   const [templateLoading, setTemplateLoading] = useState(false);
   const [templateName, setTemplateName] = useState(null);
   const [templateImage, setTemplateImage] = useState(null);
-  const [allUsers, setAllUsers] = useState([]);
   const navigate = useNavigate();
   const dataCtx = useContext(DataContext);
   useEffect(() => {
@@ -59,26 +44,27 @@ const Template = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      setTemplateLoading(true);
-      const templates = await fetchAllTemplate();
-      if (templates === undefined) {
-        toast.error("Error fetching templates");
+      try {
+        setTemplateLoading(true);
+
+        const templates = await fetchAllTemplate();
+
+        if (!templates || !templates.body) {
+          throw new Error("Invalid template response");
+        }
+
+        // setTemplates(templates.body);  
+      } catch (error) {
+        console.error("Failed to fetch templates:", error);
+      } finally {
         setTemplateLoading(false);
-        return;
       }
-      console.log(templates?.body);
-      dataCtx.addToAllTemplate(templates?.body);
-      setTemplateLoading(false);
     };
+
     fetchData();
   }, [toggle]);
 
-  const duplicateHandler = (arr) => {
-    setShowDetailModal(true);
-    setTemplateDetail(arr);
-  };
   const cloneHandler = async (arr) => {
-    // setShowDetailModal(false);
     console.log(templateDatail[0].layoutParameters.id);
     const temp = await CloneTemplateHandler(
       templateDatail[0].layoutParameters.id,
@@ -92,7 +78,8 @@ const Template = () => {
     setToggle((tg) => !tg);
     setShowDetailModal(false);
   };
-  const handleRowClick = (rowData, index) => {};
+
+  // const handleRowClick = (rowData, index) => {};
   const editHandler = async (arr, index) => {
     setLoading(true);
 
@@ -106,52 +93,6 @@ const Template = () => {
     // return;
     setLoading(false);
     navigate(`/admin/template/create-template/${arr.id}`);
-  };
-
-  const deleteImage = async (imageUrl) => {
-    const cloudName = process.env.REACT_APP_CLOUD_NAME; // Your Cloudinary cloud name
-    const apiKey = process.env.REACT_APP_API_KEY; // Your Cloudinary API key
-    const apiSecret = process.env.REACT_APP_API_SECRET; // Your Cloudinary API secret
-
-    // Extract public ID from URL
-    const urlParts = imageUrl.split("/");
-    const versionIndex = urlParts.findIndex((part) => part.startsWith("v"));
-    const publicIdWithFormat = urlParts.slice(versionIndex + 1).join("/"); // omrimages/dj7va6r3farwpblq6txv.jpg
-    const publicId = publicIdWithFormat.split(".")[0]; // omrimages/dj7va6r3farwpblq6txv
-
-    console.log("Extracted public ID:", publicId); // Debugging: Log the public ID
-
-    // Create the timestamp and signature
-    const timestamp = Math.floor(new Date().getTime() / 1000);
-    const stringToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
-    const signature = CryptoJS.SHA1(stringToSign).toString();
-
-    // Form data for the request
-    const formData = new FormData();
-    formData.append("public_id", publicId);
-    formData.append("timestamp", timestamp);
-    formData.append("api_key", apiKey);
-    formData.append("signature", signature);
-
-    try {
-      // Make the API request to delete the image
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-
-      console.log(response.data); // Debugging: Log the response data
-
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting image:", error); // Debugging: Log any error
-      throw error;
-    }
   };
 
   const deleteHandler = async (arr, index) => {
@@ -211,103 +152,45 @@ const Template = () => {
     </tr>
   ));
 
-  // const filteredTemplates = dataCtx.allTemplates?.filter((t) => {
-  //   const name = (t.fileName || '').toLowerCase();
-  //   const createdBy = (t.createdBy || '').toLowerCase();
-  //   // const role = (t.role || ''.toLowerCase())
-  //   const search = searchText.toLowerCase();
-
-  //   return name.includes(search) || createdBy.includes(search);
-  // });
-
-  // const LoadedTemplates = filteredTemplates?.map((d, i) => (
-  //   <tr
-  //     key={i}
-  //     onClick={() => handleRowClick(d, i)}
-  //     style={{ cursor: 'pointer' }} // Adds a pointer cursor on hover
-  //   >
-  //     <td>{i + 1}</td>
-  //     <td>{d.fileName}</td>
-  //     <td>{d.createAt}</td>
-  //     <td>{d.updateAt || 'N/A'}</td>
-  //     <td>{d.role || 'N/A'}</td>
-  //     <td>{d.createdBy || 'N/A'}</td>
-
-  //     {/* <td>{d.jsonPath}</td>
-  //     <td>{"Omr Template"}</td> */}
-  //     <td className='text-right'>
-  //       <UncontrolledDropdown>
-  //         <DropdownToggle
-  //           className='btn-icon-only text-light'
-  //           href='#pablo'
-  //           role='button'
-  //           size='sm'
-  //           color=''
-  //           onClick={(e) => e.preventDefault()}
-  //         >
-  //           <i className='fas fa-ellipsis-v' />
-  //         </DropdownToggle>
-  //         <DropdownMenu
-  //           className='dropdown-menu-arrow'
-  //           right
-  //         >
-  //           <DropdownItem onClick={() => editHandler(d, i)}>Edit</DropdownItem>
-  //           {/* <DropdownItem onClick={() => duplicateHandler(d)}>
-  //             Duplicate
-  //           </DropdownItem> */}
-  //           <DropdownItem
-  //             style={{ color: 'red' }}
-  //             onClick={() => deleteHandler(d, i)}
-  //           >
-  //             Delete
-  //           </DropdownItem>
-  //         </DropdownMenu>
-  //       </UncontrolledDropdown>
-  //     </td>
-  //   </tr>
-  // ));
-
   useEffect(() => {
-  const loadData = async () => {
-    try {
-      const templatesRes = await fetchAllTemplate();
-      const usersRes = await fetchAllUsers();
+    const loadData = async () => {
+      try {
+        const templatesRes = await fetchAllTemplate();
+        const usersRes = await fetchAllUsers();
 
-      const templates = templatesRes?.body || [];
-      const users = usersRes?.result || [];
+        const templates = templatesRes?.body || [];
+        const users = usersRes?.result || [];
 
-      const updatedTemplates = templates.map((template) => {
-        const fileName = template.fileName || "";
+        const updatedTemplates = templates.map((template) => {
+          const fileName = template.fileName || "";
 
-        // Try extracting empId
-        const match = fileName.match(/##(\d+)$/);
-        const empIdFromFile = match ? match[1] : null;
+          // Try extracting empId
+          const match = fileName.match(/##(\d+)$/);
+          const empIdFromFile = match ? match[1] : null;
 
-        let roleFromUser = null;
+          let roleFromUser = null;
 
-        if (empIdFromFile) {
-          const user = users.find(
-            (u) => String(u.empId) === String(empIdFromFile)
-          );
-          roleFromUser = user?.role;
-        }
+          if (empIdFromFile) {
+            const user = users.find(
+              (u) => String(u.empId) === String(empIdFromFile),
+            );
+            roleFromUser = user?.role;
+          }
 
-        return {
-          ...template,
-          // ✅ Always render role
-          role: roleFromUser ?? template.role ?? "N/A",
-        };
-      });
+          return {
+            ...template,
+            role: roleFromUser ?? template.role ?? "N/A",
+          };
+        });
 
-      dataCtx.addToAllTemplate(updatedTemplates);
+        dataCtx.addToAllTemplate(updatedTemplates);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
 
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
-  };
-
-  loadData();
-}, []);
+    loadData();
+  }, []);
 
   // Get logged-in user
   const userData = JSON.parse(localStorage.getItem("userData"));
@@ -337,12 +220,12 @@ const Template = () => {
   const LoadedTemplates = filteredTemplates?.map((d, i) => {
     const cleanName = d.fileName.split("##")[0];
 
-    console.log(filteredTemplates)
+    console.log(filteredTemplates);
 
     return (
       <tr
         key={i}
-        onClick={() => handleRowClick(d, i)}
+        // onClick={() => handleRowClick(d, i)}
         style={{ cursor: "pointer" }}
       >
         <td>{i + 1}</td>
@@ -388,17 +271,11 @@ const Template = () => {
     }
 
     try {
-      const { empid } = JSON.parse(
-        localStorage.getItem("userData") || "{}",
-      );
+      const { empid } = JSON.parse(localStorage.getItem("userData") || "{}");
       console.log(empid);
 
       setLoading(true);
-      const res = await createTemplate(
-        templateName,
-        templateImage,
-        empid,
-      );
+      const res = await createTemplate(templateName, templateImage, empid);
       const id = res.data[0].id;
       toast.success("Template created successfully!");
       navigate(`/admin/template/create-template/${id}`);
@@ -417,7 +294,7 @@ const Template = () => {
           <div className="col">
             <Card className="shadow">
               <CardHeader className="border-0">
-                <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex flex-wrap justify-content-between align-items-center">
                   <h3 className="mt-2">All Templates</h3>
 
                   <div className="d-flex align-items-center gap-2">

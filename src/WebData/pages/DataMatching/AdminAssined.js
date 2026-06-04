@@ -273,7 +273,6 @@ const AdminAssined = () => {
         contentDisposition &&
         contentDisposition.toLowerCase().includes("attachment")
       ) {
-        // support filename="name" and RFC5987 filename*=UTF-8''name
         let match =
           /filename\*=(?:UTF-8'')?([^;]+)/i.exec(contentDisposition) ||
           /filename="?([^;"\n]+)"?/i.exec(contentDisposition);

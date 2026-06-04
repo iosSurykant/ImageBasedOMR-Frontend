@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
+import { FaFileCsv } from "react-icons/fa6";
 import {
   TextField,
   Box,
@@ -12,6 +13,7 @@ import {
 } from "@mui/material";
 import { toast } from "react-toastify";
 import { fetchCsvHeader, mergerCsv } from "helper/ResultGenerationHelper";
+import NormalHeader from "components/Headers/NormalHeader";
 
 const MergeCsvComponent = () => {
   const [csv1, setCsv1] = useState(null);
@@ -61,7 +63,7 @@ const MergeCsvComponent = () => {
   };
 
   // ✅ Check if keys match
-const isKeyValid = key1 && key2 && key1 === key2;
+  const isKeyValid = key1 && key2 && key1 === key2;
 
   // ✅ Process Merge
   const handleProcess = async () => {
@@ -72,8 +74,7 @@ const isKeyValid = key1 && key2 && key1 === key2;
     try {
       setLoading(true);
 
-  if (!isKeyValid)
-     return toast.error("Keys must match!");
+      if (!isKeyValid) return toast.error("Keys must match!");
 
       const formData = new FormData();
       formData.append("CSV1", csv1);
@@ -111,7 +112,7 @@ const isKeyValid = key1 && key2 && key1 === key2;
         state: {
           tableHeaders: headers,
           tableData: tableData,
-          resultBlob: response
+          resultBlob: response,
         },
       });
     } catch (err) {
@@ -125,143 +126,223 @@ const isKeyValid = key1 && key2 && key1 === key2;
   const allHeaders = [...new Set([...headers1, ...headers2])];
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        bgcolor: "#f5f5f5",
-        p: 2,
-      }}
-    >
-      <Paper
-        elevation={6}
-        sx={{
-          width: "100%",
-          maxWidth: 900,
-          p: 5,
-          borderRadius: 4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-        }}
+    <div style={{ position: "relative" }}>
+      <NormalHeader />
+
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ padding: "24px", position: "relative", top: "-100px" }}
       >
-        <Typography variant="h4" align="center" fontWeight={700}>
-          Merge CSV Files 
-        </Typography>
-
-        {/* Upload Section */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Button
-            component="label"
-            variant="outlined"
-            fullWidth
-            color={csv1 ? "success" : "primary"}
-          >
-            {csv1 ? csv1.name : "Upload CSV 1"}
-            <input
-              hidden
-              type="file"
-              accept=".csv"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                setCsv1(file);
-                handleCsvOneHeaders(file);
-              }}
-            />
-          </Button>
-
-          <Button
-            component="label"
-            variant="outlined"
-            fullWidth
-            color={csv2 ? "success" : "primary"}
-          >
-            {csv2 ? csv2.name : "Upload CSV 2"}
-            <input
-              hidden
-              type="file"
-              accept=".csv"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                setCsv2(file);
-                handleCsvTwoHeaders(file);
-              }}
-            />
-          </Button>
-        </Box>
-
-        {/* Header Loading */}
-        {(loading1 || loading2) && (
-          <Box textAlign="center">
-            <CircularProgress size={24} />
-            <Typography variant="body2">Extracting headers...</Typography>
-          </Box>
-        )}
-
-        {/* Key Selection */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Autocomplete
-            fullWidth
-            options={headers1}
-            value={key1}
-            disabled={!headers1.length}
-            onChange={(e, v) => setKey1(v)}
-            renderInput={(params) => (
-              <TextField {...params} label="Key CSV 1" />
-            )}
-          />
-
-          <Autocomplete
-            fullWidth
-            options={headers2}
-            value={key2}
-            disabled={!headers2.length}
-            onChange={(e, v) => setKey2(v)}
-            renderInput={(params) => (
-              <TextField {...params} label="Key CSV 2" />
-            )}
-          />
-        </Box>
-
-        {/* Ignore + Filter */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Autocomplete
-            multiple
-            fullWidth
-            options={allHeaders}
-            value={ignoreColumns}
-            onChange={(e, v) => setIgnoreColumns(v)}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip label={option} {...getTagProps({ index })} key={option} />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField {...params} label="Ignore Columns" />
-            )}
-          />
-
-          <TextField
-            fullWidth
-            label="Filter Key"
-            value={filterKey}
-            onChange={(e) => setFilterKey(e.target.value)}
-          />
-        </Box>
-
-        {/* Process Button */}
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleProcess}
-          disabled={loading}
+        <div
+          className="bg-white border p-4 w-100"
+          style={{ maxWidth: "1200px", borderRadius: "12px" }}
         >
-          {loading ? "Processing..." : "Merge CSV"}
-        </Button>
-      </Paper>
-    </Box>
+           <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginBottom: "20px",
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="#3b82f6"
+              strokeWidth="2"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          
+            <h4
+              style={{
+                margin: 0,
+                fontSize: "17px",
+                fontWeight: 600,
+                color: "#1a1a2e",
+              }}
+            >
+              Merge CSV Files
+            </h4>
+          </div>
+
+
+          {/* Upload Section */}
+          <div className="row g-3 mb-4">
+            {/* CSV 1 */}
+            <div className="col-md-6">
+              <label className="form-label text-dark">
+                CSV File 1 <span className="text-danger">*</span>
+              </label>
+              <label
+                className="w-100 border rounded-3 d-flex flex-column justify-content-center align-items-center"
+                style={{
+                  height: "150px",
+                  borderStyle: "dashed",
+                  cursor: "pointer",
+                  background: "#fafafa",
+                }}
+              >
+                <span className="text-success" style={{fontSize:"30px"}}>
+                 
+                  <FaFileCsv />
+                </span>
+                <small className="mt-1">
+                  {csv1 ? csv1.name : "Upload Here"}
+                </small>
+                <small className="text-muted">Accepts .csv format only</small>
+                <input
+                  hidden
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    setCsv1(file);
+                    handleCsvOneHeaders(file);
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* CSV 2 */}
+            <div className="col-md-6">
+              <label className="form-label text-dark fw-bold">
+                CSV File 2 <span className="text-danger">*</span>
+              </label>
+              <label
+                className="w-100 border rounded-3 d-flex flex-column justify-content-center align-items-center"
+                style={{
+                  height: "150px",
+                  borderStyle: "dashed",
+                  cursor: "pointer",
+                  background: "#fafafa",
+                }}
+              >
+                <i className="text-success" style={{fontSize:"30px"}}>
+                  <FaFileCsv />
+                </i>
+                <small className="mt-1">
+                  {csv2 ? csv2.name : "Upload Here"}
+                </small>
+                <small className="text-muted">Accepts .csv format only</small>
+                <input
+                  hidden
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    setCsv2(file);
+                    handleCsvTwoHeaders(file);
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Loader */}
+          {(loading1 || loading2) && (
+            <div className="text-center mb-3">
+              <div className="spinner-border text-primary"></div>
+              <p className="small mt-1">Extracting headers...</p>
+            </div>
+          )}
+
+          {/* Key Selection */}
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label className="form-label text-dark fw-semibold">
+                Key CSV 1 <span className="text-danger">*</span>
+              </label>
+              <Autocomplete
+                options={headers1}
+                value={key1}
+                disabled={!headers1.length}
+                onChange={(e, v) => setKey1(v)}
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="Enroll" size="small" />
+                )}
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label text-dark fw-semibold">
+                Key CSV 2 <span className="text-danger">*</span>
+              </label>
+              <Autocomplete
+                options={headers2}
+                value={key2}
+                disabled={!headers2.length}
+                onChange={(e, v) => setKey2(v)}
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="Enroll" size="small" />
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Ignore Columns */}
+          <div className="mb-3">
+            <label className="form-label text-dark fw-semibold">Ignore Columns</label>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              options={allHeaders}
+              value={ignoreColumns}
+              onChange={(e, v) => setIgnoreColumns(v)}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <span
+                    className="badge bg-light text-dark me-1 border"
+                    key={option}
+                    {...getTagProps({ index })}
+                  >
+                    {option} ✕
+                  </span>
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Select columns"
+                  size="small"
+                />
+              )}
+            />
+          </div>
+
+          {/* Filter Key */}
+          <div className="mb-4">
+            <label className="form-label text-dark fw-semibold">Filter Keys</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Gen : Male"
+              value={filterKey}
+              onChange={(e) => setFilterKey(e.target.value)}
+            />
+          </div>
+
+          {/* Button */}
+          <button
+            className="btn w-100 text-white fw-semibold"
+            style={{
+              background: "#0D7FC9",
+              height: "45px",
+              borderRadius: "8px",
+            }}
+            onClick={handleProcess}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Merge CSV"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

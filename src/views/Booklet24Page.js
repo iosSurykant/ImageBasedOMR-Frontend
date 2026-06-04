@@ -13,7 +13,6 @@ import { scanFiles } from "helper/Booklet24Page_helper";
 import { refreshScanner } from "helper/Booklet24Page_helper";
 
 const Booklet24Page = () => {
-    const [count, setCount] = useState(true)
     const [data, setData] = useState([]);
     const [scanning, setScanning] = useState(false);
 

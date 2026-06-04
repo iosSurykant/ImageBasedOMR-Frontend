@@ -37,7 +37,7 @@ const Profile = () => {
     data.cont.trim() !== "" &&
     data.role.trim() !== "";
 
-  // ✅ Load user data
+  // Load user data
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("userData");
@@ -65,7 +65,7 @@ const Profile = () => {
     }
   }, []);
 
-  // ✅ Handle change
+  // Handle change
   const handleChange = (e) => {
     setData({
       ...data,
@@ -73,7 +73,7 @@ const Profile = () => {
     });
   };
 
-  // ✅ Update handler with toast
+  // Update handler with toast
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);

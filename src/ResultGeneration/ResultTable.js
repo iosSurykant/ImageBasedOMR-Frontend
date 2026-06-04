@@ -2,6 +2,7 @@ import { Button } from "@mui/material";
 import NormalHeader from "components/Headers/NormalHeader";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardHeader, Container, Row, Table } from "reactstrap";
 
 const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   const [search, setSearch] = useState("");
@@ -83,88 +84,91 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   };
 
   const handleOkay = () => {
-    navigate("/admin", { replace: true });
+    navigate("/admin/result-generation", { replace: true });
   };
 
-  return (
-    <div className="bg-white">
-      <NormalHeader />
-      <div className="container-fluid mt-4  w-75 border p-5 rounded">
-        {/* HEADER */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="fw-bold">Result Table</h5>
+return (
+  <div className="main-content">
+    <NormalHeader />
 
-          <input
-            type="text"
-            className="form-control w-25"
-            placeholder="Search anything..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+    <Container className="mt--7" fluid>
+      <Row className="justify-content-center">
+        <div className="col-lg-10">
+          <Card className="shadow">
+            
+            {/* Header */}
+            <CardHeader className="border-0">
+              <div className="d-flex justify-content-between align-items-center">
+                <h3 className="mb-0">Data Table </h3>
 
-        {/* TABLE CARD */}
-        <div
-          className="card shadow-sm border-0 rounded-4"
-          style={{ overflow: "hidden" }}
-        >
-          <div
-            className="table-responsive"
-            style={{ maxHeight: "500px", overflowY: "auto" }}
-          >
-            <table className="table table-hover align-middle mb-0">
-              {/* HEADER */}
-              <thead
-                className="table-dark"
-                style={{
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 2,
-                }}
-              >
-                <tr>
-                  {cleanHeaders.map((header, index) => (
-                    <th key={index} className="text-nowrap">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+                {/* Search */}
+                <div style={{ width: "250px" }}>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    placeholder="Search anything..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardHeader>
 
-              {/* BODY */}
-              <tbody>
-                {filteredData.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {cleanHeaders.map((header, colIndex) => (
-                      <td key={colIndex}>
-                        {row[header] !== undefined && row[header] !== null
-                          ? row[header]
-                          : "-"}
-                      </td>
+            {/* Table */}
+            <div style={{ maxHeight: "60vh", overflow: "auto" }}>
+              <Table className="align-items-center table-flush mb-0">
+                
+                {/* Table Head */}
+                <thead className="thead-light" style={{position:"sticky", top:0,}}>
+                  <tr>
+                    {cleanHeaders.map((header, index) => (
+                      <th key={index} className="sticky-th text-nowrap">
+                        {header}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
 
-          {/* FOOTER */}
-          <div className="p-2 text-end small text-muted">
-            Showing {filteredData.length} of {cleanData.length} records
-          </div>
+                {/* Table Body */}
+                <tbody>
+                  {filteredData.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {cleanHeaders.map((header, colIndex) => (
+                        <td key={colIndex}>
+                          {row[header] !== undefined && row[header] !== null
+                            ? row[header]
+                            : "-"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
 
-          <div className="p-2 d-flex gap-2 justify-content-end">
-            <Button variant="contained" onClick={handleDownload}>
-              Download
-            </Button>
-            <Button variant="outlined" onClick={handleOkay}>
-              Submit
-            </Button>
-          </div>
+            {/* Footer Info */}
+            <div className="px-4 py-2 text-muted small border-top">
+              Showing {filteredData.length} of {cleanData.length} records
+            </div>
+
+            {/* Actions */}
+            <div className="px-4 py-3 d-flex justify-content-between gap-2">
+
+              <button className="btn btn-primary px-4" onClick={handleOkay}>
+                Back
+              </button>
+
+              <button className="btn btn-success px-4" onClick={handleDownload}>
+                Download
+              </button>
+            </div>
+
+          </Card>
         </div>
-      </div>
-    </div>
-  );
+      </Row>
+    </Container>
+  </div>
+);
 };
 
 export default ResultTable;

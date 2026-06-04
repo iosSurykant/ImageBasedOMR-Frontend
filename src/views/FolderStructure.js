@@ -17,13 +17,9 @@ import "@syncfusion/ej2-layouts/styles/bootstrap5.css";
 import "@syncfusion/ej2-grids/styles/bootstrap5.css";
 import "@syncfusion/ej2-react-filemanager/styles/bootstrap5.css";
 import SmallHeader from "components/Headers/SmallHeader";
-import { Container } from "reactstrap";
 import "../App.css";
-import { MAIN_URL } from "helper/url_helper";
 import { getUrls } from "helper/url_helper";
-import ErrorBoundary from "services/ErrorWrap";
 import axios from "axios";
-import { Ajax } from "@syncfusion/ej2-base";
 const Overview = () => {
   const [hostUrl, setHostUrl] = React.useState("");
   const [loading, setLoading] = React.useState(true);

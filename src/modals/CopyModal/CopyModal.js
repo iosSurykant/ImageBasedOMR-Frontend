@@ -11,18 +11,6 @@ const CopyModal = (props) => {
     };
     
     const saveRegion = () => {
-        // try {
-        //     if (!value) {
-        //         alert("Please select Position.")
-        //     }
-        //     if (pitchValue) {
-        //         alert("Pitch value cannot be blank.")
-        //     }
-
-
-        // } catch (err) {
-        //     console.log(err)
-        // }
     props.saveRegion(pitchValue,value)
     }
     return (

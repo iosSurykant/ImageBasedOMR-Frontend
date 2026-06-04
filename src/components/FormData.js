@@ -2,7 +2,6 @@ import React, { useEffect, forwardRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Modal, Button, Row, Col, Spinner, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { select } from "@syncfusion/ej2-base";
 
 const FormData = forwardRef(
   (
@@ -502,20 +501,6 @@ const FormData = forwardRef(
                 <Form.Control
                   as="input"
                   value={customInput}
-                  // onChange={(e) => {
-                  //   const inputValue = e.target.value;
-                  //   setCustomInput(inputValue); // allow free typing
-
-                  //   const parsedArray = inputValue
-                  //     .split(",")
-                  //     .map((item) => item.trim())
-                  //     .filter((item) => item.length > 0);
-
-                  //   setCurrentBoxData((prev) => ({
-                  //     ...prev,
-                  //     Custom: parsedArray,
-                  //   }));
-                  // }}
                   onBlur={handleCustomBlur}
                   onChange={(e) => {
                     setCustomInput(e.target.value);
@@ -527,32 +512,6 @@ const FormData = forwardRef(
         )}
 
         <Row className="mt-2">
-          {/* <Col md={6}>
-            <Form.Group controlId='margin'>
-              <Form.Label>
-                Margin: <strong>{currentBoxData?.gap}</strong>
-              </Form.Label>
-              <Form.Control
-                type='range'
-                min={0}
-                max={80}
-                step={0.1}
-                value={currentBoxData?.gap}
-                onChange={(e) => {
-                  setCurrentBoxData((prev) => ({
-                    ...prev,
-                    gap: e.target.value,
-                  }));
-                  setBoxes((prevBoxes) =>
-                    prevBoxes.map((box, idx) =>
-                      idx === activeBox ? { ...box, gap: e.target.value } : box
-                    )
-                  );
-                }}
-              />
-            </Form.Group>
-          </Col> */}
-
           <Col md={6}>
             <Form.Group controlId="intensity">
               <Form.Label>
