@@ -3,9 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 // Styles
-// import "./index.css";
 import "./App.css";
-// import "animate.css";
 
 // Argon + Icons
 import "assets/plugins/nucleo/css/nucleo.css";
@@ -17,7 +15,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Providers (RENAMED to avoid conflict)
-import DataProviderOne from "./store/DataProvider";        // Project 1
+import DataProviderOne from "./context/DataProvider";        // Project 1
 import DataProviderTwo from "../src/WebData/Store/DataProvider";    // Project 2
 import { ScanProvider } from "./context/ScanningContext";
 
@@ -60,13 +58,10 @@ fetch("/config.json")
     root.render(
       <BrowserRouter>
         <ScanProvider>
-          {/* Outer Provider */}
           <DataProviderOne>
-            {/* Inner Provider */}
             <DataProviderTwo>
               <App />
 
-              {/* Toast (merged config) */}
               <ToastContainer
                 position="top-right"
                 autoClose={1000}

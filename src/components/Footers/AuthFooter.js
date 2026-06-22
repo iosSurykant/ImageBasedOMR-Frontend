@@ -1,6 +1,5 @@
-
-// reactstrap components
-import { NavItem, NavLink, Nav, Container, Row, Col } from "reactstrap";
+/* eslint-disable react/jsx-no-target-blank */
+import { Container, Row, Col } from "reactstrap";
 
 const Login = () => {
   return (
@@ -11,8 +10,7 @@ const Login = () => {
             <Col xl="12">
               <div className="copyright text-center  text-muted">
                 © {new Date().getFullYear()}{" "}
-                <a
-                  className="font-weight-bold ml-1 text-light"
+                <a className="font-weight-bold ml-1 text-light"
                   href="https://www.creative-tim.com?ref=adr-auth-footer"
                   target="_blank"
                 >
@@ -20,42 +18,6 @@ const Login = () => {
                 </a>
               </div>
             </Col>
-            {/* <Col xl="6">
-              <Nav className="nav-footer justify-content-center justify-content-xl-end">
-                <NavItem>
-                  <NavLink
-                    href="https://www.creative-tim.com?ref=adr-auth-footer"
-                    target="_blank"
-                  >
-                    Creative Tim
-                  </NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink
-                    href="https://www.creative-tim.com/presentation?ref=adr-auth-footer"
-                    target="_blank"
-                  >
-                    About Us
-                  </NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink
-                    href="http://blog.creative-tim.com?ref=adr-auth-footer"
-                    target="_blank"
-                  >
-                    Blog
-                  </NavLink>
-                </NavItem>
-                <NavItem>
-                  <NavLink
-                    href="https://github.com/creativetimofficial/argon-dashboard/blob/master/LICENSE.md?ref=adr-auth-footer"
-                    target="_blank"
-                  >
-                    MIT License
-                  </NavLink>
-                </NavItem>
-              </Nav>
-            </Col> */}
           </Row>
         </Container>
       </footer>

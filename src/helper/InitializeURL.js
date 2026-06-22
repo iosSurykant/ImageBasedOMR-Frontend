@@ -56,6 +56,15 @@ const initializeUrls = async () => {
     MERGECSV: `${baseUrl}api/AmityDemand/MargeCSV`,
     GET_DB_DATA: `${baseUrl}api/showRecord/GetDB_Rec`,
     DELETE_DB_DATA: `${baseUrl}api/showRecord/Delete_Rec`,
+
+    // Pricing Api
+    ADD_PACKAGE:`${baseUrl}api/Wallet/AddPackage`,
+    DELETE_PACKAGE:`${baseUrl}api/Wallet/DeletePackage`,
+    GET_PACKAGES:`${baseUrl}api/Wallet/ListPackages`,
+    WALLET_RECHARGE:`${baseUrl}api/Wallet/RechargeWallet`,
+    WALLET_TRAN:`${baseUrl}api/Wallet/GetWalletTran`,
+    GET_WALLET:`${baseUrl}api/Wallet/GetWallet`,
+
     MAIN_URL: baseUrl,
   };
 };

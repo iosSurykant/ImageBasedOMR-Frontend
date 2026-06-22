@@ -60,8 +60,6 @@ const MergeModal = ({ isOpen, onClose, templateId, message, table }) => {
     }
   };
   const duplicateHandler = async () => {
-    // console.log(tableName);
-    // // templateId
     try {
       setLoading(true);
 

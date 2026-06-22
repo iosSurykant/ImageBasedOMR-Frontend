@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation, Route, Routes, Navigate } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import AuthNavbar from 'components/Navbars/AuthNavbar.js';
+// import AuthNavbar from 'components/Navbars/AuthNavbar.js';
 import AuthFooter from 'components/Footers/AuthFooter.js';
-import routes from 'routes.js';
+import routes from '../config/routes';
 
 // Your login and signup pages
-import Login from 'views/examples/Login';
-import Signup from 'views/examples/Signup';
+import Login from '../auth/Login';
+import Signup from '../auth/Signup';
 
 const Auth = (props) => {
   const mainContent = React.useRef(null);
@@ -48,7 +48,7 @@ const Auth = (props) => {
         className='main-content'
         ref={mainContent}
       >
-        <AuthNavbar />
+        {/* <AuthNavbar /> */}
         <div className='header bg-gradient-info py-7 py-lg-8'>
           <div className='separator separator-bottom separator-skew zindex-100'>
             <svg

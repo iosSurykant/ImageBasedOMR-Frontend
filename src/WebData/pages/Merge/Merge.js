@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from "react";
 import NewSelect from "../../UI/NewSelect";
 import { MdCompareArrows } from "react-icons/md";
-import Multiselect from "multiselect-react-dropdown";
 import {
-  checkMappedDataExits,
   fetchFilesAssociatedWithTemplate,
   fetchHeadersInDuplicate,
-  onGetAllTasksHandler,
-  REACT_APP_IP,
 } from "../../services/common";
-import { use } from "react";
-import axios from "axios";
-import DeactivateModal from "../../components/DeactivateModal";
 import MergeModal from "../../UI/MergeModal";
-import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 const Merge = () => {
   const [options, setOptions] = useState([]);
@@ -26,13 +18,7 @@ const Merge = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSelectAll = () => {
-    if (selectedValues.length === options.length) {
-      setSelectedValues([]);
-    } else {
-      setSelectedValues(options);
-    }
-  };
+
   useEffect(() => {
     if (selectedTemplate) {
       fetchFile(selectedTemplate);
@@ -50,9 +36,6 @@ const Merge = () => {
       navigate("/merge/duplicate", {
         state: { headers, selectedFile },
       });
-      // setModals(true);
-      // setMessage(res.data.message);
-      // setTableName(res.data.tableName);
     } catch (error) {
       console.log(error);
     } finally {

@@ -1,19 +1,15 @@
-
 import React from "react";
 import { useLocation, Route, Routes, Navigate } from "react-router-dom";
 // core components
 import AdminNavbar from "components/Navbars/AdminNavbar.js";
 import Sidebar from "components/Sidebar/Sidebar.js";
 
-import routes from "routes.js";
+import routes from "../config/routes.js";
 
-import AdminScanJob from "views/AdminScanJob";
-import EditDesignTemplate from "views/simplex/EditDesignTemplate";
-import TemplateEditor from "views/simplex/TemplateEditor";
-import { useScan } from "context/ScanningContext";
+import AdminScanJob from "../features/Scanner/AdminScanJob.js";
+import TemplateEditor from "../features/TemplateManager/TemplateEditor.js";
 
 const Admin = (props) => {
-  const { isScanning } = useScan();
   const mainContent = React.useRef(null);
   const location = useLocation();
 
@@ -22,8 +18,6 @@ const Admin = (props) => {
     document.scrollingElement.scrollTop = 0;
     mainContent.current.scrollTop = 0;
   }, [location]);
-  
-  console.log(isScanning);
 
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
@@ -61,7 +55,7 @@ const Admin = (props) => {
         }}
       />
       <div className="main-content" ref={mainContent}>
-        <div style={{ position: "fixed", top: 0, zIndex:9999}}>
+        <div style={{ position: "fixed", top: 0, zIndex: 9999 }}>
           <AdminNavbar
             {...props}
             brandText={getBrandText(props?.location?.pathname)}
@@ -75,15 +69,8 @@ const Admin = (props) => {
             path="/template/create-template/:Id"
             element={<TemplateEditor />}
           />
-          <Route
-            path="/template/edit-template"
-            element={<EditDesignTemplate />}
-          />
           <Route path="/job-queue/adminscanjob" element={<AdminScanJob />} />
         </Routes>
-        {/* <Container fluid >
-          <AdminFooter />
-        </Container> */}
       </div>
     </>
   );
