@@ -27,13 +27,13 @@ export const updateUser = async (data) => {
 
 export const removeUser = async (id) => {
   const urls = await url.getUrls();
-  return del(`${urls.DELETE_USER}?id=${id}`);
+  return del(`${urls.DELETE_USER}?idEmp=${id}`);
 };
 
 export const fetchAllUsers = async () => {
   const urls = await url.getUrls();
   const token = localStorage.getItem("token");
-  return get(urls.GET_USERS, {
+  return post(urls.GET_USERS, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -50,7 +50,7 @@ export const login = async (uname, pwd) => {
   const urls = await url.getUrls();
   // return get(`${urls.LOGIN}?uname=${uname}&pwd=${pwd}`);
 
-  return get(`${urls.LOGIN}?uname=${uname}&pwd=${pwd}`, {
+  return post(`${urls.LOGIN}?uname=${uname}&pwd=${pwd}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

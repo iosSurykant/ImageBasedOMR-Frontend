@@ -21,7 +21,6 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { getLayoutDataById } from "helper/TemplateHelper";
 import Placeholder from "../../components/ui/Placeholder"
-import CloneTemplateHandler from "services/CloneTemplate";
 import { createTemplate } from "helper/TemplateHelper";
 
 import { fetchAllUsers } from "helper/userManagment_helper";
@@ -42,22 +41,6 @@ const Template = () => {
     sessionStorage.clear();
   }, []);
 
-  const cloneHandler = async (arr) => {
-    console.log(templateDatail[0].layoutParameters.id);
-    const temp = await CloneTemplateHandler(
-      templateDatail[0].layoutParameters.id,
-    );
-
-    if (temp === "Template Cloned Successfully") {
-      toast.success(temp);
-    } else {
-      toast.error(temp);
-    }
-    setToggle((tg) => !tg);
-    setShowDetailModal(false);
-  };
-
-  // const handleRowClick = (rowData, index) => {};
   const editHandler = async (arr, index) => {
     setLoading(true);
 
@@ -107,6 +90,7 @@ const Template = () => {
         }
       }
     });
+    
   };
 
   const placeHolderJobs = new Array(10).fill(null).map((_, index) => (
@@ -326,8 +310,6 @@ const Template = () => {
 
                 <Table
                   className="align-items-center table-flush mb-5 table-hover"
-                  // style={{ width: '100%', tableLayout: 'fixed' }}
-                  // responsive
                 >
                   <thead
                     className="thead-light"
@@ -524,14 +506,9 @@ const Template = () => {
             >
               Close
             </Button>
-            <Button variant="success" onClick={cloneHandler}>
-              Clone Template
-            </Button>
           </Modal.Footer>
         </Modal>
       )}
-      {/* <TemplateModal show={modalShow} onHide={() => setModalShow(false)} />{" "} */}
-      {/* Create Template modal */}
 
       <Modal
         show={modalShow}

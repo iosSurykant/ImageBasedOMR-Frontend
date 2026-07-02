@@ -9,76 +9,125 @@ import {
   Chip,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { getPackages } from "helper/Pricing_helper";
-import { deletePackage } from "helper/Pricing_helper";
+import { getPackages, deletePackage } from "helper/Pricing_helper";
 import { toast } from "react-toastify";
-import { PricingCard } from "./PricingCard";
+import { PricingCard } from "./pages/PricingCard";
 import Swal from "sweetalert2";
-// import NormalHeader from "components/Headers/NormalHeader";
+import { createPayment } from "helper/Pricing_helper";
+import { openCashfreeCheckout } from "services/cashfreeService";
+import { paymentHistory } from "helper/Pricing_helper";
+import PaymentHistory from "./pages/PaymentHistory";
+import NormalHeader from "components/Headers/NormalHeader";
 
 export default function PricingPlans() {
   const [plans, setPlans] = useState([]);
+  const [history, setHistory] = useState([])
+  const [activePackage, setActivePackage] = useState("")
 
   const navigate = useNavigate();
 
   const userData = localStorage.getItem("userData");
   const role = JSON.parse(userData).role;
+  const phone = JSON.parse(userData).phone;
+  const email = JSON.parse(userData).email;
+  const userName = JSON.parse(userData).userName;
 
   const getSubscription = async () => {
     try {
       const response = await getPackages();
       const data = await response.data;
+      const initialPlan = await response.activePackage
       setPlans(data);
+      setActivePackage(initialPlan)
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
     }
   };
 
-    const handleDelete = async (packId) => {
-      Swal.fire({
-        title: "Delete Template?",
-        text: "Are you sure you want to delete this template?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Delete",
-        cancelButtonText: "Cancel",
-      }).then(async (result) => {
-        if (result?.isConfirmed) {
-          const res = await deletePackage(packId);
-          getSubscription();
-  
-          if (res?.state === true) {
-            toast.success("Deleted Sucessfull")
-  
-            Swal.fire({
-              icon: "success",
-              title: "Deleted",
-              text: "Subscription deleted successfully",
-              timer: 1500,
-              showConfirmButton: false,
-            });
-            
-          } else {
-            Swal.fire({
-              icon: "error",
-              title: "Failed",
-              text: "Could not delete Subscription",
-            });
-          }
-        }
-      });
+  const handleSubscription = async (plan) => {
+    const data = {
+      order_Amount: plan.amount,
+      packageId: plan.packId,
+      customer_Details: {
+        customer_Phone: phone,
+        customer_Email: email,
+        customer_Name: userName,
+      },
     };
+
+    try {
+      const response = await createPayment({ data });
+
+      console.log(response)
+
+      const orderDetails = JSON.parse(response.result2);
+
+      console.log("(orderDetails.order_meta.return_url",orderDetails.order_meta.return_url);
+
+      const paymentSessionId = response.data.payment_session_id;
+      const order_id = response.data.order_id;
+
+      await openCashfreeCheckout(paymentSessionId, order_id);
+      
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleDelete = async (packId) => {
+    Swal.fire({
+      title: "Delete Template?",
+      text: "Are you sure you want to delete this template?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result?.isConfirmed) {
+        const res = await deletePackage(packId);
+        getSubscription();
+
+        if (res?.state === true) {
+          toast.success("Deleted Sucessfull");
+
+          Swal.fire({
+            icon: "success",
+            title: "Deleted",
+            text: "Subscription deleted successfully",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: "Could not delete Subscription",
+          });
+        }
+      }
+    });
+  };
+
+    const userPaymentHistory = async () => {
+    const res = await paymentHistory()
+    setHistory(res.data)
+  }
+
+  console.log(history)
+  console.log(activePackage)
 
   useEffect(() => {
     getSubscription();
+    userPaymentHistory();
   }, []);
 
   return (
     <>
-      {/* <NormalHeader /> */}
-      <Container maxWidth="lg" sx={{ bg: "white", py: 5 }}>
+      <NormalHeader />
+      <Container maxWidth="lg" sx={{ bg: "white", position:"relative", zIndex: 1, mt: -18, }}>
         {/* Header */}
         <Stack
           direction={{ xs: "column", md: "row" }}
@@ -127,7 +176,6 @@ export default function PricingPlans() {
           {/* Right Side */}
           {role === "admin" && (
             <Button
-              variant="contained"
               onClick={() => navigate("/admin/Subscription/create")}
               sx={{
                 minWidth: 140,
@@ -136,6 +184,8 @@ export default function PricingPlans() {
                 fontWeight: 600,
                 textTransform: "none",
                 boxShadow: "none",
+                bgcolor: "white",
+                color: "black"
               }}
             >
               Create Package
@@ -156,6 +206,7 @@ export default function PricingPlans() {
             >
               <PricingCard
                 handleDelete={handleDelete}
+                handleSubscription={handleSubscription}
                 plan={plan}
                 role={role}
                 isFeatured={index === 1}
@@ -163,7 +214,11 @@ export default function PricingPlans() {
             </Grid>
           ))}
         </Grid>
+
+        <PaymentHistory historyData={history} activePlan={activePackage} />
+
       </Container>
+
     </>
   );
 }

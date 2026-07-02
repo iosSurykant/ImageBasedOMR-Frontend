@@ -51,6 +51,8 @@ const initializeUrls = async () => {
     GET_TOTAL_EXCEL_ROW: `${baseUrl}GetTotalExcelRow`,
     TOTAL_SCANNING: `${baseUrl}api/showRecord/Dash_AllRec`,
     ACCURACY_RATE: `${baseUrl}api/showRecord/Dash_Avrage`,
+
+    //Result Generation and Merge Csv
     GETCSVHEADER: `${baseUrl}api/OmrProcessing/GetCSVHeader`,
     GENERATE_RESULT: `${baseUrl}api/AmityDemand/GenerateResultExcel`,
     MERGECSV: `${baseUrl}api/AmityDemand/MargeCSV`,
@@ -58,12 +60,17 @@ const initializeUrls = async () => {
     DELETE_DB_DATA: `${baseUrl}api/showRecord/Delete_Rec`,
 
     // Pricing Api
-    ADD_PACKAGE:`${baseUrl}api/Wallet/AddPackage`,
-    DELETE_PACKAGE:`${baseUrl}api/Wallet/DeletePackage`,
-    GET_PACKAGES:`${baseUrl}api/Wallet/ListPackages`,
-    WALLET_RECHARGE:`${baseUrl}api/Wallet/RechargeWallet`,
-    WALLET_TRAN:`${baseUrl}api/Wallet/GetWalletTran`,
-    GET_WALLET:`${baseUrl}api/Wallet/GetWallet`,
+    ADD_PACKAGE: `${baseUrl}api/Wallet/AddPackage`,
+    DELETE_PACKAGE: `${baseUrl}api/Wallet/DeletePackage`,
+    GET_PACKAGES: `${baseUrl}api/Wallet/ListPackages`,
+    WALLET_RECHARGE: `${baseUrl}api/Wallet/RechargeWallet`,
+    WALLET_TRAN: `${baseUrl}api/Wallet/GetWalletTran`,
+    GET_WALLET: `${baseUrl}api/Wallet/GetWallet`,
+
+    //Payment Api
+    PAYMENT: `${baseUrl}api/Payments/create-order`,
+    PAYMENT_VERIFICATION:`${baseUrl}api/Payments/verify`,
+    PAYMENT_HISTORY: `${baseUrl}api/Wallet/PaymentHistory`,
 
     MAIN_URL: baseUrl,
   };

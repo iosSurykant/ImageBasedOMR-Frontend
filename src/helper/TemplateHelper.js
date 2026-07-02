@@ -23,8 +23,6 @@ import * as url from "./url_helper";
   };
 
 
-
-
 export const createTemplate = async (templateName, image, empId) => {
   const token = localStorage.getItem("token");
   const urls = await url.getUrls();

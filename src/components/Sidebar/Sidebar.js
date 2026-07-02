@@ -98,8 +98,10 @@ const Sidebar = (props) => {
   const handleToggleCollapse = () => setCollapsed((c) => !c);
 
   const createLinks = (routes) => {
+    const role = JSON.parse(localStorage.getItem("userData"))?.role;
     return routes
       ?.filter((r) => r.showInSidebar !== false)
+      ?.filter((r) => !r.roleRequired || r.roleRequired === role)
       .map((route, index) => {
         const visibleChildren =
           route.children?.filter((c) => c.showInSidebar !== false) ?? [];

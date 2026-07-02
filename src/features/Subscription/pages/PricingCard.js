@@ -13,6 +13,7 @@ import { Edit, Delete, CheckCircle } from "@mui/icons-material";
 export const PricingCard = ({
   role,
   handleDelete,
+  handleSubscription,
   plan,
   isFeatured = false,
 }) => {
@@ -82,8 +83,8 @@ export const PricingCard = ({
             size="small"
             onClick={() => handleDelete(plan.packId)}
             sx={{
-            //   color: "error.main",
-            color: isFeatured ? "#fff":"error.main",
+              //   color: "error.main",
+              color: isFeatured ? "#fff" : "error.main",
               "&:hover": {
                 bgcolor: "error.lighter",
               },
@@ -212,6 +213,7 @@ export const PricingCard = ({
       {/* Button */}
       <Box sx={{ p: 3, pt: 0 }}>
         <Button
+          onClick={() => handleSubscription(plan)}
           variant={isFeatured ? "contained" : "outlined"}
           fullWidth
           sx={{

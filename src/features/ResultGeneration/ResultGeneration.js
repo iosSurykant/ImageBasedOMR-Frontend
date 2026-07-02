@@ -172,7 +172,7 @@ const ResultGenerateUI = () => {
 
                 <label className="upload-box mb-2">
                   <p className="mb-1 small">Upload Student File</p>
-                  <span className="text-muted small">csv, pdf, xls</span>
+                  <span className="text-muted small">csv, xls</span>
                   <input
                     type="file"
                     hidden

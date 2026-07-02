@@ -6,9 +6,6 @@ import Sidebar from "components/Sidebar/Sidebar.js";
 
 import routes from "../config/routes.js";
 
-import AdminScanJob from "../features/Scanner/AdminScanJob.js";
-import TemplateEditor from "../features/TemplateManager/TemplateEditor.js";
-
 const Admin = (props) => {
   const mainContent = React.useRef(null);
   const location = useLocation();
@@ -23,7 +20,12 @@ const Admin = (props) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
         return (
-          <Route path={prop.path} element={prop.component} key={key} exact />
+          <Route
+            path={prop.path}
+            element={<prop.component />}
+            key={key}
+            exact
+          />
         );
       } else {
         return null;
@@ -65,11 +67,6 @@ const Admin = (props) => {
         <Routes>
           {getRoutes(routes)}
           <Route path="*" element={<Navigate to="/admin/index" replace />} />
-          <Route
-            path="/template/create-template/:Id"
-            element={<TemplateEditor />}
-          />
-          <Route path="/job-queue/adminscanjob" element={<AdminScanJob />} />
         </Routes>
       </div>
     </>

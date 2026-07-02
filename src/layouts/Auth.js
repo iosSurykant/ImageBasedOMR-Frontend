@@ -1,13 +1,8 @@
 import React from 'react';
 import { useLocation, Route, Routes, Navigate } from 'react-router-dom';
-import { Container, Row, Col } from 'reactstrap';
-// import AuthNavbar from 'components/Navbars/AuthNavbar.js';
+import { Container, Row } from 'reactstrap';
 import AuthFooter from 'components/Footers/AuthFooter.js';
 import routes from '../config/routes';
-
-// Your login and signup pages
-import Login from '../auth/Login';
-import Signup from '../auth/Signup';
 
 const Auth = (props) => {
   const mainContent = React.useRef(null);
@@ -32,7 +27,7 @@ const Auth = (props) => {
         return (
           <Route
             path={prop.path}
-            element={prop.component}
+            element={<prop.component />}
             key={key}
             exact
           />
@@ -48,7 +43,6 @@ const Auth = (props) => {
         className='main-content'
         ref={mainContent}
       >
-        {/* <AuthNavbar /> */}
         <div className='header bg-gradient-info py-7 py-lg-8'>
           <div className='separator separator-bottom separator-skew zindex-100'>
             <svg
@@ -72,20 +66,6 @@ const Auth = (props) => {
           <Row className='justify-content-center'>
             <Routes>
               {getRoutes(routes)}
-
-              {/* Login */}
-              <Route
-                path='/login'
-                element={<Login />}
-              />
-
-              {/* Signup */}
-              <Route
-                path='/signup'
-                element={<Signup />}
-              />
-
-              {/* Redirect */}
               <Route
                 path='*'
                 element={

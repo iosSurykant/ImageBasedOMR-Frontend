@@ -1,26 +1,34 @@
-
+import { getPackages } from "helper/Pricing_helper";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// reactstrap components
 import {
   DropdownMenu,
   DropdownItem,
   UncontrolledDropdown,
   DropdownToggle,
-  Form,
   Navbar,
   Nav,
   Container,
   Media,
 } from "reactstrap";
-import { jwtDecode } from "jwt-decode";
 
-
-const AdminNavbar = (props) => {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+const AdminNavbar = () => {
   const navigate = useNavigate();
+  const [credits, setCredits] = useState(0);
 
+  const getCredits = async () => {
+    try {
+      const response = await getPackages();
+      const initialPlan = await response.activePackage;
+      setCredits(initialPlan.recognition_credits_total);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCredits();
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -30,53 +38,105 @@ const AdminNavbar = (props) => {
   };
 
   return (
-    <>
-      <Navbar
-        className="navbar-top navbar-dark "
-        style={{ position: "fixed", top: "0px", left: "0px", zIndex: "-999" }}
-        expand="md"
-        id="navbar-main"
-        sticky="top"
-      >
-        <Container fluid>
-          <Form className="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
-            {/* Search form content */}
-          </Form>
-          <Nav className="align-items-center d-none d-md-flex " navbar>
-            <UncontrolledDropdown nav>
-              <DropdownToggle className="pr-0" nav>
-                <Media className="align-items-center position-fixed">
-                  <i
-                    className="ni ni-single-02 "
-                    style={{ fontSize: "1rem" }}
-                  ></i>
-                  <Media className="ml-2 d-none d-lg-block">
-                    <span className="mb-0 text-sm font-weight-bold">
-                      {name}
-                    </span>
-                    <div className="mb-0 text-xs ">{role}</div>
-                  </Media>
+    <Navbar
+      className="navbar-top navbar-light shadow-sm"
+      expand="md"
+      id="navbar-main"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: "250px", // Sidebar width
+        right: 0,
+        height: "60px",
+        zIndex: 1030,
+      }}
+    >
+      <Container fluid className="h-100">
+        <Nav className="align-items-center ml-auto" navbar>
+          {/* Credit Card */}
+          <div
+            className="d-flex align-items-center px-3 py-2 mr-3"
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: "10px",
+              minHeight: "42px",
+            }}
+          >
+            <div
+              className="d-flex justify-content-center align-items-center mr-2"
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                background: "#FFD54F",
+                color: "#333",
+              }}
+            >
+              <i className="ni ni-money-coins"></i>
+            </div>
+
+            <div className="d-flex flex-column">
+              <small
+                style={{
+                  color: "#e9ecef",
+                  fontSize: "11px",
+                  lineHeight: 1,
+                }}
+              >
+                Credits
+              </small>
+              <strong className="text-white">{credits}</strong>
+            </div>
+          </div>
+
+          {/* Profile */}
+          <UncontrolledDropdown nav>
+            <DropdownToggle
+              nav
+              className="d-flex align-items-center"
+              caret={false}
+            >
+              <Media className="align-items-center">
+                <Media body className="mr-2 d-none d-lg-block">
+                  <span className="mb-0 text-sm font-weight-bold text-white">
+                    Shivam
+                  </span>
                 </Media>
-              </DropdownToggle>
-              <DropdownMenu className="dropdown-menu-arrow" right>
-                <DropdownItem className="noti-title" header tag="div">
-                  <h6 className="text-overflow m-0">Welcome!</h6>
-                </DropdownItem>
-                <DropdownItem tag={Link} to="/admin/user-profile">
-                  <i className="ni ni-single-02" />
-                  <span>My profile</span>
-                </DropdownItem>
-                <DropdownItem divider />
-                <DropdownItem onClick={handleLogout}>
-                  <i className="ni ni-user-run" />
-                  <span>Logout</span>
-                </DropdownItem>
-              </DropdownMenu>
-            </UncontrolledDropdown>
-          </Nav>
-        </Container>
-      </Navbar>
-    </>
+
+                <div
+                  className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                  }}
+                >
+                  <i className="ni ni-single-02"></i>
+                </div>
+              </Media>
+            </DropdownToggle>
+
+            <DropdownMenu right className="dropdown-menu-arrow">
+              <DropdownItem header className="noti-title">
+                <h6 className="m-0">Welcome!</h6>
+              </DropdownItem>
+
+              <DropdownItem tag={Link} to="/admin/user-profile">
+                <i className="ni ni-single-02" />
+                <span>My Profile</span>
+              </DropdownItem>
+
+              <DropdownItem divider />
+
+              <DropdownItem onClick={handleLogout}>
+                <i className="ni ni-user-run" />
+                <span>Logout</span>
+              </DropdownItem>
+            </DropdownMenu>
+          </UncontrolledDropdown>
+        </Nav>
+      </Container>
+    </Navbar>
   );
 };
 

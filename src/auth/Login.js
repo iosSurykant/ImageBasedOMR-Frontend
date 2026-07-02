@@ -39,28 +39,27 @@ const Login = () => {
     }
     try {
       setIsLoading(true);
-      const obj = {
-        email,
-        password,
-      };
-      setIsLoading(true);
       const res = await login(email, password);
-      console.log(res);
+
+
       if (res === undefined) {
         toast.error("Can't Connect to network");
         return;
       }
+
       if (!res.success) {
         setIsLoading(false);
         localStorage.setItem("token", res.token);
         const decoded = jwtDecode(res.token);
 
-        console.log(decoded)
 
         const role = decoded.role;
         const empid = decoded.nameid;
+        const phone = decoded.Phone;
+        const userName = decoded.unique_name;
+        const email = decoded.email;
 
-        localStorage.setItem("userData", JSON.stringify({ role, empid }));
+        localStorage.setItem("userData", JSON.stringify({ role, empid, phone, email, userName }));
 
         if (decoded.Role === "Operator") {
           navigate("/operator/index", { replace: true });
