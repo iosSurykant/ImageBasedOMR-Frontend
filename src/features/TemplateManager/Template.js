@@ -1,578 +1,346 @@
+import React, { useEffect, useState } from "react";
 import {
-  Card,
-  CardHeader,
-  DropdownMenu,
-  DropdownItem,
-  UncontrolledDropdown,
-  DropdownToggle,
-  Table,
-  Container,
-} from "reactstrap";
-// core components
-import NormalHeader from "components/Headers/NormalHeader";
-import { Modal, Button, Row, Col, Spinner } from "react-bootstrap";
-import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import DataContext from "../../context/DataContext";
-import { fetchAllTemplate } from "helper/TemplateHelper";
-import { deleteTemplate } from "helper/TemplateHelper";
-import Swal from "sweetalert2";
-
+  FaSearch,
+  FaRegEdit,
+  FaRegTrashAlt,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTemplates, deleteTemplate, getLayoutData, } from "../../redux/reducers/templateSlice";
+import CreateTemplateModal from "./CreateTemplateModel";
 import { toast } from "react-toastify";
-import { getLayoutDataById } from "helper/TemplateHelper";
-import Placeholder from "../../components/ui/Placeholder"
-import { createTemplate } from "helper/TemplateHelper";
-
-import { fetchAllUsers } from "helper/userManagment_helper";
+import { useNavigate } from "react-router-dom";
 
 const Template = () => {
-  const [modalShow, setModalShow] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [templateDatail, setTemplateDetail] = useState([]);
-  const [toggle, setToggle] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [templateLoading, setTemplateLoading] = useState(false);
-  const [templateName, setTemplateName] = useState(null);
-  const [templateImage, setTemplateImage] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const dataCtx = useContext(DataContext);
-  useEffect(() => {
-    sessionStorage.clear();
-  }, []);
+  const { list: templates, loading, error, } = useSelector((state) => state.templates);
 
-  const editHandler = async (arr, index) => {
-    setLoading(true);
-
-    const templateId = arr.id;
-    const res = await getLayoutDataById(templateId);
-    if (res?.data?.jsonPath === "") {
-      toast.warning("Template Not Created Yet!!");
+  const handleEdit = async (id) => {
+    try {
+      const { payload } = await dispatch(getLayoutData(id));
+      toast.success(payload.message);
+      const Id = payload.data.id
+      navigate(`/app/template/create-template/${Id}`);
+    } catch (error) {
+      console.log(error);
+      toast.error("Error fetching template data");
     }
-    console.log(res);
-    console.log("text here ");
-    // return;
-    setLoading(false);
-    navigate(`/admin/template/create-template/${arr.id}`);
   };
 
-  const deleteHandler = async (arr, index) => {
-    Swal.fire({
-      title: "Delete Template?",
-      text: "Are you sure you want to delete this template?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-    }).then(async (result) => {
-      if (result?.isConfirmed) {
-        const id = arr?.id;
-        const res = await deleteTemplate(id);
-
-        if (res?.state) {
-          setToggle((prev) => !prev);
-
-          Swal.fire({
-            icon: "success",
-            title: "Deleted",
-            text: "Template deleted successfully",
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Failed",
-            text: "Could not delete template",
-          });
-        }
-      }
-    });
-    
-  };
-
-  const placeHolderJobs = new Array(10).fill(null).map((_, index) => (
-    <tr key={index}>
-      <td>
-        <Placeholder width="20%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td></td>
-    </tr>
-  ));
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const templatesRes = await fetchAllTemplate();
-        const usersRes = await fetchAllUsers();
-
-        const templates = templatesRes?.body || [];
-        const users = usersRes?.result || [];
-
-        const updatedTemplates = templates.map((template) => {
-          const fileName = template.fileName || "";
-
-          // Try extracting empId
-          const match = fileName.match(/##(\d+)$/);
-          const empIdFromFile = match ? match[1] : null;
-
-          let roleFromUser = null;
-
-          if (empIdFromFile) {
-            const user = users.find(
-              (u) => String(u.empId) === String(empIdFromFile),
-            );
-            roleFromUser = user?.role;
-          }
-
-          return {
-            ...template,
-            role: roleFromUser ?? template.role ?? "N/A",
-          };
-        });
-
-        dataCtx.addToAllTemplate(updatedTemplates);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Get logged-in user
-  const userData = JSON.parse(localStorage.getItem("userData"));
-  const loggedInEmpId = String(userData?.empid || "");
-  const loggedInRole = userData?.role?.toLowerCase();
-
-  // 🔹 Admin sees all, others see only their templates
-  const roleBasedTemplates = dataCtx.allTemplates?.filter((template) => {
-    if (loggedInRole === "admin") {
-      return true;
-    }
-
-    const match = template.fileName?.match(/##(\d+)$/);
-    const empIdFromFile = match ? match[1] : null;
-
-    return empIdFromFile === loggedInEmpId;
-  });
-
-  const filteredTemplates = roleBasedTemplates?.filter((t) => {
-    const name = (t.fileName || "").toLowerCase();
-    const createdBy = (t.createdBy || "").toLowerCase();
-    const search = searchText.toLowerCase();
-
-    return name.includes(search) || createdBy.includes(search);
-  });
-
-  const LoadedTemplates = filteredTemplates?.map((d, i) => {
-    const cleanName = d.fileName.split("##")[0];
-
-    console.log(filteredTemplates);
-
-    return (
-      <tr
-        key={i}
-        // onClick={() => handleRowClick(d, i)}
-        style={{ cursor: "pointer" }}
-      >
-        <td>{i + 1}</td>
-        <td>{cleanName}</td>
-        <td>{d.createAt}</td>
-        {/* <td>{d.updateAt || "N/A"}</td> */}
-        <td>{d.role}</td>
-
-        <td className="text-right">
-          <UncontrolledDropdown>
-            <DropdownToggle
-              className="btn-icon-only text-light"
-              href="#pablo"
-              role="button"
-              size="sm"
-              onClick={(e) => e.preventDefault()}
-            >
-              <i className="fas fa-ellipsis-v" />
-            </DropdownToggle>
-
-            <DropdownMenu className="dropdown-menu-arrow" right>
-              <DropdownItem onClick={() => editHandler(d, i)}>
-                Edit
-              </DropdownItem>
-
-              <DropdownItem
-                style={{ color: "red" }}
-                onClick={() => deleteHandler(d, i)}
-              >
-                Delete
-              </DropdownItem>
-            </DropdownMenu>
-          </UncontrolledDropdown>
-        </td>
-      </tr>
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this template?",
     );
-  });
 
-  const handleCreate = async () => {
-    if (!templateName || !templateImage) {
-      toast.error("Please provide both template name and image.");
-      return;
-    }
+    if (!confirmDelete) return;
 
     try {
-      const { empid } = JSON.parse(localStorage.getItem("userData") || "{}");
-      console.log(empid);
-
-      setLoading(true);
-      const res = await createTemplate(templateName, templateImage, empid);
-      const id = res.data[0].id;
-      toast.success("Template created successfully!");
-      navigate(`/admin/template/create-template/${id}`);
-    } catch (err) {
-      console.error("Error creating template:", err);
+      await dispatch(deleteTemplate(id)).unwrap();
+    } catch (error) {
+      console.error(error);
     }
+  };
+
+  useEffect(() => {
+    dispatch(fetchTemplates());
+  }, [dispatch]);
+
+  const styles = {
+    container: {
+      backgroundColor: "#ffffff",
+      border: "2px solid rgba(217, 217, 217, 0.4)",
+      borderRadius: "8px",
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    },
+    title: {
+      fontWeight: "700",
+      color: "#1a1a1a",
+      fontSize: "20px",
+    },
+    searchWrapper: {
+      position: "relative",
+      width: "240px",
+    },
+    searchInput: {
+      borderRadius: "6px",
+      borderColor: "#e2e8f0",
+      paddingLeft: "35px",
+      fontSize: "14px",
+      height: "38px",
+      color: "#4a5568",
+    },
+    searchIcon: {
+      position: "absolute",
+      left: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      color: "#a0aec0",
+      fontSize: "14px",
+    },
+    btnCreate: {
+      background: "linear-gradient(to left, #3969FE, #1047D5)",
+      borderColor: "#1d52e5",
+      fontWeight: 600,
+      borderRadius: "6px",
+      fontSize: "14px",
+      padding: "8px 16px",
+      boxShadow: "0 2px 4px rgba(29, 82, 229, 0.2)",
+      color: "#fff",
+    },
+    th: {
+      backgroundColor: "#F1F4FC",
+      color: "#4a5568",
+      fontWeight: "600",
+      fontSize: "14px",
+      borderBottom: "none",
+      padding: "14px 16px",
+      textTransform: "capitalize" 
+    },
+    td: {
+      verticalAlign: "middle",
+      fontSize: "14px",
+      color: "#4a5568",
+      borderBottom: "1px solid #f0f2f5",
+      padding: "16px",
+    },
+    templateCode: {
+      color: "#718096",
+      fontSize: "12px",
+      fontWeight: "500",
+    },
+    badgeIncomplete: {
+      backgroundColor: "#fff6e6",
+      color: "#d97706",
+      letterSpacing: "0.05em",
+      fontWeight: "600",
+      fontSize: "12px",
+      padding: "6px 12px",
+      borderRadius: "6px",
+    },
+    badgeActive: {
+      backgroundColor: "#e6f6ee",
+      color: "#178752",
+      letterSpacing: "0.05em",
+      fontWeight: "600",
+      fontSize: "12px",
+      padding: "6px 12px",
+      borderRadius: "6px",
+    },
+    actionBtn: {
+      background: "none",
+      border: "none",
+      padding: "4px 8px",
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "16px",
+    },
+
+    paginationText: {
+      color: "#a0aec0",
+      fontSize: "14px",
+      fontWeight: "500",
+      cursor: "not-allowed",
+    },
+    paginationNum: {
+      color: "#4a5568",
+      fontSize: "14px",
+      fontWeight: "500",
+      padding: "6px 12px",
+      cursor: "pointer",
+    },
+    paginationActive: {
+      backgroundColor: "#1d52e5",
+      color: "#ffffff",
+      fontSize: "14px",
+      fontWeight: "600",
+      borderRadius: "6px",
+      padding: "6px 12px",
+    },
   };
 
   return (
-    <>
-      <NormalHeader />
-      {/* Page content */}
-      <Container className="mt--7" fluid>
-        {/* Table */}
-        <Row>
-          <div className="col">
-            <Card className="shadow">
-              <CardHeader className="border-0">
-                <div className="d-flex flex-wrap justify-content-between align-items-center">
-                  <h3 className="mt-2">All Templates</h3>
+    <div
+      className="container-fluid pb-4 pt-2 bg-white h-100"
+      style={{ overflowY: "scroll" }}
+    >
+      <div className="p-4 mx-auto" style={{ ...styles.container }}>
+        {/* Top Header Section */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="m-0" style={styles.title}>
+            All Templates
+          </h2>
 
-                  <div className="d-flex align-items-center gap-2">
-                    {/* Search Bar */}
-                    <input
-                      type="text"
-                      placeholder="Search templates..."
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      style={{
-                        width: "250px",
-                        padding: "9px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        fontSize: "15px",
-                        marginRight: "20px",
-                      }}
-                    />
-
-                    <Button
-                      color="primary"
-                      type="button"
-                      onClick={() => setModalShow(true)}
-                    >
-                      Create Template
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <div style={{ height: "70vh", overflow: "auto" }}>
-                {loading && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      backgroundColor: "rgba(0, 0, 0, 0.2)", // Slightly opaque background
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      zIndex: 999,
-                      pointerEvents: "auto", // Make the overlay not clickable
-                    }}
-                  >
-                    <Spinner />
-                  </div>
-                )}
-
-                <Table
-                  className="align-items-center table-flush mb-5 table-hover"
-                >
-                  <thead
-                    className="thead-light"
-                    style={{ position: "sticky", top: 0 }}
-                  >
-                    <tr>
-                      <th>SL no.</th>
-                      <th>Template Name</th>
-                      <th>Updated Date</th>
-                      {/* <th>Updated Date</th> */}
-                      <th>Role</th>
-                      <th style={{ width: "70px", textAlign: "right" }}></th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {templateLoading ? placeHolderJobs : LoadedTemplates}
-                  </tbody>
-                </Table>
-              </div>
-            </Card>
-          </div>
-        </Row>
-      </Container>
-
-      {/* Template Detail Modal*/}
-      {templateDatail.length !== 0 && (
-        <Modal
-          show={showDetailModal}
-          onHide={() => setShowDetailModal(false)}
-          size="lg"
-          aria-labelledby="modal-custom-navbar"
-          centered
-        >
-          <Modal.Header>
-            <Modal.Title id="modal-custom-navbar">
-              Template Name : {templateDatail[0].layoutParameters.layoutName}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Row className="mb-3">
-              <Col xs={12} md={2}>
-                <label
-                  htmlFor="example-text-input"
-                  style={{ fontSize: ".9rem" }}
-                >
-                  Name:
-                </label>
-              </Col>
-              <Col xs={12} md={10}>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={templateDatail[0].layoutParameters.layoutName}
-                />
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col xs={12} md={2}>
-                <label
-                  htmlFor="example-text-input"
-                  style={{ fontSize: ".9rem" }}
-                >
-                  Total Row:
-                </label>
-              </Col>
-              <Col xs={12} md={2}>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={templateDatail[0].layoutParameters.timingMarks}
-                  readOnly
-                />
-              </Col>
-              <Col xs={12} md={2}>
-                <label
-                  htmlFor="example-text-input"
-                  style={{ fontSize: ".9rem" }}
-                >
-                  Total Column:
-                </label>
-              </Col>
-              <Col xs={12} md={2}>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={templateDatail[0].layoutParameters.totalColumns}
-                  readOnly
-                />
-              </Col>
-              <Col xs={12} md={2}>
-                <label
-                  htmlFor="example-text-input"
-                  style={{ fontSize: ".9rem" }}
-                >
-                  Bubble Type:
-                </label>
-              </Col>
-              <Col xs={12} md={2}>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={templateDatail[0].layoutParameters.bubbleType}
-                  readOnly
-                />
-              </Col>
-            </Row>
-
-            {templateDatail.Regions &&
-              templateDatail.Regions.map((item, index) => {
-                return (
-                  <div key={index}>
-                    <Row className="mb-3">
-                      <Col xs={12} md={2}>
-                        <label
-                          htmlFor="example-text-input"
-                          style={{ fontSize: ".9rem" }}
-                        >
-                          Region Name:
-                        </label>
-                      </Col>
-                      <Col xs={12} md={10}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={item["Region name"]}
-                          readOnly
-                        />
-                      </Col>
-                    </Row>
-
-                    <Row className="mb-3">
-                      <Col xs={6} md={3}>
-                        <label
-                          htmlFor="example-text-input"
-                          style={{ fontSize: ".9rem" }}
-                        >
-                          Start Row:
-                        </label>
-                        <input
-                          className="form-control"
-                          value={item["Coordinate"]["Start Row"]}
-                          readOnly
-                        />
-                      </Col>
-                      <Col xs={6} md={3}>
-                        <label
-                          htmlFor="example-text-input"
-                          style={{ fontSize: ".9rem" }}
-                        >
-                          Start Col:
-                        </label>
-                        <input
-                          className="form-control"
-                          value={item["Coordinate"]["Start Col"]}
-                          readOnly
-                        />
-                      </Col>
-                      <Col xs={6} md={3}>
-                        <label
-                          htmlFor="example-text-input"
-                          style={{ fontSize: ".9rem" }}
-                        >
-                          End Row:
-                        </label>
-                        <input
-                          className="form-control"
-                          value={item["Coordinate"]["End Row"]}
-                          readOnly
-                        />
-                      </Col>
-                      <Col xs={6} md={3}>
-                        <label
-                          htmlFor="example-text-input"
-                          style={{ fontSize: ".9rem" }}
-                        >
-                          End Col:
-                        </label>
-                        <input
-                          className="form-control"
-                          value={item["Coordinate"]["End Col"]}
-                          readOnly
-                        />
-                      </Col>
-                    </Row>
-                  </div>
-                );
-              })}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDetailModal(false)}
-            >
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      )}
-
-      <Modal
-        show={modalShow}
-        size="md"
-        aria-labelledby="contained-modal-title-vcenter"
-        centered
-      >
-        <Modal.Header>
-          <Modal.Title id="contained-modal-title-vcenter">
-            Create Template
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Row className="mb-3">
-            <label htmlFor="example-text-input" className="col-md-2 col-label">
-              Template Name
-            </label>
-            <div className="col-md-10">
+          <div className="d-flex align-items-center">
+            <div className="mr-3" style={styles.searchWrapper}>
+              <FaSearch style={styles.searchIcon} />
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter Template Name"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Search Template"
+                style={styles.searchInput}
               />
             </div>
-          </Row>
-          <Row className="mb-3">
-            <label htmlFor="image-upload" className="col-md-2 col-label">
-              Upload Image
-            </label>
-            <div className="col-md-10">
-              <input
-                type="file"
-                className="form-control"
-                id="image-upload"
-                accept="image/*"
-                onChange={(e) => setTemplateImage(e.target.files[0])}
-              />
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn btn-primary"
+              style={styles.btnCreate}
+            >
+              Create Template
+            </button>
+          </div>
+        </div>
+
+        {/* Loading & Error States */}
+        {loading && (
+          <div className="text-center py-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="sr-only">Loading...</span>
             </div>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            type="button"
-            color="primary"
-            onClick={() => setModalShow(false)}
-            className="waves-effect waves-light"
-          >
-            Close
-          </Button>{" "}
-          <Button
-            type="button"
-            color="success"
-            disabled={loading}
-            onClick={handleCreate}
-            className="waves-effect waves-light"
-          >
-            {loading && <Spinner animation="border" role="status" />}
-            {!loading && "Create"}
-          </Button>{" "}
-        </Modal.Footer>
-      </Modal>
-    </>
+          </div>
+        )}
+
+        {/* Data Table */}
+        {!loading && !error && (
+          <div className="table-responsive">
+            <table className="table table-borderless m-0">
+              <thead>
+                <tr>
+                  <th style={{ ...styles.th, width: "60px" }}>Sr</th>
+                  <th style={{ ...styles.th, minWidth: "240px", }}>
+                    Template Name
+                  </th>
+                  <th style={{ ...styles.th, minWidth: "280px" }}>
+                    Description
+                  </th>
+                  <th style={{ ...styles.th, minWidth: "180px" }}>
+                    Updated On
+                  </th>
+                  <th style={{ ...styles.th, minWidth: "110px" }}>Status</th>
+                  <th style={{ ...styles.th, width: "140px", textAlign: "center" }}>
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {templates?.map((row) => (
+                  <tr key={row.id}>
+                    <td style={styles.td} className="text-muted">
+                      {
+                        templates?.indexOf(row) + 1
+                      }
+                    </td>
+                    <td style={styles.td}>
+                      <div className="d-flex align-items-center">
+                        <img
+                          src={process.env.REACT_APP_BACKEND_URL + row.imgPath}
+                          alt="thumbnail"
+                          className="rounded mr-3 border"
+                          style={{ width: "40px", height: "40px", objectFit: "cover" }} />
+                        <div>
+                          <div style={{ fontWeight: "600", color: "#2d3748" }}>
+                            {row.fileName}
+                          </div>
+                          <div style={styles.templateCode}>
+                            ID - {row.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={styles.td} className="text-muted">
+                      {row.discription}
+                    </td>
+                    <td style={styles.td}>{row.createAt}</td>
+                    <td style={styles.td}>
+                      <span
+                        style={
+                          row.jsonPath !== ""
+                            ? styles.badgeActive
+                            : styles.badgeIncomplete
+                        }
+                      >
+                        {row.jsonPath === "" ? "Incomplete" : "Active"}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <div className="d-flex justify-content-center align-items-center">
+                        <button
+                          onClick={() => handleEdit(row.id)}
+                          style={{
+                            ...styles.actionBtn,
+                          }}
+                          title="Edit"
+                          className="mx-2 p-2 rounded"
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#E3E8FF")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        >
+                          <FaRegEdit color="#1d52e5" />
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(row.id)}
+                          style={{
+                            ...styles.actionBtn,
+                          }}
+                          title="Delete"
+                          className="p-2 rounded"
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FAD7D7")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        >
+                          <FaRegTrashAlt color="#e53e3e" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination Section */}
+        <div className="d-flex justify-content-end align-items-center mt-4 pt-2">
+          <div className="d-flex align-items-center">
+            <span
+              className="d-flex align-items-center mr-3"
+              style={styles.paginationText}
+            >
+              <FaChevronLeft size={12} className="mr-2" /> Previous
+            </span>
+            <span className="mx-1" style={styles.paginationActive}>
+              1
+            </span>
+            <span className="mx-1" style={styles.paginationNum}>
+              2
+            </span>
+            <span className="mx-1" style={styles.paginationNum}>
+              3
+            </span>
+            <span
+              className="d-flex align-items-center ml-3"
+              style={{
+                ...styles.paginationNum,
+                color: "#1d52e5",
+                fontWeight: "600",
+              }}
+            >
+              Next <FaChevronRight size={12} className="ml-2" />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <CreateTemplateModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
+    </div>
   );
 };
 

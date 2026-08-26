@@ -1,56 +1,82 @@
 import {
-  post,
-  del,
   get,
   postWithFormData,
   putWithFormData,
 } from "./api_helper";
 import * as url from "./url_helper";
+import axiosApi from "Interceptor/axios";
 
 
-// Create Class
-  export const fetchAllTemplate = async () => {
-    const token = localStorage.getItem("token");
+// REPLACING Old Template.js Helper
 
-    const urls = await url.getUrls();
-    const endpoint = urls.GET_ALL_TEMPLATE;
-
-    return await get(endpoint, {  
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  };
-
-
-export const createTemplate = async (templateName, image, empId) => {
-  const token = localStorage.getItem("token");
+export const getAllTemplate = async () => {
   const urls = await url.getUrls();
+  return await axiosApi.get(urls.GET_ALL_TEMPLATE)
+};
 
-  // Send TempName and empId in query params
-  const endpoint = `${urls.CREATE_TEMPLATE}?TempName=${encodeURIComponent(
-    templateName
-  )}&empId=${encodeURIComponent(empId)}`;
-
+export const createTemplate = async (templateName, image, empId, description) => {
+  const urls = await url.getUrls();
   const formData = new FormData();
-
-  // Only file in body
   formData.append("ImgTemp", image);
+  return await axiosApi.post(`${urls.CREATE_TEMPLATE}?TempName=${encodeURIComponent(templateName)}&empId=${encodeURIComponent(empId)}&description=${encodeURIComponent(description)}`, formData);
+};
 
-  const config = {
+export const deleteTemplateById = async (id) => {
+  const urls = await url.getUrls();
+  return await axiosApi.delete(`${urls.DELETE_TEMPLATE}?id=${id}`);
+};
+
+export const getLayoutDataById = async (id) => {
+  const urls = await url.getUrls();
+  return axiosApi.get(`${urls.GET_LAYOUT_DATA}?id=${id}`)
+}; 
+
+
+
+
+
+
+export const fetchAllTemplate = async () => {
+  const token = localStorage.getItem("token");
+
+  const urls = await url.getUrls();
+  const endpoint = urls.GET_ALL_TEMPLATE;
+
+  return await get(endpoint, {
     headers: {
       Authorization: `Bearer ${token}`,
-
     },
-  };
-
-  return await post(endpoint, formData, config);
+  });
 };
+
+
+// export const createTemplate = async (templateName, image, empId) => {
+//   const token = localStorage.getItem("token");
+//   const urls = await url.getUrls();
+
+//   // Send TempName and empId in query params
+//   const endpoint = `${urls.CREATE_TEMPLATE}?TempName=${encodeURIComponent(
+//     templateName
+//   )}&empId=${encodeURIComponent(empId)}`;
+
+//   const formData = new FormData();
+
+//   // Only file in body
+//   formData.append("ImgTemp", image);
+
+//   const config = {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+
+//     },
+//   };
+
+//   return await post(endpoint, formData, config);
+// };
 
 
 export const updateTemplate = async (FileName, jsonFile) => {
   const urls = await url.getUrls();
-  const token = localStorage.getItem("token");
 
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const empid = userData?.empid;
@@ -66,44 +92,36 @@ export const updateTemplate = async (FileName, jsonFile) => {
 
   // Append empid only once
   const updatedFileName = `${baseFileName}##${empid}`;
-  console.log(updatedFileName)
-  
 
   const endpoint = `${urls.UPDATE_TEMPLATE}?FileName=${encodeURIComponent(updatedFileName)}`;
-
-  console.log("Final API URL:", endpoint);
 
   const formData = new FormData();
   formData.append("tempName", jsonFile);
 
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
 
-  return await putWithFormData(endpoint, formData, config);
+
+  return await putWithFormData(endpoint, formData);
 };
 
 
-export const deleteTemplate = async (id) => {
-  const urls = await url.getUrls();
-  const endpoint = `${urls.DELETE_TEMPLATE}?id=${id}`;
-  // const token = localStorage.getItem("token");
+// export const deleteTemplate = async (id) => {
+//   const urls = await url.getUrls();
+//   const endpoint = `${urls.DELETE_TEMPLATE}?id=${id}`;
+//   // const token = localStorage.getItem("token");
 
-  return await del(endpoint);
-};
+//   return await del(endpoint);
+// };
 
-export const getLayoutDataById = async (id) => {
-  const token = localStorage.getItem("token") ?? "";
-  const urls = await url.getUrls();
-  const endpoint = `${urls.GET_LAYOUT_DATA}?id=${id}`;
-  return await get(endpoint, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
+// export const getLayoutDataById = async (id) => {
+//   const token = localStorage.getItem("token") ?? "";
+//   const urls = await url.getUrls();
+//   const endpoint = `${urls.GET_LAYOUT_DATA}?id=${id}`;
+//   return await get(endpoint, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+// };
 
 export const sendFile = async (data) => {
   const urls = await url.getUrls();

@@ -22,7 +22,7 @@ export function useWebSocket({
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
-  useEffect(() => {
+  useEffect(() => { 
     onAccuracyChangeRef.current = onAccuracyChange;
   }, [onAccuracyChange]);
 

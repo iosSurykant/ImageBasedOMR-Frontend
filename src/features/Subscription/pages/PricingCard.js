@@ -9,14 +9,95 @@ import {
   Typography,
 } from "@mui/material";
 import { Edit, Delete, CheckCircle } from "@mui/icons-material";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import { createPayment } from "helper/Pricing_helper";
+import { openCashfreeCheckout } from "services/cashfreeService";
+import { deletePackage } from "helper/Pricing_helper";
 
 export const PricingCard = ({
-  role,
-  handleDelete,
-  handleSubscription,
+  // role,
+  // handleDelete,
+  // handleSubscription,
+  getSubscription,
   plan,
   isFeatured = false,
 }) => {
+  const userData = localStorage.getItem("userData");
+
+  const role = JSON.parse(userData).role;
+  const phone = JSON.parse(userData).phone;
+  const email = JSON.parse(userData).email;
+  const userName = JSON.parse(userData).userName;
+
+  const handleSubscription = async (plan) => {
+    const data = {
+      order_Amount: plan.amount,
+      packageId: plan.packId,
+      customer_Details: {
+        customer_Phone: phone,
+        customer_Email: email,
+        customer_Name: userName,
+      },
+    };
+
+    try {
+      const response = await createPayment({ data });
+
+      console.log(response);
+
+      const orderDetails = JSON.parse(response.result2);
+
+      console.log(
+        "(orderDetails.order_meta.return_url",
+        orderDetails.order_meta.return_url,
+      );
+
+      const paymentSessionId = response.data.payment_session_id;
+      const order_id = response.data.order_id;
+
+      await openCashfreeCheckout(paymentSessionId, order_id);
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleDelete = async (packId) => {
+    Swal.fire({
+      title: "Delete Template?",
+      text: "Are you sure you want to delete this template?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result?.isConfirmed) {
+        const res = await deletePackage(packId);
+        getSubscription();
+
+        if (res?.state === true) {
+          toast.success("Deleted Sucessfull");
+
+          Swal.fire({
+            icon: "success",
+            title: "Deleted",
+            text: "Subscription deleted successfully",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: "Could not delete Subscription",
+          });
+        }
+      }
+    });
+  };
   return (
     <Card
       sx={{

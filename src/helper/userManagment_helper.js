@@ -1,21 +1,41 @@
 import { post, del, get, put } from "./api_helper";
 import * as url from "./url_helper";
 
-// Create Class
+//OPERATOR AND MODERATOR
 export const createUser = async (data) => {
-  const { name, email, cont, role, pwd } = data;
+  console.log(data)
+  const { name, email, cont, role, pwd, referenceId } = data;
   const urls = await url.getUrls();
   return post(
-    `${urls.CREATE_USER}?name=${name}&email=${email}&cont=${cont}&role=${role}&pwd=${pwd}`,
+    `${urls.CREATE_USER}?name=${name}&email=${email}&cont=${cont}&role=${role}&pwd=${pwd}&refranceId=${referenceId}`,
   );
 };
+
+export const fetchAllUsers = async (currentPage,statusFilter,roleFilter,debouncedSearchQuery) => {
+  const urls = await url.getUrls();
+  const pageNumber = currentPage
+  const role = roleFilter
+  const search = debouncedSearchQuery
+  const isLogg = statusFilter
+  const range = 5
+
+  return post(urls.GET_USERS, { pageNumber, range, isLogg, role, search });
+};
+
+
+export const removeUser = async (id) => {
+  const urls = await url.getUrls();
+  return del(`${urls.DELETE_USER}?idEmp=${id}`);
+};
+
 
 export const updateUser = async (data) => {
   const urls = await url.getUrls();
 
   return put(urls.UPDATE_USER, null, {
     params: {
-      EmpId: data.empid,
+      EmpId: data.EmpId,
+      // referenceId: data.referenceId,
       name: data.name,
       email: data.email,
       pwd: data.pwd,
@@ -25,34 +45,38 @@ export const updateUser = async (data) => {
   });
 };
 
-export const removeUser = async (id) => {
+
+export const logout = async () =>{
   const urls = await url.getUrls();
-  return del(`${urls.DELETE_USER}?idEmp=${id}`);
+  return get(`${urls.LOG_OUT}`);
+}
+
+// Via a OTP
+export const createUserWithOtp = async (data) => {
+  const urls = await url.getUrls();
+  return post(
+    `${urls.CREATE_USER_WITH_OTP}?name=${data.fullName}&email=${data.email}&cont=${data.phone}`,
+  );
 };
 
-export const fetchAllUsers = async () => {
+export const verifyOtp = async (data) => {
+  const { email: otpEmail, otp: otpCode } = data;
   const urls = await url.getUrls();
-  const token = localStorage.getItem("token");
-  return post(urls.GET_USERS, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  return post(
+    `${urls.OTP_VERIFY}?email=${otpEmail}&Otp=${otpCode}`,
+  );
 };
 
-export const getUserRoles = async () => {
+export const sendLoginOtp = async ({email}) => {
   const urls = await url.getUrls();
-  return get(urls.GET_USER_ROLES);
-};
+  return post(`${urls.LOGIN_VIA_OTP}?email=${email}`);
+}
 
-export const login = async (uname, pwd) => {
-  const token = localStorage.getItem("token");
+export const createQREndpoint = async (oldSessionId) => {
   const urls = await url.getUrls();
-  // return get(`${urls.LOGIN}?uname=${uname}&pwd=${pwd}`);
 
-  return post(`${urls.LOGIN}?uname=${uname}&pwd=${pwd}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const query = oldSessionId ? `?sessionId=${encodeURIComponent(oldSessionId)}`
+    : "";
+
+  return post(`${urls.CREATE_QR_ENDPOINT}${query}`);
 };

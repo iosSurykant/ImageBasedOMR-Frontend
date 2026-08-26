@@ -102,7 +102,7 @@ const MergeCsvComponent = () => {
       console.log(headers);
       console.log(tableData);
 
-      navigate("/admin/result-table", {
+      navigate("/app/result-table", {
         state: {
           tableHeaders: headers,
           tableData: tableData,

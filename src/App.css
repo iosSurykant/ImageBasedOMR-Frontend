@@ -1,13 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+.outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Firefox */
-/* input[type="number"] {
-  -moz-appearance: textfield;
-} */
 
 .head {
   width: 70vw;
@@ -32,7 +34,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .main-container {
   display: flex;
-  /* width:80vw; */
   justify-content: center;
   align-items: center;
   overflow: auto;
@@ -40,22 +41,15 @@ input[type="number"]::-webkit-outer-spin-button {
 .containers {
   display: flex;
   flex-direction: column;
-  /* align-items: flex-start; */
   align-self: center;
   padding-top: 1rem;
   padding-left: 2rem;
-  /* width: max-content; */
-  /* width: 100%; */
-  /* justify-content: center;  */
-  /* align-items: center;  */
   overflow-y: auto;
-  /* al */
 }
 
 .top-row {
   display: flex;
   margin-left: 40px;
-  /* Adjust according to the size of the timing marks */
 }
 
 .top {
@@ -64,7 +58,6 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .corner {
   width: 0px;
-  /* Space for the row numbers on the left */
 }
 
 .top-num {
@@ -94,18 +87,10 @@ input[type="number"]::-webkit-outer-spin-button {
 .row2 {
   display: flex;
 }
-/* .circle {
-    width: 17px;
-    height: 10px;
-    border: 1px solid black;
-    border-radius: 50%;
-    margin: 2px;
-} */
+
 .left-num-circle {
-  /* margin-bottom: 0.6rem; */
   padding-top: 7px;
   width: 30px;
-  /* Enough space to fit the timing mark and number */
   display: flex;
   align-items: center;
   justify-content: right;

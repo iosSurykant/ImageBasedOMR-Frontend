@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { Provider } from 'react-redux';
+import { store } from "./redux/store"
 
 // Styles
 import "./App.css";
@@ -14,9 +16,8 @@ import "assets/scss/argon-dashboard-react.scss";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ✅ Providers (RENAMED to avoid conflict)
 import DataProviderOne from "./context/DataProvider";        // Project 1
-import DataProviderTwo from "../src/WebData/Store/DataProvider";    // Project 2
+
 import { ScanProvider } from "./context/ScanningContext";
 
 // App
@@ -42,7 +43,7 @@ registerLicense(
   "Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXhdcHRVQmVeV0F3Wks="
 );
 
-// ✅ Load config BEFORE app starts
+//  Load config BEFORE app starts
 fetch("/config.json")
   .then((response) => response.json())
   .then((config) => {
@@ -59,19 +60,20 @@ fetch("/config.json")
       <BrowserRouter>
         <ScanProvider>
           <DataProviderOne>
-            <DataProviderTwo>
-              <App />
-
-              <ToastContainer
-                position="top-right"
-                autoClose={1000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                pauseOnHover
-                theme="light"
-              />
-            </DataProviderTwo>
+            <Provider store={store}>
+              <>
+                <App />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={1000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  pauseOnHover
+                  theme="light"
+                />
+              </>
+            </Provider>
           </DataProviderOne>
         </ScanProvider>
       </BrowserRouter>

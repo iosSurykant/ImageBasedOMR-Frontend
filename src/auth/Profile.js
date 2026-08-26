@@ -142,16 +142,6 @@ const Profile = () => {
                   />
                 </FormGroup>
 
-                {/* <FormGroup>
-              <Label>Contact Number</Label>
-              <Input
-                type="text"
-                name="cont"
-                value={data.cont}
-                onChange={handleChange}
-              />
-            </FormGroup> */}
-
                 <FormGroup>
                   <Label>Contact Number</Label>
 

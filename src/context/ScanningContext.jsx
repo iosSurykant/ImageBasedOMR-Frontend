@@ -1,9 +1,7 @@
 import { createContext, useContext, useState } from "react";
 
-// Create context
 const ScanContext = createContext();
 
-// Provider component
 export const ScanProvider = ({ children }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isPausedContext, setIsPausedContext] = useState(false);
@@ -25,5 +23,4 @@ export const ScanProvider = ({ children }) => {
   );
 };
 
-// Custom hook for easier usage
 export const useScan = () => useContext(ScanContext);

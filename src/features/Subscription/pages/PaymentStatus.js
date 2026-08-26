@@ -155,7 +155,7 @@ const PaymentStatus = () => {
           {status === "success" && (
             <button
               className="btn btn-success btn-lg px-5"
-              onClick={() => navigate("/admin/subscription")}
+              onClick={() => navigate("/app/subscription")}
             >
               Continue
             </button>
@@ -164,7 +164,7 @@ const PaymentStatus = () => {
           {(status === "failed" || status === "error") && (
             <button
               className="btn btn-primary btn-lg px-5"
-              onClick={() => navigate("/admin/subscription")}
+              onClick={() => navigate("/app/subscription")}
             >
               Back
             </button>

@@ -1,2004 +1,849 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Rnd } from "react-rnd";
-import FormData from "./FormData";
-import classes from "./Template.module.css";
-import { RxDragHandleDots2 } from "react-icons/rx";
-import { Button } from "react-bootstrap";
-import SmallHeader from "components/Headers/SmallHeader";
+/* eslint-disable array-callback-return */
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { GoArrowLeft } from "react-icons/go";
+import { FiZoomIn, FiZoomOut } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
-import { getLayoutDataById, updateTemplate } from "helper/TemplateHelper";
-import getBaseUrl from "services/BackendApi";
+import { Rnd } from "react-rnd";
+
+// Redux Toolkit
+import { useDispatch, useSelector } from "react-redux";
+import { getLayoutData, updateTemplateData } from "redux/reducers/templateSlice";
+import { updateSkewPosition, updateSkewDimensions, } from "redux/reducers/skewSlice";
+import { updateBoxGeometry } from "redux/reducers/boxSlice";
+
+// Components
+import Controls from "./editorHelper/controls";
+import Skews from "./editorHelper/skews";
+import MappingForm from "./editorHelper/BoxForm";
+import DynamicGrid from "./editorHelper/dynamicGrid";
+import { selectBox } from "redux/reducers/boxSlice";
+import { isFormPanelOpen } from "redux/reducers/tempControlSlice";
+import axiosApi from "Interceptor/axios";
 import { toast } from "react-toastify";
-import axios from "axios";
-import Swal from "sweetalert2";
-import Spinner from "react-bootstrap/Spinner";
-import { v4 as uuidv4 } from "uuid";
-import ReferenceFieldModal from "./ReferenceFieldModal";
+import { setSelectedSkewCorners } from "redux/reducers/skewSlice";
+import { renderBoxes } from "redux/reducers/boxSlice";
+import MergeModal from "./editorHelper/mergeModel";
 
-//icons
-import { MdAdd } from "react-icons/md";
-import { CiZoomIn } from "react-icons/ci";
-import { CiZoomOut } from "react-icons/ci";
-import { MdOutlineGrid4X4 } from "react-icons/md";
-import { FaCopy } from "react-icons/fa";
-import { FaPaste } from "react-icons/fa";
-import { IoDuplicate } from "react-icons/io5";
-import { MdMerge } from "react-icons/md";
-import { MdSaveAlt } from "react-icons/md";
-import { IoIosArrowDropup } from "react-icons/io";
-
-const referenceOptions = [
-  { id: "topLeft", label: "Top Left" },
-  { id: "bottomLeft", label: "Bottom Left" },
-  { id: "topRight", label: "Top Right" },
-  { id: "bottomRight", label: "Bottom Right" },
+const tourSteps = [
+  {
+    title: "Toolbar",
+    target: "#tour-body",
+    content: "This is your main floating control panel. From here, you can manage all your workspace tools.",
+    placement: "top",
+    disableBeacon: true,
+  },
+  {
+    title: "Skew Calibration Switch",
+    target: "#tour-skew-btn",
+    content: "Toggle this switch to view and adjust the four red skew corners on your document.",
+    placement: "top",
+  },
+  {
+    title: "Hand Tool",
+    target: "#tour-pan-btn",
+    content: "Click the Hand tool to drag and pan around your canvas without moving any boxes.",
+    placement: "top",
+  },
+  {
+    title: "Add Mapping box",
+    target: "#tour-add-btn",
+    content: "Click the Plus icon to open the Form Panel and create a new OMR area.",
+    placement: "top",
+  },
+  {
+    title: "Duplicate / Copy Box",
+    target: "#tour-duplicate-btn",
+    content: "Select an existing box on the canvas, then click here to instantly duplicate it.",
+    placement: "top",
+  },
+  {
+    title: "Delete Mapping box",
+    target: "#tour-delete-btn",
+    content: "Select a box and click the trash can to delete it.",
+    placement: "top",
+  },
+  {
+    title: "Merge / Group Boxes",
+    target: "#tour-merge-btn",
+    content: "Need to combine fields? Click here to open the Merge Panel and group boxes together.",
+    placement: "top",
+  },
+  {
+    title: "Save Template",
+    target: "#tour-save-btn",
+    content: "Click here to save your template.",
+    placement: "top",
+  },
+  {
+    title: "Zoom In / Out",
+    target: "#tour-zoom-btn",
+    content: "Use these buttons to zoom in and out of the canvas.",
+    placement: "top",
+  },
+  {
+    title: "Back to templates List",
+    target: "#tour-back-btn",
+    content: "Click here to go back to the templates list.",
+    placement: "top",
+  }
 ];
 
 const TemplateEditor = () => {
-  // Core states
-  const [boxes, setBoxes] = useState([]);
-  const [copiedBox, setCopiedBox] = useState(null);
-  const [activeMergeEditor, setActiveMergeEditor] = useState(null);
-  const [activeBox, setActiveBox] = useState(null);
-  const [currentBoxData, setCurrentBoxData] = useState(null);
-  const imageRef = useRef(null);
-  const [zoomScale, setZoomScale] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [paths, setPaths] = useState(null);
-  const [baseUrl, setBaseUrl] = useState(null);
-  const [showMergeMenu, setShowMergeMenu] = useState(false);
-  const [selectedMergeBoxes, setSelectedMergeBoxes] = useState([]);
-  const [mergedFields, setMergedFields] = useState([]);
-  const [showReferenceBox, setShowReferenceBox] = useState(false);
-  const [referenceBoxes, setReferenceBoxes] = useState([]);
-  const [currentReferenceBox, setCurrentReferenceBox] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [options, setOptions] = useState(referenceOptions);
-  const buttonRef = useRef(null);
-  const [radius, setRadius] = useState(0.38);
-  const [scrollY, setScrollY] = useState(0);
-  const [boxPos, setBoxPos] = useState({ x: -1000, y: 100 });
-  const initialPosRef = useRef({ x: -1000, y: 100 });
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [jsonData, setJsonData] = useState([]);
+
+  const [runTour, setRunTour] = useState(false);
+
+  // 1. PAN / DRAG STATES & REFS
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+
+  // Getting Json File And Data
   const { Id } = useParams();
+  const [activeSkewCorner, setActiveSkewCorner] = useState(null);
+
+  // Refs for boundary enforcement
+  const containerRef = useRef(null);
+  const imageRef = useRef(null);
+
+  const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 10, 300));
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => {
+      const nextZoom = Math.max(prev - 10, 50);
+      if (nextZoom === 50) setPosition({ x: 0, y: 0 });
+      return nextZoom;
+    });
+  };
+
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
-  const [baseDisplaySize, setBaseDisplaySize] = useState({
-    width: 0,
-    height: 0,
-  });
-  const isTablet = window.innerWidth <= 1024 && window.innerWidth >= 768;
-  const [isDOpen, setIsDOpen] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth); //window size related
+  const { layoutData } = useSelector((state) => state.templates);
+  const tempData = layoutData;
+  const skewData = useSelector((state) => state.skew.skewData);
+  const isPanelOpen = useSelector((state) => state.skew.isPanelOpen);
 
-  const [newboxPos, setNewBoxPos] = useState({ x: 100, y: 100 });
+  const isPanMode = useSelector((state) => state.tempControl.isPanModeActive);
+  const isFormOpen = useSelector((state) => state.tempControl.isFormPanelOpen);
+  const isMergePanel = useSelector((state) => state.tempControl.isMergePanelOpen);
 
-  const handleResize = () => {
-    setWindowWidth(window.innerWidth);
-  };
+  const boxes = useSelector((state) => state.BoxData.boxes);
+  const mergeFields = useSelector((state) => state.BoxData.mergefields);
+  const mergeBoxes = useSelector((state) => state.BoxData.mergeBoxes);
 
-  useEffect(() => {
-    window.addEventListener("resize", handleResize);
+  const selectedBoxId = useSelector((state) => state.BoxData.selectedBoxId);
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };  
-  }, []);
 
-  // Dropdown -> Add box related data
-  const toggleDropdown = () => {
-    setIsDOpen((prevState) => !prevState);
-  };
 
-  function useDraggable() {
-    const ref = React.useRef(null);
-    const dragOffsetRef = React.useRef({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = React.useState(false);
-    const [pos, setPos] = React.useState({ x: 0, y: 0 });
+  console.log("boxes", boxes)
+  console.log("mergerboxes------->>>>>>", mergeBoxes)
+  console.log("mergefields------->>>>>>", mergeFields)
+  console.log("jsonData", jsonData);
 
-    const handleMouseDown = (e) => {
-      if (!ref.current) return;
 
-      const box = ref.current;
-      dragOffsetRef.current = {
-        x: e.clientX - box.offsetLeft,
-        y: e.clientY - box.offsetTop,
-      };
 
-      setIsDragging(true);
-      box.style.cursor = "grabbing";
-    };
+  const getJsonData = useCallback(async () => {
+    if (!Id) return;
 
-    React.useEffect(() => {
-      const handleMouseMove = (e) => {
-        if (!isDragging || !ref.current) return;
+    try {
+      const { payload } = await dispatch(getLayoutData(Id));
 
-        const box = ref.current;
-        const boxWidth = box.offsetWidth;
-        const boxHeight = box.offsetHeight;
+      const jsonXPath = payload?.data?.jsonPath;
 
-        let x = e.clientX - dragOffsetRef.current.x;
-        let y = e.clientY - dragOffsetRef.current.y;
-
-        const maxX = window.innerWidth - boxWidth;
-        const maxY = window.innerHeight - boxHeight;
-
-        x = Math.max(0, Math.min(x, maxX));
-        y = Math.max(0, Math.min(y, maxY));
-
-        box.style.left = `${x}px`;
-        box.style.top = `${y}px`;
-        setPos({ x, y });
-      };
-
-      const handleMouseUp = () => {
-        if (!ref.current) return;
-        setIsDragging(false);
-        ref.current.style.cursor = "grab";
-      };
-
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-      };
-    }, [isDragging]);
-
-    return { ref, handleMouseDown, pos };
-  }
-
-  const fieldNameBox = useDraggable();
-  const mergedFieldNameBox = useDraggable();
-
-  const visualList = useMemo(() => {
-    const result = [];
-    const seen = new Set();
-
-    boxes.forEach((b) => {
-      if (!b.mergedInto) {
-        result.push({
-          type: "single",
-          ids: [b.id],
-          label: b.fieldName,
-        });
-      } else if (!seen.has(b.mergedInto)) {
-        seen.add(b.mergedInto);
-
-        const children = boxes
-          .filter((x) => x.mergedInto === b.mergedInto)
-          .map((x) => x.id);
-
-        result.push({
-          type: "merged",
-          ids: children,
-          label: b.mergedInto,
-        });
+      if (!jsonXPath) {
+        throw new Error("JSON path not found");
       }
-    });
 
-    return result;
-  }, [boxes]);
+      const encodedPath = jsonXPath
+        .split("/")
+        .map(encodeURIComponent)
+        .join("/");
 
-  const mergedEditorList = useMemo(() => {
-    if (!activeMergeEditor) return [];
+      const { data } = await axiosApi.get(
+        `${process.env.REACT_APP_BACKEND_URL}${encodedPath}`,
+      );
 
-    const merge = mergedFields.find(
-      (m) => m.mergeId === activeMergeEditor.mergeId,
-    );
-    if (!merge) return [];
-
-    return merge.childrenIds
-      .map((id) => boxes.find((b) => b.id === id))
-      .filter(Boolean)
-      .map((b) => ({
-        id: b.id,
-        label: b.fieldName,
-        totalRow: b.totalRow,
-        totalCol: b.totalCol,
-        subName: b.subName,
-      }));
-  }, [activeMergeEditor, mergedFields, boxes]);
-
-  console.log(boxes);
-
-  const dragItem = useRef(null);
-  const dragOver = useRef(null);
-
-  const onDragStart = (index) => {
-    dragItem.current = index;
-  };
-
-  const onDragEnter = (index) => {
-    dragOver.current = index;
-  };
-
-  const onDragEnd = () => {
-    if (
-      dragItem.current === null ||
-      dragOver.current === null ||
-      dragItem.current === dragOver.current
-    )
-      return;
-
-    const ordered = [...visualList];
-    const [movedBlock] = ordered.splice(dragItem.current, 1);
-    ordered.splice(dragOver.current, 0, movedBlock);
-
-    // 🔁 rebuild boxes array
-    const newBoxes = [];
-    ordered.forEach((block) => {
-      block.ids.forEach((id) => {
-        const box = boxes.find((b) => b.id === id);
-        if (box) newBoxes.push(box);
-      });
-    });
-
-    setBoxes(newBoxes);
-
-    dragItem.current = null;
-    dragOver.current = null;
-  };
-
-  const mergeDragItem = useRef(null);
-  const mergeDragOver = useRef(null);
-
-  const onMergeDragStart = (index) => {
-    mergeDragItem.current = index;
-  };
-
-  const onMergeDragEnter = (index) => {
-    mergeDragOver.current = index;
-  };
-
-  const onMergeDragEnd = () => {
-    if (
-      mergeDragItem.current === null ||
-      mergeDragOver.current === null ||
-      mergeDragItem.current === mergeDragOver.current
-    )
-      return;
-
-    const updated = [...mergedEditorList];
-    const [moved] = updated.splice(mergeDragItem.current, 1);
-    updated.splice(mergeDragOver.current, 0, moved);
-
-    // 🔁 Update mergedFields childrenIds
-    setMergedFields((prev) =>
-      prev.map((m) =>
-        m.mergeId === activeMergeEditor?.mergeId
-          ? {
-              ...m,
-              childrenIds: updated.map((x) => x.id),
-            }
-          : m,
-      ),
-    );
-
-    // 🔁 Reorder boxes physically (important) 
-    setBoxes((prev) => {
-      const others = prev.filter((b) => !updated.some((u) => u.id === b.id));
-      const reordered = updated.map((u) => prev.find((b) => b.id === u.id));
-      return [...others, ...reordered];
-    });
-
-    mergeDragItem.current = null;
-    mergeDragOver.current = null;
-  };
-
-  // Fetch baseUrl and template paths
-  useEffect(() => {
-    const fetchData = async () => {
-      const baseUrl = await getBaseUrl();
-      setBaseUrl(baseUrl);
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (activeBox !== null) {
-      // Calculate exactly once when opened
-      const newY = window.scrollY + 20; // 80px from top of current screen
-      const newPos = { x: initialPosRef.current.x, y: newY };
-
-      setBoxPos(newPos);
-      // also store it so next open uses same X until dragged
-      initialPosRef.current = newPos;
-    } else {
-      // when form closes, reset X to your left docked position for next open
-      initialPosRef.current.x = -1000;
+      console.log("JSON Data:", data);
+      setJsonData(data);
+    } catch (error) {
+      console.error("Error fetching template data:", error);
     }
-  }, [activeBox]);
+  }, [Id, dispatch]);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll);
-
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [scrollY]);
-
-  // 2. When user drags → remember new position + mark as dragged
-  const handleDragStop = (e, d) => {
-    // User dragged → from now on remember exact position forever
-    initialPosRef.current = { x: d.x, y: d.y };
-    setBoxPos({ x: d.x, y: d.y });
-  };
+    getJsonData();
+  }, [getJsonData]);
 
 
-  const getMergeBoundary = (merge) => {
-    const children = boxes.filter((b) => merge.childrenIds.includes(b.id));
-    if (children.length === 0) return null;
+  // Helper function remains exactly the same!
+  const getMergeBoxCoordinates = (selectedBoxes) => {
+    if (!selectedBoxes || selectedBoxes.length === 0) return null;
 
-    const minX = Math.min(...children.map((b) => b.x));
-    const minY = Math.min(...children.map((b) => b.y));
+    const firstBox = selectedBoxes[0];
+    let minX = firstBox.x;
+    let minY = firstBox.y;
+    let maxX = firstBox.x + firstBox.width;
+    let maxY = firstBox.y + firstBox.height;
 
-    const maxX = Math.max(...children.map((b) => b.x + b.width));
-    const maxY = Math.max(...children.map((b) => b.y + b.height));
+    for (let i = 1; i < selectedBoxes.length; i++) {
+      const box = selectedBoxes[i];
+      minX = Math.min(minX, box.x);
+      minY = Math.min(minY, box.y);
+      maxX = Math.max(maxX, box.x + box.width);
+      maxY = Math.max(maxY, box.y + box.height);
+    }
 
     return {
-      x: Math.round(minX * effectiveScale),
-      y: Math.round(minY * effectiveScale),
-      width: Math.round((maxX - minX) * effectiveScale),
-      height: Math.round((maxY - minY) * effectiveScale),
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
     };
   };
 
-  
-
-  const copyBox = () => {
-  if (activeBox === null) {
-    toast.warn("Select a field first");
-    return;
-  }
-
-  const boxToCopy = boxes[activeBox];
-
-  // remove id so copiedBox becomes a pure template
-  const { id, ...rest } = boxToCopy;
-
-  const cloned = JSON.parse(JSON.stringify(rest));
-
-  setCopiedBox(cloned);
-  toast.success("Field Copied");
-};
-
-const pasteBox = () => {
-  if (!copiedBox) {
-    toast.warn("No copied field found");
-    return;
-  }
-
-  const OFFSET = 20;
-
-  const newBox = {
-    ...copiedBox,
-    id: uuidv4(),
-    x: (copiedBox.x || 0) + OFFSET,
-    y: (copiedBox.y || 0) + OFFSET,
-    isMerged: false,
-    mergedInto: "N/A",
-    merge: false,
-  };
-
-  setBoxes((prev) => {
-    const updated = [...prev, newBox];
-
-    setActiveBox(updated.length); 
-
-    return updated;
-  });
-
-  toast.success("Field Pasted");
-};
-
-
-  const QUESTION_NAME_REGEX = /^([qQ])(\d+)-([qQ])(\d+)$/;
-
-  function parseQuestionRange(name) {
-    const m = name?.trim().match(QUESTION_NAME_REGEX);
-    if (!m) return null;
-
-    const prefix = m[1];
-    const start = Number(m[2]);
-    const end = Number(m[4]);
-
-    if (end <= start) return null;
-
-    return { prefix, start, end, gap: end - start + 1 };
-  }
-
-  //  ADD THIS JUST BELOW IT
-  function getNextQuestionRangeFromBoxes(boxes, baseFieldName) {
-    const parsedBase = parseQuestionRange(baseFieldName);
-    if (!parsedBase) return baseFieldName;
-
-    const { prefix, gap } = parsedBase;
-
-    const ranges = boxes
-      .map((b) => parseQuestionRange(b.fieldName))
-      .filter((r) => r && r.prefix === prefix && r.gap === gap);
-
-    if (ranges.length === 0) return baseFieldName;
-
-    const maxEnd = Math.max(...ranges.map((r) => r.end));
-
-    const newStart = maxEnd + 1;
-    const newEnd = newStart + gap - 1;
-
-    return `${prefix}${newStart}-${prefix}${newEnd}`;
-  }
-
-  const duplicateBox = () => {
-    if (activeBox === null) {
-      toast.warn("Select a field to duplicate");
-      return;
-    }
-
-    const source = boxes[activeBox];
-
-    // ❌ Block duplication if not questionfield
-    if (source.fieldType !== "questionfield") {
-      toast.warning("Only question fields can be duplicated");
-      return;
-    }
-
-    const updatedFieldName = getNextQuestionRangeFromBoxes(
-      boxes,
-      source.fieldName,
-    );
-
-    const newBox = {
-      ...source,
-      id: uuidv4(),
-      x: source.x + 25,
-      y: source.y + 25,
-      fieldName: updatedFieldName,
-      isMerged: false,
-      mergedInto: "N/A",
-      merge: false,
-    };
-
-    setBoxes((prev) => [...prev, newBox]);
-    setActiveBox(boxes.length);
-    toast.success("Field Duplicated");
-  };
-
-  const handleMergeSelected = () => {
-    const selected = boxes.filter((b) => selectedMergeBoxes.includes(b.id));
-
-    console.table(
-      selected.map((b) => ({
-        id: b.id,
-        raw: b.fieldName,
-        normalized: (b.fieldName || "").trim().toLowerCase(),
-        type: b.fieldType,
-        isMerged: b.isMerged,
-      })),
-    );
-
-    if (selected.length < 2) {
-      toast.error("Select at least 2 fields to merge");
-      return;
-    }
-
-    //  Prevent merging already merged boxes
-    if (selected.some((b) => b.isMerged)) {
-      toast.error("One or more fields are already merged");
-      return;
-    }
-
-    //  Enforce same Field Name
-    const normalize = (v) => (v || "").toString().trim().toLowerCase();
-
-    const baseFieldName = normalize(selected[0].fieldName);
-
-    const invalidName = selected.some(
-      (b) => normalize(b.fieldName) !== baseFieldName,
-    );
-
-    if (invalidName) {
-      toast.error("All merged fields must have same Field Name");
-      return;
-    }
-
-    //  Enforce same Field Type
-    const type = selected[0].fieldType;
-    const invalidType = selected.some((b) => b.fieldType !== type);
-
-    if (invalidType) {
-      toast.error("All merged fields must have same Field Type");
-      return;
-    }
-
-    //  Auto sort LEFT → RIGHT by X position
-    const sorted = [...selected].sort((a, b) => a.x - b.x);
-
-    const newMerge = {
-      mergeId: uuidv4(),
-      mergedName: baseFieldName,
-      childrenIds: sorted.map((b) => b.id),
-    };
-
-    setMergedFields((prev) => [...prev, newMerge]);
-
-    setBoxes((prev) =>
-      prev.map((b) =>
-        sorted.some((s) => s.id === b.id)
-          ? {
-              ...b,
-              isMerged: true,
-              mergedInto: baseFieldName || "N/A",
-              merge: false, //  lock toggle automatically
-            }
-          : b,
-      ),
-    );
-
-    setSelectedMergeBoxes([]);
-    setShowMergeMenu(false);
-    toast.success("Fields merged safely");
-  };
-
-  useEffect(() => {
-    const handleKeyCopyPaste = (e) => {
-      if (e.ctrlKey && e.key === "c") {
-        e.preventDefault();
-        copyBox();
-      }
-
-      if (e.ctrlKey && e.key === "v") {
-        e.preventDefault();
-        pasteBox();
-      }
-
-      if (e.ctrlKey && e.key === "d") {
-        e.preventDefault();
-        duplicateBox();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyCopyPaste);
-    return () => window.removeEventListener("keydown", handleKeyCopyPaste);
-  }, [activeBox, copiedBox, boxes]);
-
-  useEffect(() => {
-    const fetchTemplateData = async () => {
-      const res = await getLayoutDataById(Id);
-      if (res) setPaths(res.data);
-    };
-    if (Id) fetchTemplateData();
-  }, [Id]);
-
-  // Fetch JSON fields
-  useEffect(() => {
-    const fetchJsonData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${baseUrl}${paths.jsonPath}`, {
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-            Expires: "0",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (res) {
-          const field = res?.data?.fields || [];
-          const fieldDetails = res?.data?.referenceCoordinate;
-
-          //  Restore reference boxes
-          if (fieldDetails && Object.keys(fieldDetails).length > 0) {
-            setReferenceBoxes(fieldDetails);
-            setShowReferenceBox(true);
-          } else {
-            setShowReferenceBox(false);
-          }
-
-          //  STEP 2 — RESTORE MERGE STATE SAFELY
-          const restored = (field || []).map((b) => ({
-            id: b.id || uuidv4(),
-            //  AUTO-FIX OLD DATA
-            ...b,
-            merge: !!b.merge,
-            isMerged: !!b.isMerged,
-          }));
-
-          setBoxes(restored);
-
-          //  Restore mergedFields array
-          setMergedFields(res?.data?.mergedfields || []);
-        }
-      } catch (error) {
-        console.error("Error fetching JSON data:", error);
-      }
-    };
-
-    if (paths && baseUrl) fetchJsonData();
-  }, [paths, baseUrl]);
-
-  // Delete key handling
-  useEffect(() => {
-    const handleDeleteKey = (e) => {
-      //  DELETE FIELD BOX (WITH MERGE CLEANUP)
-      if (e.key === "Delete" && activeBox !== null) {
-        const res = window.confirm("Are you sure you want to delete this box?");
-        if (res) {
-          const deletedId = boxes[activeBox]?.id;
-
-          //  Remove field safely
-          setBoxes((prev) => prev.filter((b) => b.id !== deletedId));
-
-          //  CLEAN MERGED FIELDS (STEP 5)
-          setMergedFields((prev) =>
-            prev
-              .map((m) => ({
-                ...m,
-                childrenIds: m.childrenIds.filter((id) => id !== deletedId),
-              }))
-              .filter((m) => m.childrenIds.length >= 2),
-          );
-
-          setActiveBox(null);
-        }
-      }
-
-      //  DELETE REFERENCE BOX (UNCHANGED)
-      if (e.key === "Delete" && currentReferenceBox !== null) {
-        const res = window.confirm(
-          "Are you sure you want to delete this reference box?",
-        );
-        if (res) {
-          const updatedBoxes = referenceBoxes.filter(
-            (_, i) => i !== currentReferenceBox,
-          );
-          setReferenceBoxes(updatedBoxes);
-          setCurrentReferenceBox(null);
-
-          //  Recalculate available options
-          const usedPositions = updatedBoxes.map((b) => b.position);
-          const availableOptions = referenceOptions.filter(
-            (opt) => !usedPositions.includes(opt.id),
-          );
-          setOptions(availableOptions);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleDeleteKey);
-    return () => window.removeEventListener("keydown", handleDeleteKey);
-  }, [activeBox, currentReferenceBox, referenceBoxes, boxes]);
-
-  // Update baseDisplaySize on image load or window resize
-  useEffect(() => {
-    const updateBase = () => {
-      const img = imageRef.current;
-      if (!img || !img.naturalWidth) return;
-      const clientW = img.clientWidth;
-      const clientH = img.clientHeight;
-      const baseW = clientW / (zoomScale || 1);
-      const baseH = clientH / (zoomScale || 1);
-      console.log(
-        `Updating baseDisplaySize: client=${clientW}x${clientH}, base=${baseW}x${baseH}, zoomScale=${zoomScale}`,
+  // UPDATED: MERGE BOUNDARY (Plural)
+  const mergeBoundaries = useMemo(() => {
+    if (!mergeFields || mergeFields.length === 0 || !boxes) return [];
+
+    return mergeFields.map((mergeGroup) => {
+      const liveGroup = boxes.filter((mainBox) =>
+        mergeGroup.childrenIds.includes(mainBox.id)
       );
-      setBaseDisplaySize({ width: baseW, height: baseH });
-    };
 
-    updateBase();
-    window.addEventListener("resize", updateBase);
-    return () => window.removeEventListener("resize", updateBase);
-  }, [zoomScale, paths, baseUrl]);
+      if (liveGroup.length === 0) return null;
 
-  // Handle image load to set natural and base display sizes
-  const handleImageLoad = (e) => {
-    const img = e.target;
-    const naturalW = img.naturalWidth || 0;
-    const naturalH = img.naturalHeight || 0;
-    const clientW = img.clientWidth;
-    const clientH = img.clientHeight;
-    const baseW = clientW / (zoomScale || 1);
-    const baseH = clientH / (zoomScale || 1);
-    console.log(
-      `Image loaded: natural=${naturalW}x${naturalH}, client=${clientW}x${clientH}, base=${baseW}x${baseH}, zoomScale=${zoomScale}`,
-    );
-    setNaturalSize({ width: naturalW, height: naturalH });
-    setBaseDisplaySize({ width: baseW, height: baseH });
-  };
+      const coords = getMergeBoxCoordinates(liveGroup);
+      if (!coords) return null;
 
-  // Calculate effective scale
-  const effectiveScale = useMemo(() => {
-    if (!naturalSize.width || !baseDisplaySize.width) return zoomScale;
-    const scale = (baseDisplaySize.width / naturalSize.width) * zoomScale;
-    console.log(
-      `effectiveScale: ${scale}, naturalSize: ${naturalSize.width}x${naturalSize.height}, baseDisplaySize: ${baseDisplaySize.width}x${baseDisplaySize.height}, zoomScale: ${zoomScale}`,
-    );
-    return scale;
-  }, [naturalSize, baseDisplaySize, zoomScale]);
+      return {
+        id: mergeGroup.mergeId,
+        name: mergeGroup.fieldName,
+        x: coords.x,
+        y: coords.y,
+        width: coords.width,
+        height: coords.height
+      };
+    }).filter(boundary => boundary !== null);
 
-  // Update box in natural pixels
-  const updateBox = (index, newProps) => {
-    setBoxes((prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], ...newProps };
-      console.log(`Updated box ${index}:`, copy[index]);
-      return copy;
-    });
-  };
+  }, [boxes, mergeFields]);
 
-  //Draggable selected Box by using Arrow Key
+  // RENDERING BOXES AFTER RE OPEN THE TEMPLATE ACCORDING TO JSON 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const tag = e.target.tagName;
+    if (jsonData?.referncefield) {
+      const selectedCorners = jsonData?.referncefield;
 
-      const isFormElement =
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        e.target.isContentEditable;
+      dispatch(renderBoxes(jsonData))
+      dispatch(setSelectedSkewCorners(selectedCorners));
+    }
+  }, [jsonData?.referncefield, dispatch, jsonData]);
 
-      if (isFormElement) return;
 
-      if (!currentBoxData) return; // no active box selected
-
-      const step = 1;
-
-      // copy current box data
-      let newX = currentBoxData.x;
-      let newY = currentBoxData.y;
-
-      switch (e.key) {
-        case "ArrowUp":
-          newY -= step / effectiveScale;
-          e.preventDefault();
-          break;
-        case "ArrowDown":
-          newY += step / effectiveScale;
-          e.preventDefault();
-          break;
-        case "ArrowLeft":
-          newX -= step / effectiveScale;
-          e.preventDefault();
-          break;
-        case "ArrowRight":
-          newX += step / effectiveScale;
-          e.preventDefault();
-          break;
-        default:
-          return;
+  // Data for sending to backend
+  const activeSkewCoordinates = Object.entries(skewData || {}).reduce(
+    (acc, [key, point]) => {
+      if (point.selected) {
+        acc[key] = {
+          x: point.x,
+          y: point.y,
+          width: point.width,
+          height: point.height,
+          selected: point.selected
+        };
       }
+      return acc;
+    },
+    {},
+  );
 
-      // Update both currentBoxData and boxes state
-      setCurrentBoxData((prev) => ({ ...prev, x: newX, y: newY }));
-      updateBox(activeBox, { x: newX, y: newY });
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentBoxData, activeBox, effectiveScale]);
-
-  // Sanitize reference box coordinates
-  const getRefCoordinates = (boxes) => {
-    if (!boxes || boxes.length === 0) return [];
-    return boxes.map((box) => ({
-      position: box.position,
-      x: Math.round(box.x),
-      y: Math.round(box.y),
-      width: Math.round(box.width),
-      height: Math.round(box.height),
-    }));
-  };
-
-  // Calculate bubble coordinates using center + radius → bounding box
+  // Calculates The Grid BUBBLE Coordinate For Each Box
   const getBubbleCoordinates = (box) => {
-    // console.log(box);
     if (!box) return [];
-    const { x, y, width, height, totalRow, totalCol } = box;
-    if (!totalRow || !totalCol || totalRow <= 0 || totalCol <= 0) return [];
+
+    const { x = 0, y = 0, width = 0, height = 0, totalRow = 0, totalCol = 0 } = box;
+
+    if (!totalRow || !totalCol || totalRow <= 0 || totalCol <= 0 || !width || !height) {
+      return [];
+    }
 
     const cellWidth = width / totalCol;
     const cellHeight = height / totalRow;
-    const rScale = box?.radius || 10;
+
+    const rawRadius = box?.radius ?? 0.35;
+    const rScale = rawRadius > 1 ? rawRadius / 10 : rawRadius;
+
     const radius = Math.min(cellWidth, cellHeight) * rScale;
 
     const bubbles = [];
+
     for (let row = 0; row < totalRow; row++) {
       for (let col = 0; col < totalCol; col++) {
-        // Bubble center (cx, cy)
+        // Find center of current cell
         const cx = x + col * cellWidth + cellWidth / 2;
         const cy = y + row * cellHeight + cellHeight / 2;
 
-        // Bounding box from center and radius
-        const bubble = {
-          x: Math.round(cx - radius + 1.7), // top-left x <- addition of error correction factor
-          y: Math.round(cy - radius + 1.7), // top-left y <- addition of error correction factor
+        // Calculate bounding box top-left position
+        bubbles.push({
+          x: Math.round(cx - radius),
+          y: Math.round(cy - radius),
           width: Math.round(radius * 2),
           height: Math.round(radius * 2),
           row,
           col,
-        };
-
-        bubbles.push(bubble);
+        });
       }
     }
 
     return bubbles;
   };
 
-  function transformPositions(arr) {
-    const result = {};
-    arr.forEach((item) => {
-      const key = item.position;
-      result[key] = {
-        x: item.x,
-        y: item.y,
-        width: item.width,
-        height: item.height,
-      };
+  // SAVE TEMPLATE
+  const handleSaveTemplate = useCallback(async () => {
+    if (!tempData?.data?.fileName) return;
+
+    const { fileName } = tempData.data;
+
+    const fields = boxes.map((box) => ({
+      ...box,
+      bubbles: getBubbleCoordinates(box),
+    }));
+
+    const templateData = {
+      name: fileName,
+      fields,
+      mergedfields: mergeFields,
+      referncefield: activeSkewCoordinates,
+    };
+
+    console.log("templateData", templateData)
+
+    const jsonFileName = fileName.endsWith(".json")
+      ? fileName
+      : `${fileName}.json`;
+
+    console.log(jsonFileName);
+
+    const jsonFile = new File([JSON.stringify(templateData)], jsonFileName, {
+      type: "application/json",
     });
-    return result;
-  }
-
-  const allBubbles = boxes.map((box) => getBubbleCoordinates(box));
-
-  const zoomOut = () => {
-    setZoomScale((prev) => Math.max(0.1, +(prev - 0.1).toFixed(2)));
-  };
-  const zoomIn = () => {
-    setZoomScale((prev) => +(prev + 0.1).toFixed(2));
-  };
-
-  // Save template
-  const saveTemplate = async () => {
-    if (isLoading) return; //  Prevent double click
-
-    if (referenceBoxes.length <= 1) {
-      toast.error("Set at least 2 Reference Box");
-      return;
-    }
 
     try {
-      setIsLoading(true); //  DISABLE BUTTON IMMEDIATELY
+      await dispatch(
+        updateTemplateData({
+          FileName: fileName,
+          tempName: jsonFile,
+        }),
+      );
 
-      let referenceField = [];
-      if (showReferenceBox) {
-        const coordinates = getRefCoordinates(referenceBoxes);
-        if (coordinates.length <= 0) {
-          toast.error("Please select all the reference boxes before saving.");
-          return;
+      navigate("/app/template");
+    } catch (error) {
+      toast.error("Failed to save template");
+    }
+  }, [tempData?.data, boxes, mergeFields, activeSkewCoordinates, dispatch, navigate]);
+
+  // KEYBOARD ARROW KEY PANNING & BOX MOVEMENT
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        return;
+      }
+      e.preventDefault();
+      const MOVE_STEP = 1;
+
+
+      if (activeSkewCorner && skewData[activeSkewCorner] && !isPanMode) {
+        const currentPoint = skewData[activeSkewCorner];
+
+        let newX = currentPoint.x;
+        let newY = currentPoint.y;
+
+        if (e.key === "ArrowLeft") newX -= MOVE_STEP;
+        if (e.key === "ArrowRight") newX += MOVE_STEP;
+        if (e.key === "ArrowUp") newY -= MOVE_STEP;
+        if (e.key === "ArrowDown") newY += MOVE_STEP;
+
+        dispatch(
+          updateSkewPosition({
+            corner: activeSkewCorner,
+            x: newX,
+            y: newY,
+          })
+        );
+        return; // Exit early
+      }
+
+
+      // If a box is selected and we are NOT in pan mode
+      if (selectedBoxId && !isPanMode) {
+        const selectedBox = boxes.find((b) => b.id === selectedBoxId);
+        if (!selectedBox) return;
+
+
+        let newX = selectedBox.x;
+        let newY = selectedBox.y;
+
+        if (e.key === "ArrowLeft") newX -= MOVE_STEP;
+        if (e.key === "ArrowRight") newX += MOVE_STEP;
+        if (e.key === "ArrowUp") newY -= MOVE_STEP;
+        if (e.key === "ArrowDown") newY += MOVE_STEP;
+
+        dispatch(
+          updateBoxGeometry({
+            id: selectedBoxId,
+            x: newX,
+            y: newY,
+            width: selectedBox.width,
+            height: selectedBox.height,
+          })
+        );
+        return;
+      }
+
+      // If no box is selected, pan the background canvas
+      const PAN_STEP = 20;
+
+      setPosition((prevPos) => {
+        let newX = prevPos.x;
+        let newY = prevPos.y;
+
+        if (e.key === "ArrowLeft") newX += PAN_STEP;
+        if (e.key === "ArrowRight") newX -= PAN_STEP;
+        if (e.key === "ArrowUp") newY += PAN_STEP;
+        if (e.key === "ArrowDown") newY -= PAN_STEP;
+
+        // Apply container boundary clamping
+        if (!containerRef.current || !imageRef.current)
+          return { x: newX, y: newY };
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const scale = zoomLevel / 100;
+        const scaledWidth = imageRef.current.offsetWidth * scale;
+        const scaledHeight = imageRef.current.offsetHeight * scale;
+
+        const maxX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+        const minX = -maxX;
+        const maxY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+        const minY = -maxY;
+
+        return {
+          x: Math.min(Math.max(newX, minX), maxX),
+          y: Math.min(Math.max(newY, minY), maxY),
+        };
+      });
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+
+  }, [zoomLevel, selectedBoxId, boxes, dispatch, isPanMode, activeSkewCorner, skewData]);
+
+  // mouse event handler with boundary clamping
+  const handleMouseDown = (e) => {
+
+    if (!isPanMode) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    };
+  };
+
+  // ALT + MOUSE WHEEL ZOOMING
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e) => {
+
+      if (e.altKey) {
+        e.preventDefault();
+        const ZOOM_STEP = 10;
+
+        if (e.deltaY < 0) {
+          setZoomLevel((prev) => Math.min(prev + ZOOM_STEP, 300));
+        } else if (e.deltaY > 0) {
+          setZoomLevel((prev) => {
+            const nextZoom = Math.max(prev - ZOOM_STEP, 50);
+            if (nextZoom === 50) setPosition({ x: 0, y: 0 });
+            return nextZoom;
+          });
         }
-        const refBoxed = transformPositions(coordinates);
-        referenceField = refBoxed;
       }
+    };
 
-      const mappedData = boxes.map((box, idx) => {
-        const bubbles = getBubbleCoordinates(box);
-        console.log(`Saving box ${idx}:`, { ...box, bubbles });
-        return { ...box, bubbles };
-      });
+    container.addEventListener("wheel", handleWheel, { passive: false });
 
-      const empid = JSON.parse(localStorage.getItem("userData"))?.empid;
-      if (!empid) {
-        toast.error("Employee ID not found");
-        return;
-      }
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
-      const obj = {
-        name: paths.fileName,
-        fields: mappedData,
-        mergedfields: mergedFields,
-        referncefield: showReferenceBox ? [referenceField] : [],
-        referenceCoordinate: showReferenceBox ? referenceBoxes : {},
-      };
+  // Boxes drag and drop
+  const handleMouseMove = (e) => {
+    if (!isDragging || !isPanMode) return;
+    if (!containerRef.current || !imageRef.current) return;
 
-      // Remove existing ## if already present
-      const baseName = paths.fileName.includes("##")
-        ? paths.fileName.split("##")[0]
-        : paths.fileName;
+    const containerRect = containerRef.current.getBoundingClientRect();
 
-      const jsonString = JSON.stringify(obj);
-      const jsonFileName = paths.fileName.endsWith(".json")
-        ? baseName
-        : `${baseName}.json`;
+    const targetX = e.clientX - dragStartRef.current.x;
+    const targetY = e.clientY - dragStartRef.current.y;
 
-      const jsonFile = new File([jsonString], jsonFileName, {
-        type: "application/json",
-      });
+    const scale = zoomLevel / 100;
+    const scaledWidth = imageRef.current.offsetWidth * scale;
+    const scaledHeight = imageRef.current.offsetHeight * scale;
 
-      const res = await updateTemplate(paths.fileName, jsonFile, empid);
+    const maxX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+    const minX = -maxX;
 
-      if (!res) {
-        toast.error("Network error. Please try again.");
-        return;
-      }
+    const maxY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+    const minY = -maxY;
 
-      if (!res.state) {
-        toast.error("Failed to save template.");
-        return;
-      }
+    const clampedX = Math.min(Math.max(targetX, minX), maxX);
+    const clampedY = Math.min(Math.max(targetY, minY), maxY);
 
-      toast.success("Template Saved Successfully");
-      navigate("/admin/template", { replace: true });
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong while saving.");
-    } finally {
-      setIsLoading(false); //  ALWAYS RE-ENABLE BUTTON
+    setPosition({
+      x: clampedX,
+      y: clampedY,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // While click on the box
+  const handleBoxClick = (box) => {
+    dispatch(isFormPanelOpen(box));
+    dispatch(selectBox(box.id));
+    setActiveSkewCorner(null);
+  };
+
+  // Srart Tour
+  const startTour = () => {
+    setRunTour(false);
+
+    setTimeout(() => {
+      setRunTour(true);
+    }, 100);
+  };
+
+  const handleTourCallback = (data) => {
+    const { status } = data;
+
+    if (status === "finished" || status === "skipped") {
+      setRunTour(false);
     }
   };
 
-  useEffect(() => {
-    const usedPositions = referenceBoxes.map((b) => b.position);
-
-    const filteredOptions = referenceOptions.filter(
-      (opt) => !usedPositions.includes(opt.id),
-    );
-
-    setOptions(filteredOptions);
-  }, [referenceBoxes]);
-
-  // Compute container dimensions
-  const containerDisplayWidth = baseDisplaySize.width
-    ? Math.round(baseDisplaySize.width * zoomScale)
-    : undefined;
-  const containerDisplayHeight = baseDisplaySize.height
-    ? Math.round(baseDisplaySize.height * zoomScale)
-    : undefined;
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      <SmallHeader />
+    <div className="p-4" style={{ backgroundColor: "white", height: "100%" }}>
+      {/* ACTION TOOLBAR */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex align-items-center justify-content-center">
+          <button
+            id="tour-back-btn"
+            onClick={() => navigate(-1)}
+            className="border-0 shadow-none rounded mr-1 pb-1"
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#E8E8E8"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+            style={{ cursor: "pointer", backgroundColor: "white" }}
+          >
+            <GoArrowLeft size={22} />
+          </button>
 
-      <section style={{ display: "flex", justifyContent: "center" }}>
-        <div
-          style={{
-            position: "relative",
-            display: "inline-block",
-            border: "1px solid #ccc",
-            overflow: "hidden",
-            width: containerDisplayWidth
-              ? `${containerDisplayWidth}px`
-              : "auto",
-            height: containerDisplayHeight
-              ? `${containerDisplayHeight}px`
-              : "auto",
-            background: "#fff",
-            marginBottom: "100px",
-          }}
-        >
-          {/* Reference Boxes */}
-          {referenceBoxes.map((box, index) => {
-            const displayX = Math.round(box.x * effectiveScale);
-            const displayY = Math.round(box.y * effectiveScale);
-            const displayW = Math.round(box.width * effectiveScale);
-            const displayH = Math.round(box.height * effectiveScale);
+          <div className="d-flex align-items-center" style={{ fontFamily: "outfit", fontWeight: 600 }}>
+            <h5 className="d-none d-lg-block text-dark mb-0 mr-2 text-nowrap">
+              Template Name
+            </h5>
 
-            //tooltips for reference Boxes
-            const getTooltip = (index) => {
-              const box = referenceBoxes[index];
-              return (
-                referenceOptions.find((opt) => opt.id === box?.position)
-                  ?.label || `${box.position}`
-              );
-            };
+            <span
+              className="form-control bg-white border-1 px-3"
+              style={{
+                borderRadius: "8px",
+                color: "#495057",
+                fontWeight: 500,
+                minWidth: "210px",
+                overflowX: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {tempData?.data?.fileName}
+            </span>
+          </div>
+        </div>
 
-            return (
-              <Rnd
-                key={index}
-                title={getTooltip(index)}
-                size={{ width: displayW, height: displayH }}
-                position={{ x: displayX, y: displayY }}
-                tabIndex={0}
-                onClick={() => setCurrentReferenceBox(index)}
-                onKeyDown={(e) => {
-                  e.preventDefault();
-                  const stepNatural = 5;
-                  setReferenceBoxes((prev) => {
-                    const updated = [...prev];
-                    const current = updated[index];
-                    switch (e.key) {
-                      case "ArrowUp":
-                        updated[index] = {
-                          ...current,
-                          y: current.y - stepNatural,
-                        };
-                        break;
-                      case "ArrowDown":
-                        updated[index] = {
-                          ...current,
-                          y: current.y + stepNatural,
-                        };
-                        break;
-                      case "ArrowLeft":
-                        updated[index] = {
-                          ...current,
-                          x: current.x - stepNatural,
-                        };
-                        break;
-                      case "ArrowRight":
-                        updated[index] = {
-                          ...current,
-                          x: current.x + stepNatural,
-                        };
-                        break;
-                      default:
-                        return prev;
-                    }
-                    console.log(
-                      `Reference box ${index} moved to:`,
-                      updated[index],
-                    );
-                    return updated;
-                  });
-                }}
-                onDragStop={(e, d) => {
-                  const naturalX = Math.round(d.x / effectiveScale);
-                  const naturalY = Math.round(d.y / effectiveScale);
-                  console.log(
-                    `Reference box ${index} dragged to display: (${d.x}, ${d.y}), natural: (${naturalX}, ${naturalY}), effectiveScale: ${effectiveScale}`,
-                  );
-                  setReferenceBoxes((prev) => {
-                    const updated = [...prev];
-                    updated[index] = {
-                      ...updated[index],
-                      x: naturalX,
-                      y: naturalY,
-                    };
-                    return updated;
-                  });
-                }}
-                onResizeStop={(e, direction, ref, delta, position) => {
-                  const naturalW = Math.round(
-                    parseInt(ref.style.width, 10) / effectiveScale,
-                  );
-                  const naturalH = Math.round(
-                    parseInt(ref.style.height, 10) / effectiveScale,
-                  );
-                  const naturalX = Math.round(position.x / effectiveScale);
-                  const naturalY = Math.round(position.y / effectiveScale);
-                  console.log(
-                    `Reference box ${index} resized to natural: (${naturalX}, ${naturalY}, ${naturalW}, ${naturalH}), effectiveScale: ${effectiveScale}`,
-                  );
-                  setReferenceBoxes((prev) => {
-                    const updated = [...prev];
-                    updated[index] = {
-                      ...updated[index],
-                      width: naturalW,
-                      height: naturalH,
-                      x: naturalX,
-                      y: naturalY,
-                    };
-                    return updated;
-                  });
-                }}
-                bounds="parent"
-                style={{
-                  border:
-                    currentReferenceBox !== index
-                      ? "2px solid #007bff"
-                      : "2px solid red",
-                  backgroundColor: "transparent",
-                }}
-              />
-            );
-          })}
+        {/* Zoom & Hand Controls */}
+        <div className="d-flex align-items-center">
 
-          {/* Image */}
-          <img
-            ref={imageRef}
-            src={`${baseUrl}${paths?.imgPath}`}
-            alt="to crop"
-            onLoad={handleImageLoad}
+          {/* 3. NEW "START TOUR" BUTTON */}
+          <button
+            type="button"
+            onClick={startTour}
+            title="Start Editor Tour"
+            className="btn btn-primary  px-4 py-2"
             style={{
-              display: "block",
-              width: containerDisplayWidth
-                ? `${containerDisplayWidth}px`
-                : "100%",
-              height: containerDisplayHeight
-                ? `${containerDisplayHeight}px`
-                : "auto",
-              userSelect: "none",
-              pointerEvents: "auto",
-            }}
-          />
-
-          {/*  MERGED FIELD OUTLINES */}
-          {mergedFields.map((merge) => {
-            const boundary = getMergeBoundary(merge);
-            if (!boundary) return null;
-
-            return (
-              <div
-                key={merge.mergeId}
-                style={{
-                  position: "absolute",
-                  left: boundary.x - 4,
-                  top: boundary.y - 4,
-                  width: boundary.width + 8,
-                  height: boundary.height + 8,
-                  border: "3px dashed #ff9800",
-                  borderRadius: "6px",
-                  pointerEvents: "none",
-                  // zIndex: 50,
-                  boxSizing: "border-box",
-                }}
-              >
-                {/* Label */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -22,
-                    left: 0,
-                    background: "#ff9800",
-                    color: "#fff",
-                    fontSize: 11,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    fontWeight: 600,
-                  }}
-                >
-                  Link : {merge.mergedName}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Field Boxes */}
-          {boxes.map((box, index) => {
-            const displayX = Math.round(box.x * effectiveScale);
-            const displayY = Math.round(box.y * effectiveScale);
-            const displayW = Math.round(box.width * effectiveScale);
-            const displayH = Math.round(box.height * effectiveScale);
-            const cellDisplayWidth = displayW / box.totalCol;
-            const cellDisplayHeight = displayH / box.totalRow;
-            const bubbleDisplaySize =
-              Math.min(cellDisplayWidth, cellDisplayHeight) * box.radius * 2 ??
-              0.38;
-            return (
-              <Rnd
-                key={index}
-                size={{ width: displayW, height: displayH }}
-                position={{ x: displayX, y: displayY }}
-                onDragStop={(e, d) => {
-                  const naturalX = Math.round(d.x / effectiveScale);
-                  const naturalY = Math.round(d.y / effectiveScale);
-                  console.log(
-                    `Box ${index} dragged to display: (${d.x}, ${d.y}), natural: (${naturalX}, ${naturalY}), effectiveScale: ${effectiveScale}`,
-                  );
-                  updateBox(index, {
-                    x: naturalX,
-                    y: naturalY,
-                  });
-                }}
-                onResize={(e, direction, ref, delta, position) => {
-                  const naturalW = Math.round(
-                    parseInt(ref.style.width, 10) / effectiveScale,
-                  );
-                  const naturalH = Math.round(
-                    parseInt(ref.style.height, 10) / effectiveScale,
-                  );
-                  const naturalX = Math.round(position.x / effectiveScale);
-                  const naturalY = Math.round(position.y / effectiveScale);
-                  console.log(
-                    `Box ${index} resizing to natural: (${naturalX}, ${naturalY}, ${naturalW}, ${naturalH}), effectiveScale: ${effectiveScale}`,
-                  );
-                  updateBox(index, {
-                    width: naturalW,
-                    height: naturalH,
-                    x: naturalX,
-                    y: naturalY,
-                  });
-                }}
-                onResizeStop={(e, direction, ref, delta, position) => {
-                  const naturalW = Math.round(
-                    parseInt(ref.style.width, 10) / effectiveScale,
-                  );
-                  const naturalH = Math.round(
-                    parseInt(ref.style.height, 10) / effectiveScale,
-                  );
-                  const naturalX = Math.round(position.x / effectiveScale);
-                  const naturalY = Math.round(position.y / effectiveScale);
-                  console.log(
-                    `Box ${index} resized to natural: (${naturalX}, ${naturalY}, ${naturalW}, ${naturalH}), effectiveScale: ${effectiveScale}`,
-                  );
-                  updateBox(index, {
-                    width: naturalW,
-                    height: naturalH,
-                    x: naturalX,
-                    y: naturalY,
-                  });
-                }}
-                bounds="parent"
-                onClick={() => {
-                  setActiveBox(index);
-                  setCurrentBoxData(box);
-                  console.log(box);
-                }}
-              >
-                {/* show FieldName at the top-left of the box */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -21,
-                    left: 0,
-                    background: "#4f7ff7",
-                    color: "#fff",
-                    fontSize: 11,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    fontWeight: 600,
-                    zIndex: 10,
-                    whiteSpace: "nowrap", // prevent line wrapping
-                    overflow: "hidden", // hide overflow text
-                    textOverflow: "ellipsis", // show "..." if text too long
-                    maxWidth: displayW - 4, // max width slightly smaller than box width
-                  }}
-                >
-                  {box.fieldName}
-                </div>
-
-                <div
-                  className={
-                    index === activeBox
-                      ? classes.activeField
-                      : classes.notActive
-                  }
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: `repeat(${box.totalCol}, ${cellDisplayWidth}px)`,
-                      gridTemplateRows: `repeat(${box.totalRow}, ${cellDisplayHeight}px)`,
-                      width: `${displayW}px`,
-                      height: `${displayH}px`,
-                      border: "1px solid black",
-                    }}
-                  >
-                    {Array.from({ length: box.totalRow * box.totalCol }).map(
-                      (_, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            // border: "1px solid black",
-                            minWidth: 0,
-                            minHeight: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${bubbleDisplaySize}px`,
-                              height: `${bubbleDisplaySize}px`,
-                              // borderRadius: "50%",
-                              border: "1px solid black",
-                              backgroundColor: "transparent",
-                            }}
-                          />
-                        </div>
-                      ),
-                    )}
-                  </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-
-                      Swal.fire({
-                        title: "Delete Field?",
-                        text: "Are you sure you want to delete this field box?",
-                        icon: "warning",
-                        showCancelButton: true,
-                        confirmButtonColor: "#d33",
-                        cancelButtonColor: "#3085d6",
-                        confirmButtonText: "Delete",
-                        cancelButtonText: "Cancel",
-                      }).then((result) => {
-                        if (result.isConfirmed) {
-                          const deletedId = boxes[index]?.id;
-
-                          // Remove field
-                          setBoxes((prev) =>
-                            prev.filter((_, i) => i !== index),
-                          );
-
-                          // Cleanup merged fields
-                          setMergedFields((prev) =>
-                            prev
-                              .map((m) => ({
-                                ...m,
-                                childrenIds: m.childrenIds.filter(
-                                  (id) => id !== deletedId,
-                                ),
-                              }))
-                              .filter((m) => m.childrenIds.length >= 2),
-                          );
-
-                          // Remove active selection
-                          if (activeBox === index) {
-                            setActiveBox(null);
-                          }
-
-                          Swal.fire({
-                            icon: "success",
-                            title: "Deleted",
-                            text: "Field deleted successfully",
-                            timer: 1200,
-                            showConfirmButton: false,
-                          });
-                        }
-                      });
-                    }}
-                    style={{
-                      position: "absolute",
-                      top: -10,
-                      right: -10,
-                      background: "#fff",
-                      border: "1px solid red",
-                      borderRadius: "50%",
-                      width: 20,
-                      height: 20,
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      lineHeight: "18px",
-                      padding: 0,
-                      zIndex: 9990,
-                      color: "cadetblue",
-                    }}
-                    title="Remove box"
-                  >
-                    ×
-                  </button>
-                </div>
-              </Rnd>
-            );
-          })}
-        </div>
-
-        {/* Form Editor */}
-
-        <div>
-          {activeBox !== null && (
-            <Rnd
-              position={{
-                x: boxPos.x,
-                y: boxPos.y,
-                width: 400,
-                height: "auto",
-              }}
-              onDragStop={handleDragStop}
-              bounds="window"
-              enableResizing={false}
-              dragHandleClassName="drag-handle"
-              style={{ position: "absolute" }}
-              className="z-[9999]"
-            >
-              <div className="bg-white rounded-lg shadow-lg w-full">
-                <div
-                  className="bg-primary text-white px-3 py-2 rounded-top d-flex align-items-center justify-content-between drag-handle"
-                  style={{ cursor: "move" }}
-                >
-                  <div className="d-flex align-items-center">
-                    <RxDragHandleDots2 className="me-2 fs-5" />
-                    <span>Move Form</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="close text-white hover:text-red-200"
-                    aria-label="Close"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveBox(null);
-                    }}
-                  >
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-
-                <div className="p-3 ">
-                  <FormData
-                    setCurrentBoxData={setCurrentBoxData}
-                    currentBoxData={currentBoxData}
-                    setBoxes={setBoxes}
-                    activeBox={activeBox}
-                    allBubbles={allBubbles}
-                    isNewBox={false}
-                    setActiveBox={setActiveBox}
-                    setRadius={setRadius}
-                    Radius={radius}
-                  />
-                </div>
-              </div>
-            </Rnd>
-          )}
-        </div>
-      </section>
-
-      {/* Controls */}
-      <div
-        className="d-flex w-100 position-fixed bottom-0 bg-white"
-        style={{ zIndex: 10000, maxHeight: 60 }} //  HARD OVERRIDE
-      >
-        <div className="d-flex justify-content-around align-items-center  p-2 w-75 bg-white bottom-0 ">
-          <div className="custom-control custom-switch">
-            <input
-              type="checkbox"
-              className="custom-control-input"
-              id="exampleCheck"
-              onChange={(e) => setShowReferenceBox(e.target.checked)}
-              checked={showReferenceBox}
-            />
-            <label
-              className="custom-control-label text-dark  user-select-none"
-              htmlFor="exampleCheck"
-            >
-              {!showReferenceBox ? "Skew" : "No Skew"}
-            </label>
-          </div>
-
-          {showReferenceBox && referenceBoxes.length <= 4 && (
-            <div
-              onClick={() => {
-                if (referenceBoxes.length >= 4) {
-                  toast.error("You can only add 4 reference boxes.");
-                  return;
-                }
-                setModalOpen(true);
-              }}
-            >
-              <button
-                type="button"
-                className="btn btn-warning"
-                style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-              >
-                Add
-              </button>
-              <button
-                className="bg-warning rounded-circle px-2 pb-1 text-white "
-                style={{
-                  display: windowWidth <= 1400 ? "block" : "none",
-                  fontSize: "1.5rem",
-                  border: "none",
-                }}
-              >
-                <MdAdd />
-              </button>
-            </div>
-          )}
-
-          <span style={{ fontSize: 35 }}>|</span>
-
-          <div
-            onClick={() => {
-              setCurrentBoxData({});
-              setIsOpen(true);
+              fontWeight: 500,
+              fontFamily: "outfit",
+              backgroundColor: "#2563eb",
+              borderColor: "#2563eb",
+              borderRadius: "8px",
             }}
           >
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-            >
-              Add Box
-            </button>
-            <button
-              className="bg-primary rounded-circle px-2 text-white "
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.4rem",
-                paddingBottom: "3px",
-                border: "none",
-              }}
-            >
-              <MdOutlineGrid4X4 />
-            </button>
-          </div>
-
-          {/* copy button */}
-
-          <div onClick={copyBox} disabled={activeBox === null}>
-            <button
-              type="button"
-              className="btn btn-info"
-              style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-            >
-              Copy
-            </button>
-            <button
-              type="button"
-              className="bg-info rounded-circle px-2 text-white"
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.4rem",
-                paddingBottom: "4px",
-                border: "none",
-              }}
-            >
-              <FaCopy />
-            </button>
-          </div>
-
-          {/* Paste Button*/}
-
-          <div onClick={pasteBox} disabled={!copiedBox}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-            >
-              Paste
-            </button>
-            <button
-              type="button"
-              className="bg-secondary rounded-circle px-2"
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.6rem",
-                paddingBottom: "4px",
-                border: "none",
-              }}
-            >
-              <FaPaste />
-            </button>
-          </div>
-
-          {/* Duplicate Button */}
-
-          <div onClick={duplicateBox} disabled={activeBox === null}>
-            <button
-              type="button"
-              className="btn btn-dark"
-              style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-            >
-              Duplicate
-            </button>
-            <button
-              type="button"
-              className="bg-dark text-white rounded-circle px-2"
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.5rem",
-                paddingBottom: "4px",
-                border: "none",
-              }}
-            >
-              <IoDuplicate />
-            </button>
-          </div>
-
-          <span style={{ fontSize: 35 }}>|</span>
-
-          {/* MERGE DROPDOWN BUTTON */}
-          {/* MERGE DROPDOWN BUTTON */}
+            Tutorial Tour
+          </button>
 
           <div
-            className="dropup"
-            style={{ position: "relative" }}
-            // onClick={() => setShowMergeMenu((p) => !p)}
-          >
-            <Button
-              onClick={() => setShowMergeMenu((p) => !p)}
-              type="button"
-              className="btn btn-warning dropdown-toggle"
-              style={{ display: windowWidth < +1400 ? "none" : "block" }}
-            >
-              Links
-            </Button>
-            {showMergeMenu && (
-              <div
-                className="dropdown-menu show p-2"
-                style={{
-                  minWidth: 220,
-                  position: "absolute",
-                  bottom: "100%",
-                  transform: "translateY(-8px)",
-                  zIndex: 999999,
-                }}
-              >
-                {boxes
-                  .filter((b) => b.merge === true && !b.isMerged)
-                  .map((box) => (
-                    <div key={box.id} className="form-check">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedMergeBoxes.includes(box.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMergeBoxes((p) => [...p, box.id]); //  FIXED
-                          } else {
-                            setSelectedMergeBoxes(
-                              (p) => p.filter((id) => id !== box.id), //  FIXED
-                            );
-                          }
-                        }}
-                      />
-                      {/* <label className="form-check-label">
-                        {box.fieldName || "Unnamed"}
-                      </label> */}
-
-                      <label className="form-check-label">
-                        {box.fieldName}
-                        {box.subName && (
-                          <span className="text-muted ml-2">
-                            ({box.subName})
-                          </span>
-                        )}
-                      </label>
-                    </div>
-                  ))}
-
-                <Button
-                  size="sm"
-                  className="mt-2 w-100"
-                  onClick={handleMergeSelected}
-                >
-                  Links Selected
-                </Button>
-              </div>
-            )}
-
-            <Button
-              type="button"
-              className=" btn-warning text-white rounded-circle"
-              onClick={() => setShowMergeMenu((p) => !p)}
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.5rem",
-                border: "none",
-                padding: "1px 9px",
-                paddingBottom: "5px",
-              }}
-            >
-              <MdMerge />
-            </Button>
-          </div>
-
-          <div>
+            id="tour-zoom-btn"
+            className="bg-white border rounded-lg shadow-sm d-flex align-items-center px-2 mr-3"
+            style={{ borderRadius: "8px" }} >
             <button
               type="button"
-              className="btn btn-success"
-              style={{ display: windowWidth <= 1400 ? "none" : "block" }}
-              disabled={isLoading}
-              onClick={saveTemplate}
+              className="btn btn-link border-0 shadow-none text-muted p-2 mr-0"
+              onClick={handleZoomIn}
             >
-              {isLoading && <Spinner animation="border" role="status" />}
-              {!isLoading && "Save Template"}
+              <FiZoomIn size={22} />
             </button>
 
-            <Button
-              type="button"
-              disabled={isLoading}
-              onClick={saveTemplate}
-              className="btn btn-success rounded-circle"
-              style={{
-                display: windowWidth <= 1400 ? "block" : "none",
-                fontSize: "1.5rem",
-                border: "none",
-                padding: "3px 10px",
-                paddingBottom: 4,
-              }}
-            >
-              <MdSaveAlt />
-            </Button>
-          </div>
-
-          <div style={{ marginLeft: 20 }} className="d-flex align-items-center">
-            <button
-              className="btn-none ms-1 p-0"
-              style={{ background: "none", color: "black", border: "none" }}
-              onClick={zoomOut}
-            >
-              <CiZoomOut style={{ fontSize: "2rem" }} />
-            </button>
-
-            <span style={{ margin: "0 4px" }}>
-              {Math.round(zoomScale * 100)}%
+            <span className="font-weight-bold text-primary px-2">
+              {zoomLevel}%
             </span>
 
             <button
-              className=" btn-none ms-1 p-0"
-              style={{ background: "none", color: "black", border: "none" }}
-              onClick={zoomIn}
+              type="button"
+              className="btn btn-link border-0 shadow-none text-muted p-2"
+              onClick={handleZoomOut}
             >
-              <CiZoomIn style={{ fontSize: "2rem" }} />
+              <FiZoomOut size={22} />
             </button>
           </div>
+
+          <button
+            id="tour-save-btn"
+            onClick={handleSaveTemplate}
+            type="button"
+            className="btn btn-primary  px-4 py-2"
+            style={{
+              fontWeight: 500,
+              fontFamily: "outfit",
+              backgroundColor: "#2563eb",
+              borderColor: "#2563eb",
+              borderRadius: "8px",
+            }}
+          >
+            Save <span>Template</span>
+          </button>
         </div>
       </div>
 
-      {/* Add Box Modal */}
-      {isOpen && (
-        <Rnd
-          default={{
-            x: 100,
-            y: window.scrollY + 50,
-            width: 400,
-            height: "auto",
-          }}
-          bounds="window"
-          enableResizing={false}
-          dragHandleClassName="drag-handle"
-          style={{ position: "absolute", zIndex: 1500 }}
-          className="z-[100] bg-white shadow-lg rounded-lg border "
-        >
-          <div className="flex flex-col w-full" style={{ cursor: "move" }}>
-            <div className="bg-primary text-white px-3 py-2 rounded-top d-flex align-items-center justify-content-between drag-handle">
-              <h2 className="font-semibold text-white">Create Template</h2>
-            </div>
-
-            <div className="p-4">
-              <FormData
-                setCurrentBoxData={setCurrentBoxData}
-                currentBoxData={currentBoxData}
-                setBoxes={setBoxes}
-                activeBox={activeBox}
-                allBubbles={allBubbles}
-                isNewBox={true}
-                setIsOpen={setIsOpen}
-                ref={buttonRef}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pl-3 pb-3 border-t">
-              <Button
-                type="button"
-                variant="warning"
-                onClick={() => setIsOpen(false)}
-              >
-                Close
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => {
-                  if (buttonRef.current) buttonRef.current.click();
-                }}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        </Rnd>
-      )}
-
-      <ReferenceFieldModal
-        show={modalOpen}
-        onClose={() => setModalOpen(false)}
-        options={options}
-        onSave={(selectedValue) => {
-          setOptions((prev) =>
-            prev.filter((option) => option.id !== selectedValue),
-          );
-          setReferenceBoxes((prev) => [
-            ...prev,
-            { position: selectedValue, width: 100, height: 100, x: 20, y: 30 },
-          ]);
-          setModalOpen(false);
-        }}
-      />
-
-      {/* DROPDOWN -> Add box field */}
-      <span
-        className="rounded-circle morph-container"
-        style={{
-          position: "fixed",
-          left: 180,
-          top: 720,
-          border: "none",
-          zIndex: 99999,
-        }}
-        type="button"
-        onClick={toggleDropdown}
+      {/* CANVAS WORKSPACE AREA */}
+      <div
+        ref={containerRef}
+        className="position-relative rounded-lg overflow-hidden shadow-sm d-flex justify-content-center align-items-center"
+        style={{ height: "90%",  backgroundColor: "#EAF2FC", backgroundImage: "radial-gradient(#cbd5e1 2.5px, transparent 1.5px)", backgroundSize: "35px 35px", cursor: isPanMode ? (isDragging ? "grabbing" : "grab") : "default", }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
-        <IoIosArrowDropup style={{ fontSize: 20 }} className="morph-shape" />
-      </span>
+        <div className="position-relative bg-white shadow-lg rounded p-2" style={{ maxWidth: "450px", transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel / 100})`, transformOrigin: "center center", transition: isDragging ? "none" : "transform 0.1s ease-out", userSelect: "none", display: "inline-block", }}>
+          <div ref={imageRef} className="position-relative" style={{ width: "100%", height: "100%" }}>
+            <img src={process.env.REACT_APP_BACKEND_URL + tempData?.data?.imgPath} alt="OMR Document" className="img-fluid border" style={{ display: "block", pointerEvents: "none", width: "100%" }} />
 
-      <style jsx>
-        {`
-          .morph-shape {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            position: relative;
-          }
+            {/* Render Active Skew Boxes */}
+            {skewData &&
+              Object.entries(skewData).map(([corner, point]) => {
+                if (!point?.selected) return null;
 
-          .morph-shape:hover {
-            border-radius: 20px;
-            transform: rotate(360deg);
-            background: linear-gradient(45deg, #ef4444, #dc2626);
-          }
-
-          .morph-shape span {
-            transition: transform 0.5s ease;
-          }
-
-          .morph-shape:hover span {
-            transform: rotate(-45deg);
-          }
-        `}
-      </style>
-
-      {/* MAIN FIELDS DROPDOWN */}
-      {isDOpen && (
-        <div
-          ref={fieldNameBox.ref}
-          style={{
-            position: "fixed",
-            top: isTablet ? "10%" : newboxPos.y + "px",
-            left: isTablet ? "50%" : newboxPos.x + "px",
-            transform: isTablet ? "translateX(-50%)" : "none",
-
-            width: isTablet ? "60%" : "18%",
-            maxWidth: "500px",
-            minWidth: "280px",
-
-            maxHeight: isTablet ? "70vh" : "600px",
-
-            backgroundColor: "white",
-            border: "1px solid #ddd",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            borderRadius: "8px",
-
-            zIndex: 100000,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <h1
-            className="btn-primary"
-            onMouseDown={fieldNameBox.handleMouseDown}
-            style={{
-              userSelect: "none",
-              fontSize: isTablet ? "18px" : "20px",
-              padding: "10px",
-              margin: 0,
-              cursor: "grab",
-              textAlign: "center",
-            }}
-          >
-            Fields Name
-          </h1>
-
-          <ul
-            style={{
-              listStyle: "none",
-              padding: "10px",
-              margin: "10px",
-              overflowY: "auto",
-              maxHeight: "60vh",
-            }}
-          >
-            {visualList.map((item, index) => (
-              <button
-                key={item.label + index}
-                draggable
-                onClick={() => {
-                  if (item.type === "merged") {
-                    const merge = mergedFields.find(
-                      (m) => m.mergedName === item.label,
-                    );
-                    if (merge) {
-                      setActiveMergeEditor({
-                        mergeId: merge.mergeId,
-                        mergedName: merge.mergedName,
-                      });
+                return (
+                  <Rnd
+                    key={corner}
+                    onMouseDown={() => {
+                      setActiveSkewCorner(corner);
+                    }}
+                    position={{ x: point.x, y: point.y }}
+                    size={{ width: point.width, height: point.height }}
+                    scale={zoomLevel / 100}
+                    bounds="parent"
+                    disableDragging={isPanMode}
+                    resizeHandleStyles={{
+                    }}
+                    enableResizing={
+                      isPanMode
+                        ? false
+                        : {
+                          top: false,
+                          right: false,
+                          bottom: false,
+                          left: false,
+                          topRight: true,
+                          bottomRight: true,
+                          bottomLeft: true,
+                          topLeft: true,
+                        }
                     }
+                    style={{
+                      backgroundColor: "rgba(255, 193, 7, 0.65)",
+                      border: "1px solid #dc3545",
+                      boxSizing: "border-box",
+                      zIndex: 900,
+                      pointerEvents: isPanMode ? "none" : "auto",
+                    }}
+                    onDragStop={(e, d) => {
+                      dispatch(
+                        updateSkewPosition({
+                          corner,
+                          x: Math.round(d.x),
+                          y: Math.round(d.y),
+                        }),
+                      );
+                    }}
+                    onResizeStop={(e, direction, ref, delta, position) => {
+                      dispatch(
+                        updateSkewDimensions({
+                          corner,
+                          width: ref.offsetWidth,
+                          height: ref.offsetHeight,
+                          x: Math.round(position.x),
+                          y: Math.round(position.y),
+                          selected: point.selected,
+                        }),
+                      );
+                    }}
+                  />
+                );
+              })}
+
+            {/* Render Dynamic Grid Boxes */}
+            {boxes.map((box) => {
+              const minW = box.totalCol * (box.radius * 2);
+              const minH = box.totalRow * (box.radius * 2);
+              return (
+                <Rnd
+                  onClick={() => handleBoxClick(box)}
+                  key={box.id}
+                  position={{ x: box.x, y: box.y }}
+                  size={{ width: box.width, height: box.height }}
+                  minWidth={minW}
+                  minHeight={minH}
+                  scale={zoomLevel / 100}
+                  bounds="parent"
+                  disableDragging={isPanMode}
+                  style={{
+                    pointerEvents: isPanMode ? "none" : "auto",
+                    zIndex: 800,
+                  }}
+                  onDragStop={(e, d) => {
+                    dispatch(
+                      updateBoxGeometry({
+                        id: box.id,
+                        x: d.x,
+                        y: d.y,
+                      }),
+                    );
+                  }}
+                  onResizeStop={(e, direction, ref, delta, position) => {
+                    dispatch(
+                      updateBoxGeometry({
+                        id: box.id,
+                        width: ref.offsetWidth,
+                        height: ref.offsetHeight,
+                        x: position.x,
+                        y: position.y,
+                      }),
+                    );
+                  }}
+                  enableResizing={
+                    isPanMode
+                      ? false
+                      : {
+                        top: true,
+                        right: true,
+                        bottom: true,
+                        left: true,
+                        topRight: false,
+                        bottomRight: true,
+                        bottomLeft: true,
+                        topLeft: false,
+                      }
                   }
-                }}
-                onDragStart={() => onDragStart(index)}
-                onDragEnter={() => onDragEnter(index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnd={onDragEnd}
-                className={`btn w-100 mb-2 text-left ${
-                  item.type === "merged" ? "btn-primary" : "btn-secondary"
-                }`}
-              >
-                {index + 1}. Field Name: {item.label}
-              </button>
-            ))}
-          </ul>
-        </div>
-      )}
+                >
+                  <DynamicGrid
+                    rows={box.totalRow}
+                    cols={box.totalCol}
+                    radius={box.radius}
+                    width={box.width}
+                    height={box.height}
+                    name={box.fieldName}
+                  />
+                </Rnd>
+              );
+            })}
 
-      {/* 🔽 MERGE FIELD EDITOR DROPDOWN (ADD THIS HERE) */}
-      {activeMergeEditor && (
-        <div
-          ref={mergedFieldNameBox.ref}
-          style={{
-            position: "fixed",
-            top: newboxPos.y + 40,
-            // left: `calc(${newboxPos.x}px + 18%)`,
-            left: newboxPos.y + 530,
-            width: 260,
-            maxHeight: 400,
-            background: "#fff",
-            border: "1px solid #ccc",
-            borderRadius: 6,
-            zIndex: 100001,
-            boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-          }}
-        >
-          <div
-            onMouseDown={mergedFieldNameBox.handleMouseDown}
-            style={{
-              padding: "10px",
-              background: "#ff9800",
-              color: "#fff",
-              fontWeight: 600,
-              display: "flex",
-              justifyContent: "space-between",
-              cursor: "move",
-              alignItems: "center",
-            }}
-          >
-            {activeMergeEditor.mergedName} Fields
-            <span
-              style={{ cursor: "pointer", fontSize: "20px" }}
-              onClick={() => setActiveMergeEditor(null)}
-            >
-              ×
-            </span>
-          </div>
-
-          <ul
-            style={{
-              listStyle: "none",
-              padding: 10,
-              margin: 0,
-              maxHeight: "35vh",
-              overflowY: "auto",
-              scrollbarWidth: "none",
-            }}
-          >
-            {" "}
-            {mergedEditorList.map((item, index) => (
-              <li
-                key={item.id}
-                draggable
-                onDragStart={() => onMergeDragStart(index)}
-                onDragEnter={() => onMergeDragEnter(index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnd={onMergeDragEnd}
+            {/* MERGE/GROUPING OUTLINE */}
+            {mergeBoundaries.map((boundary) => (
+              <div
+                key={boundary.id}
                 style={{
-                  padding: "8px 10px",
-                  marginBottom: 6,
-                  background: "#f5f5f5",
-                  borderRadius: 4,
-                  cursor: "grab",
-                  display: "flex",
-                  justifyContent: "space-between",
+                  position: "absolute",
+                  left: boundary.x,
+                  top: boundary.y,
+                  width: boundary.width,
+                  height: boundary.height,
+                  border: "1px dashed red",
+                  pointerEvents: "none",
+                  zIndex: 900,
+                  boxSizing: "border-box",
                 }}
               >
-                <span>
-                  {index + 1}. {item.label}{" "}
-                </span>
-                <span>{item.subName}</span>
-              </li>
+                {/* FLOATING LABEL FOR MERGE NAME */}
+                {boundary.name && (
+                  <div
+                    className="px-1 d-flex justify-content-center align-items-center"
+                    style={{
+                      position: "absolute",
+                      top: "-9px",
+                      right: "-1px",
+                      backgroundColor: "#2460FB",
+                      color: "#FFFFFF",
+                      fontSize: "0.35rem",
+                      fontWeight: 500,
+                      borderRadius: "2px",
+                      whiteSpace: "nowrap",
+                      fontFamily: "outfit, sans-serif",
+                    }}
+                  >
+                    {boundary.name}
+                  </div>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
-      )}
+
+        {/* Floating Controls */}
+        <div className="bg-white rounded-pill shadow-lg d-flex align-items-center position-absolute" style={{ bottom: "24px", left: "50%", transform: "translateX(-50%)", zIndex: 100, border: "1px solid #e2e8f0", gap: "16px", padding: "8px 24px" }}>
+          <Controls tourSteps={tourSteps} runTour={runTour} handleTourCallback={handleTourCallback} />
+        </div>
+
+        {/* Skews Dropdown Panel */}
+        <div style={{ zIndex: "1000", position: "absolute", left: "5%", top: "50px", pointerEvents: isPanelOpen }} >
+          {isPanelOpen && <Skews />}
+        </div>
+
+        {/* FORM */}
+        <div style={{ height: "100%", width: "350px", zIndex: "1000", position: "absolute", top: "0px", right: "0px", pointerEvents: isFormOpen ? "auto" : "none", }}>
+          {isFormOpen && <MappingForm />}
+        </div>
+
+        {/* Merger Panel */}
+        <div style={{ zIndex: "1000", position: "absolute", top: "50px", pointerEvents: isMergePanel ? "auto" : "none", }}>
+          {isMergePanel && <MergeModal />}
+        </div>
+
+      </div>
     </div>
   );
 };

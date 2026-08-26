@@ -6,11 +6,29 @@ const initializeUrls = async () => {
   const baseUrl = await getBaseUrl();
   console.log(baseUrl);
   return {
+    // User Related
     CREATE_USER: `${baseUrl}api/userAuth/SignUp`,
+    CREATE_USER_WITH_OTP: `${baseUrl}api/userAuth/SignUpMob`,
+    OTP_VERIFY:`${baseUrl}api/userAuth/Verify`,
+    LOGIN_VIA_OTP:`${baseUrl}api/userAuth/ForgetRequest`,
     UPDATE_USER: `${baseUrl}api/userAuth/Update`,
     GET_USERS: `${baseUrl}api/userAuth/GetList`,
-    LOGIN: `${baseUrl}api/userAuth/LoginForm`,
     DELETE_USER: `${baseUrl}api/userAuth/DeleteEmp`,
+    LOG_OUT: `${baseUrl}api/userAuth/DeviceLogOut`,
+    REFERESH_TOKEN:`${baseUrl}api/userAuth/RefreshToken`,
+
+    // QR endpoint
+    CREATE_QR_ENDPOINT: `${baseUrl}api/auth/qr/create`,
+
+    // Template Manager
+    GET_ALL_TEMPLATE: `${baseUrl}api/Template/List_ImeTemp`,
+    GET_LAYOUT_DATA: `${baseUrl}api/Template/Single_ImeTem`,
+    CREATE_TEMPLATE: `${baseUrl}api/Template/Create_ImeTemp`,
+    UPDATE_TEMPLATE: `${baseUrl}api/Template/Update_ImeTemp`,
+    DELETE_TEMPLATE: `${baseUrl}api/Template/Del_ImeTemp`,
+    GET_TEMPLATE_IMAGE: `${baseUrl}GetTemplateImage`,
+    GET_TEMPLATE_CSV: `${baseUrl}GetTemplateCSV`,
+    
     GET_USER_ROLES: `${baseUrl}GetUserRole`,
     GET_PROCESS_DATA: `${baseUrl}ProcessData`,
     SCAN_FILES: `${baseUrl}api/OmrProcessing/process-omr`,
@@ -20,17 +38,9 @@ const initializeUrls = async () => {
     SCAN_24_PAGE_FILES: `${baseUrl}Scan_24_Page_Booklet`,
     GET_PROCESS_32_PAGE_DATA: `${baseUrl}ProcessData`,
     SCAN_32_PAGE_FILES: `${baseUrl}Scan_32_Page_Booklet`,
-    GET_ALL_TEMPLATE: `${baseUrl}api/Template/List_ImeTemp`,
-    GET_LAYOUT_DATA: `${baseUrl}api/Template/Single_ImeTem`,
-    CREATE_TEMPLATE: `${baseUrl}api/Template/Create_ImeTemp`,
-    UPDATE_TEMPLATE: `${baseUrl}api/Template/Update_ImeTemp`,
     PAUSE_SCAN: `${baseUrl}api/OmrProcessing/pause-processing`,
     RESUME_SCAN: `${baseUrl}api/OmrProcessing/resume-processing`,
     SEND_FILE: `${baseUrl}SaveLayoutFiles`,
-    DELETE_TEMPLATE: `${baseUrl}api/Template/Del_ImeTemp`,
-    CHECK_DELETE_TEMPLATE: `${baseUrl}GetJobStatus`,
-    GET_TEMPLATE_IMAGE: `${baseUrl}GetTemplateImage`,
-    GET_TEMPLATE_CSV: `${baseUrl}GetTemplateCSV`,
     LAST_RECORDS: `${baseUrl}api/showRecord/LastRec`,
     CANCEL_SCAN: `${baseUrl}CancelScan`,
     GENERATE_EXCEL: `${baseUrl}GenerateExcelFile`,

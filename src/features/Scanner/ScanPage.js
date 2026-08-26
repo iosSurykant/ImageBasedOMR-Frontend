@@ -64,8 +64,7 @@ const ScanPage = () => {
     }
     localStorage.setItem("folderName", folderName);
     localStorage.setItem("templateId", templateId);
-    // navigate("/admin/job-queue/adminscanjob");
-    navigate("/admin/job-queue/adminscanjobnew");
+    navigate("/app/job-queue/adminscanjobnew");
     setShowPrint(false);
     console.log(templateId);
   };

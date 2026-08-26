@@ -64,7 +64,7 @@ const PaymentHistory = ({ historyData = [], activePlan }) => {
           <span className="text-muted d-block" style={{ fontSize: "0.8rem" }}>
             Current Plan
           </span>
-          <span className="badge badge-primary px-3 py-2">{activePlan.currentPackage}</span>
+          <span className="badge badge-primary px-3 py-2">{activePlan?.currentPackage}</span>
         </div>
       </div>
 

@@ -11,7 +11,6 @@ axiosApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
 
-    // Only add Authorization header if token exists
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
@@ -29,6 +28,4 @@ axiosApi.interceptors.response.use(
   (error) => Promise.reject(error)
 );
 
-
 export default axiosApi;
-

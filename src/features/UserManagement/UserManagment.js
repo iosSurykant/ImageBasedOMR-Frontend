@@ -1,620 +1,398 @@
-import {
-  Card,
-  CardHeader,
-  DropdownMenu,
-  DropdownItem,
-  UncontrolledDropdown,
-  DropdownToggle,
-  Table,
-  Container,
-  Row,
-  Button,
-} from "reactstrap";
-// core components
-import NormalHeader from "components/Headers/NormalHeader";
-import { Modal } from "react-bootstrap";
-import { useEffect, useRef, useState, useCallback } from "react";
-import Spinner from "react-bootstrap/Spinner";
-import Select from "react-select";
-import { toast } from "react-toastify";
-import { createUser } from "helper/userManagment_helper";
-import { fetchAllUsers } from "helper/userManagment_helper";
-import { updateUser } from "helper/userManagment_helper";
-import { removeUser } from "helper/userManagment_helper";
-import Placeholder from "../../components/ui/Placeholder"
-import { GiCrossMark } from "react-icons/gi";
-import { PhoneInput } from "react-international-phone";
-import "react-international-phone/style.css";
+import React, { useEffect, useState } from 'react';
+import { AiOutlineDelete } from 'react-icons/ai';
+import { FiEdit } from 'react-icons/fi';
+import { IoIosArrowDown, IoIosSearch } from 'react-icons/io';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllUsers } from 'redux/reducers/UserManagementSlice';
+import CreateUserForm from './CreateUserForm';
+import { deleteUser } from 'redux/reducers/UserManagementSlice';
+import Swal from 'sweetalert2';
 
-const roles = [
-  { roleName: "admin" },
-  { roleName: "moderator" },
-  { roleName: "operator" },
-];
 
-const UserManagment = () => {
-  const [modalShow, setModalShow] = useState(false);
-  const [createModalShow, setCreateModalShow] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [selectecdRole, setSelectedRole] = useState(null);
-  const [btnLoading, setBtnLoading] = useState(false);
-
-  const [password, setPassword] = useState("");
-  const [ConfirmPassword, setConfirmPassword] = useState("");
-  const [spanDisplay, setSpanDisplay] = useState("none");
-  const [allUsers, setAllUsers] = useState([]);
-  const [id, setId] = useState("");
-  // const [toggle, setToggle] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const emailRef = useRef(null); // Reference to the input element
-  const [isValid, setIsValid] = useState(true);
-  const confirmRef = useRef(null);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await fetchAllUsers();
-      setAllUsers(data?.result || []);
-    } catch (error) {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    setAllUsers([]);
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const handleSelectRole = (selectedValue) => {
-    setSelectedRole(selectedValue);
-  };
-
-  //Current user's role
-  const userData = JSON.parse(localStorage.getItem("userData"));
-  const loggedInRole = userData?.role;
-  const isAdmin = loggedInRole === "admin";
-
-  const handleUpdate = async () => {
-    if (!name || !phoneNumber || !selectecdRole || !password) {
-      setSpanDisplay("inline");
-      return;
-    }
-
-    try {
-      setBtnLoading(true);
-
-      const payload = {
-        empid: id, // lowercase empid (important)
-        name: name.trim(),
-        email: email, // you already store email
-        pwd: password.trim(),
-        cont: phoneNumber.trim(),
-        role:
-          typeof selectecdRole === "object"
-            ? selectecdRole.roleName
-            : selectecdRole,
-      };
-
-      const response = await updateUser(payload);
-
-      if (response) {
-        toast.success("User updated successfully");
-        setModalShow(false);
-        await fetchUsers();
-      } else {
-        toast.error("Update Failed");
-      }
-    } catch (error) {
-      console.error("Update Error:", error);
-      toast.error("Something went wrong");
-    } finally {
-      setBtnLoading(false);
-    }
-  };
-
-  const handleCreate = async () => {
-    // Required field validation
-    if (
-      !name ||
-      !email ||
-      !phoneNumber ||
-      !selectecdRole ||
-      !password ||
-      !ConfirmPassword
-    ) {
-      setSpanDisplay("inline");
-      return;
-    }
-
-    if (!isValid) {
-      toast.warn("Invalid Email");
-      return;
-    }
-
-    // Password match
-    if (password !== ConfirmPassword) {
-      toast.error("Password did not match");
-      return;
-    }
-
-    try {
-      setBtnLoading(true);
-
-      const payload = {
-        name: name.trim(),
-        email: email.trim(),
-        cont: phoneNumber.trim(),
-        role: selectecdRole?.roleName?.trim(),
-        pwd: password.trim(),
-      };
-
-      console.log("Sending:", payload); // 🔍 debug
-
-      const data = await createUser(payload);
-
-      if (data?.status) {
-        toast.success(data.message || "User Created Successfully");
-
-        setName("");
-        setEmail("");
-        setPhoneNumber("");
-        setSelectedRole(null);
-        setPassword("");
-        setConfirmPassword("");
-        setCreateModalShow(false);
-
-        await fetchUsers();
-      } else {
-        toast.warn(data.message);
-      }
-    } catch (error) {
-      console.error(error);
-
-      // show real backend error
-      toast.error(error?.response?.data?.message || "Something went wrong");
-    } finally {
-      setBtnLoading(false);
-    }
-  };
-
-  const deleteUser = async (d) => {
-    const result = window.confirm("Are you sure you want to delete user?");
-    if (!result) {
-      return;
-    }
-
-    try {
-      const data = await removeUser(d.empId);
-      if (data) {
-        toast.success("User Deleted successfully");
-        setModalShow(false);
-        await fetchUsers();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error("Something went wrong");
-    }
-  };
-
-  const handleRowClick = (d) => {
-    setName(d.empName);
-    setEmail(d.empEmail);
-    setPhoneNumber(d.contact);
-
-    // convert string role to object for Select
-    setSelectedRole({ roleName: d.role });
-
-    setPassword(d.password); // never prefill password
-    setId(d.empId);
-
-    setModalShow(true);
-  };
-
-  const placeHolderUser = new Array(10).fill(null).map((_, index) => (
-    <tr key={index}>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td>
-        <Placeholder width="60%" height="1.5em" />
-      </td>
-      <td></td>
-    </tr>
-  ));
-
-  const ALLUSER = allUsers?.map((d, i) => (
-    <>
-      <tr key={d.empId}>
-        <td>{i + 1}</td>
-        <td>{d?.empName}</td>
-        <td>{d?.empEmail}</td>
-        <td>{d?.contact}</td>
-        <td>{d?.role}</td>
-        {isAdmin && (
-          <td className="text-right">
-            <UncontrolledDropdown>
-              <DropdownToggle
-                className="btn-icon-only text-light"
-                href="#pablo"
-                role="button"
-                size="sm"
-                color=""
-                disabled={!isAdmin}
-                onClick={(e) => e.preventDefault()}
-              >
-                <i className="fas fa-ellipsis-v" />
-              </DropdownToggle>
-              <DropdownMenu className="dropdown-menu-arrow" right>
-                <DropdownItem href="#pablo" onClick={() => handleRowClick(d)}>
-                  Edit
-                </DropdownItem>
-                <DropdownItem href="#pablo" onClick={(e) => deleteUser(d)}>
-                  Delete
-                </DropdownItem>
-              </DropdownMenu>
-            </UncontrolledDropdown>
-          </td>
-        )}
-      </tr>
-    </>
-  ));
-  return (
-    <>
-      <NormalHeader />
-      {/* Page content */}
-      <Container className="mt--7" fluid>
-        {/* Table */}
-        <Row>
-          <div className="col">
-            <Card className="shadow">
-              <CardHeader className="border-0">
-                <div className="d-flex justify-content-between">
-                  <h3 className="mt-2">All Users</h3>
-
-                  {isAdmin && (
-                    <Button
-                      className=""
-                      color="primary"
-                      type="button"
-                      onClick={() => setCreateModalShow(true)}
-                    >
-                      Create User
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <div style={{ height: "70vh", overflow: "auto" }}>
-                <Table
-                  className="align-items-center table-flush mb-45"
-                  responsive
-                >
-                  <thead
-                    className="thead-light"
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                    }}
-                  >
-                    <tr>
-                      <th style={{ width: "60px" }}>S.No</th>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Phone Number</th>
-                      <th>Role</th>
-                      {isAdmin && <th style={{ width: "120px" }}>Action</th>}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {/* Loading */}
-                    {loading && placeHolderUser}
-
-                    {/* Data */}
-                    {!loading && ALLUSER.length > 0 && ALLUSER}
-
-                    {/* Empty State */}
-                    {!loading && ALLUSER.length === 0 && (
-                      <tr>
-                        <td colSpan="6" className="text-center py-4 text-muted">
-                          No users found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </Card>
-          </div>
-        </Row>
-      </Container>
-
-      {/* User Edit Model */}
-      <Modal
-        show={modalShow}
-        size="lg"
-        aria-labelledby="contained-modal-title-vcenter"
-        centered
-      >
-        <Modal.Header>
-          <Modal.Title id="contained-modal-title-vcenter">
-            Edit User
-          </Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          {/* Name */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Name</label>
-            <div className="col-md-10">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter User Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {!name && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This field is required
-                </span>
-              )}
-            </div>
-          </Row>
-
-          {/* Phone Number */}
-
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Phone Number</label>
-
-            <div className="col-md-10">
-              <PhoneInput
-                defaultCountry="in"
-                value={phoneNumber}
-                onChange={(phone) => setPhoneNumber(phone)}
-                className="w-100"
-                inputClassName="form-control w-100"
-                placeholder="Enter Phone Number"
-              />
-
-              {!phoneNumber && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This field is required
-                </span>
-              )}
-            </div>
-          </Row>
-
-          {/* Password */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Password</label>
-            <div className="col-md-10">
-              <input
-                type="password"
-                className="form-control"
-                placeholder="Enter New Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {!password && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This field is required
-                </span>
-              )}
-            </div>
-          </Row>
-
-          {/* Role */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Role</label>
-            <div className="col-md-10">
-              <Select
-                value={selectecdRole}
-                onChange={handleSelectRole}
-                options={roles}
-                getOptionLabel={(option) => option?.roleName || ""}
-                getOptionValue={(option) => option?.roleName?.toString() || ""}
-              />
-              {!selectecdRole && (
-                <span style={{ color: "red", display: spanDisplay }}>
-                  This field is required
-                </span>
-              )}
-            </div>
-          </Row>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            type="button"
-            color="primary"
-            onClick={() => setModalShow(false)}
-            className="waves-effect waves-light"
-          >
-            Close
-          </Button>
-
-          <Button
-            type="button"
-            color="success"
-            disabled={btnLoading}
-            onClick={handleUpdate}
-            className="waves-effect waves-light"
-          >
-            {btnLoading ? (
-              <Spinner animation="border" role="status" size="sm" />
-            ) : (
-              "Update"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Create User Model */}
-      <Modal
-        show={createModalShow}
-        onHide={() => setCreateModalShow(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Header>
-          <Modal.Title>Create User</Modal.Title>
-
-          <button
-            onClick={() => setCreateModalShow(false)}
-            style={{
-              border: "none",
-              background: "transparent",
-              fontSize: "22px",
-              cursor: "pointer",
-            }}
-          >
-            <GiCrossMark />
-          </button>
-        </Modal.Header>
-
-        <Modal.Body>
-          {/* Email */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Email</label>
-            <div className="col-md-10">
-              <input
-                type="email"
-                className={`form-control ${!isValid ? "is-invalid" : ""}`}
-                placeholder="Enter Email Id"
-                ref={emailRef}
-                value={email}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setEmail(value);
-
-                  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  setIsValid(regex.test(value) || value === "");
-                }}
-              />
-            </div>
-          </Row>
-
-          {/* Username */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Username</label>
-
-            <div className="col-md-10">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter User Name"
-                // value={name}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\s/g, "");
-                  setName(value);
-                }}
-              />
-            </div>
-          </Row>
-
-          {/* Phone */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Phone Number</label>
-
-            <div className="col-md-10">
-              <PhoneInput
-                defaultCountry="in"
-                inputClassName="form-control w-100"
-                placeholder="Enter 10 digit Phone Number"
-                // value={phoneNumber}
-                maxLength={10}
-                onChange={(phone) => setPhoneNumber(phone)}
-              />
-            </div>
-          </Row>
-
-          <Row className="mb-3 align-items-center">
-            <label htmlFor="roleSelect" className="col-md-2 col-form-label">
-              Role
-            </label>
-
-            <div className="col-md-10">
-              <Select
-                inputId="roleSelect"
-                // value={selectedRole}
-                onChange={handleSelectRole}
-                options={roles}
-                getOptionLabel={(role) => role.roleName}
-                getOptionValue={(role) => String(role.roleId)}
-                placeholder="Select Role"
-                isClearable
-              />
-            </div>
-          </Row>
-
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Confirm Password</label>
-
-            <div className="col-md-10">
-              <input
-                type="password"
-                className="form-control"
-                placeholder="Enter Password"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </Row>
-
-          {/* Confirm Password */}
-          <Row className="mb-3">
-            <label className="col-md-2 col-form-label">Confirm Password</label>
-
-            <div className="col-md-10">
-              <input
-                type="password"
-                className="form-control"
-                placeholder="Enter Confirm Password"
-                // value={ConfirmPassword}
-                ref={confirmRef}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-
-              {password && ConfirmPassword && password !== ConfirmPassword && (
-                <span style={{ color: "red" }}>
-                  Password and Confirm Password must match
-                </span>
-              )}
-            </div>
-          </Row>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button color="secondary" onClick={() => setCreateModalShow(false)}>
-            Close
-          </Button>
-
-          <Button
-            color="success"
-            disabled={btnLoading}
-            onClick={handleCreate}
-            className="d-flex align-items-center justify-content-center"
-          >
-            {btnLoading ? <Spinner size="sm" /> : "Create"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </>
-  );
+// Common base styles for badges
+const baseBadgeStyle = {
+  padding: '6px 12px',
+  borderRadius: '6px',
+  fontWeight: '500',
+  fontSize: '13px',
+  display: 'inline-block',
+  letterSpacing: '0.8px',
 };
 
-export default UserManagment;
+const getRoleBadgeStyle = (role) => {
+  switch (role) {
+    case 'admin': return { ...baseBadgeStyle, backgroundColor: '#ECF4FF', color: '#1B41FB', };
+    case 'operator': return { ...baseBadgeStyle, backgroundColor: '#F2EDFE', color: '#4F25D6', };
+    case 'moderator': return { ...baseBadgeStyle, backgroundColor: '#E9FBFC', color: '#1589AF', };
+    default: return { ...baseBadgeStyle, backgroundColor: '#f8fafc', color: '#475569', };
+  }
+};
+
+const getStatusBadgeStyle = (isLoggedIn) => {
+  return isLoggedIn === true
+    ? { ...baseBadgeStyle, backgroundColor: '#DCF4EC', color: '#09835B' }
+    : { ...baseBadgeStyle, backgroundColor: '#fee2e2', color: '#dc2626' };
+};
+
+export default function UserManagment() {
+  const [createModal, setCreateModal] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [userId, setUserId] = useState('')
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  // SEARCHING
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
+
+  const userData = useSelector((state) => state.UserData?.allUsers)
+  const refreshUsers = useSelector((state) => state.UserData?.refreshUsers);
+  const dispatch = useDispatch()
+
+
+  // --- Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = useSelector((state) => state.UserData?.totalPages)
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePageClick = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  // DEBOUNCING
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 500)
+    return () => clearTimeout(timeout)
+  }, [searchQuery])
+
+
+  useEffect(() => {
+    dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery }))
+  }, [currentPage, dispatch, statusFilter, roleFilter, debouncedSearchQuery, refreshUsers])
+
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This user will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await dispatch(deleteUser(id)).unwrap();
+
+      dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery }))
+
+      await Swal.fire({
+        title: "Deleted!",
+        text: "User has been deleted.",
+        icon: "success",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: "Delete failed",
+        text: error?.message || "Something went wrong while deleting the user.",
+        icon: "error",
+      });
+    }
+  };
+
+
+  // Shared Inline Styles
+  const containerStyle = { backgroundColor: '#fff', fontFamily: "outfit", padding: '24px', height: '100%', overflowY: 'auto' };
+  const cardStyle = { backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px' };
+  const textDarkBlue = { color: '#5A5A5A', fontWeight: '600' };
+  const textLightGrey = { color: '#64748b' };
+
+  const btnCreateStyle = { backgroundColor: '#2563eb', border: 'none', color: '#ffffff', fontWeight: '500', borderRadius: '8px', padding: '8px 20px', cursor: 'pointer' };
+
+  const inputStyle = { border: '1px solid #e2e8f0', borderRadius: '8px', height: '42px', color: '#64748b', boxShadow: 'none', appearance: "none", };
+
+  const tableWrapperStyle = { overflow: 'hidden' };
+  const thStyle = { fontSize: "14px", backgroundColor: '#f4f6fa', color: '#252525', fontWeight: '600', borderTop: 'none', borderBottom: '1px solid #e2e8f0', textTransform: "capitalize" };
+  const tdStyle = { verticalAlign: 'middle', color: '#475569', fontWeight: '500', borderTop: '1px solid #f1f5f9' };
+
+  const paginationLinkStyle = { border: 'none', color: '#64748b', fontWeight: '500', margin: '0 4px', borderRadius: '6px', background: 'transparent' };
+  const paginationActiveStyle = { ...paginationLinkStyle, backgroundColor: '#2563eb', color: '#ffffff' };
+
+  return (
+    <>
+      <div className="container-fluid" style={containerStyle}>
+        <div style={cardStyle}>
+
+          {/* Header Actions */}
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <h4 className="mb-3 mb-md-0" style={{ ...textDarkBlue, margin: 0 }}>User List</h4>
+            <button
+              onClick={() => {
+                setUserId(null);
+                setCreateModal(true);
+              }}
+              style={btnCreateStyle}>
+              Create User
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className="row mb-4">
+            <div className="col-lg-6 col-xl-8 col-md-6 mb-3 mb-lg-0">
+              <div className="input-group" style={{ height: '42px' }}>
+                <div className="input-group-prepend">
+                  <span className="input-group-text bg-white" style={{ border: '1px solid #e2e8f0', borderRight: 'none', borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }}>
+                    <IoIosSearch size={22} />
+                  </span>
+                </div>
+                <input onChange={(e) => setSearchQuery(e.target.value)} type="text" className="form-control" placeholder="Search users...." style={{ ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }} />
+              </div>
+            </div>
+            <div className="col-lg-3 col-xl-2 col-md-3 col-6 mb-3 mb-lg-0 position-relative">
+              <IoIosArrowDown
+                size={22}
+                className='position-absolute'
+                style={{
+                  right: '30px',
+                  top: '10px',
+                  pointerEvents: 'none',
+                  transition: 'transform 0.3s ease',
+                  transform: activeDropdown === 'All Roles' ? 'rotate(180deg)' : 'none'
+                }}/>
+              <select
+                onChange={(e) => {
+                  setRoleFilter(e.target.value);
+                  setActiveDropdown(null);
+                  e.target.blur();
+                }}
+                onFocus={() => setActiveDropdown("All Roles")}
+                onBlur={() => setActiveDropdown(null)}
+                className="form-control apear"
+                style={inputStyle}>
+                <option value="">All Roles</option>
+                <option value="moderator">Moderator</option>
+                <option value="operator">Operator</option>
+              </select>
+            </div>
+
+            <div className="col-lg-3 col-xl-2 col-md-3 col-6 mb-3 mb-lg-0 position-relative">
+              <IoIosArrowDown
+                size={22}
+                className='position-absolute'
+                style={{
+                  right: '30px',
+                  top: '10px',
+                  pointerEvents: 'none',
+                  transition: 'transform 0.3s ease',
+                  transform: activeDropdown === 'Active' ? 'rotate(180deg)' : 'none'
+                }}/>
+              <select
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setActiveDropdown(null);
+                  e.target.blur();
+                }}
+                onFocus={() => setActiveDropdown('Active')}
+                onBlur={() => setActiveDropdown(null)}
+                className="form-control apear"
+                style={inputStyle}
+              >
+                <option value="">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* DESKTOP VIEW        */}
+          <div className="d-none d-lg-block">
+            <div style={tableWrapperStyle}>
+              <table className="table table-hover mb-0" style={{ backgroundColor: '#ffffff' }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...thStyle, paddingLeft: '1.5rem' }}>Sr.</th>
+                    <th style={thStyle}>Name</th>
+                    <th style={thStyle}>Reference Id</th>
+                    <th style={thStyle}>Role</th>
+                    <th style={thStyle}>Created On</th>
+                    <th style={thStyle}>Status</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userData?.map((user, index) => (
+                    <tr key={user.id} style={{ cursor: 'default' }}>
+                      <td style={{ ...tdStyle, paddingLeft: '1.5rem' }}><span style={textLightGrey}>{index + 1}</span></td>
+                      <td style={tdStyle}>
+                        <div className="d-flex align-items-center">
+                          <img src="https://png.pngtree.com/png-clipart/20230927/original/pngtree-man-avatar-image-for-profile-png-image_13001882.png" alt="avatar" className="rounded-circle mr-3" width="40" height="40" style={{ objectFit: 'cover' }} />
+                          <div>
+                            <div style={{ ...textDarkBlue, fontSize: '15px', marginBottom: '2px' }}>{user.empName}</div>
+                            <div style={{ ...textLightGrey, fontSize: '13px' }}>{user.empEmail}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={tdStyle}><span style={textLightGrey}>{user.refranceId}</span></td>
+                      <td style={tdStyle}>
+                        <span style={getRoleBadgeStyle(user.role)} className="text-capitalize">
+                          {user.role}
+                        </span>
+                      </td>
+                      <td style={tdStyle}><span style={textLightGrey}>{user.createdOn}</span></td>
+                      <td style={tdStyle}>
+                        <span style={getStatusBadgeStyle(user.isLoggedIn)}>
+                          {user.isLoggedIn ? "Active" : "Incomplete"}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>
+                        <div className="d-flex justify-content-around">
+                          <span onClick={() => { setCreateModal(true); setUserId(user.empId) }} style={{ color: '#ef4444', cursor: 'pointer', }}><FiEdit size={20} color='#3b82f6' /></span>
+                          <span onClick={() => handleDelete(user.empId)} style={{ color: '#ef4444', cursor: 'pointer' }}><AiOutlineDelete size={22} color='#ef4444' /></span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLET / MOBILE VIEW (Cards)   */}
+          <div className="d-block d-lg-none">
+            <div className="row">
+              {userData?.map((user) => (
+                <div className="col-md-6 mb-4" key={user.empId}>
+                  <div className="d-flex flex-column justify-content-between h-100"
+                    style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px 12px', backgroundColor: '#ffffff' }}>
+
+                    <div className="d-flex mb-4">
+
+                      <img
+                        src="https://png.pngtree.com/png-clipart/20230927/original/pngtree-man-avatar-image-for-profile-png-image_13001882.png"
+                        alt="avatar"
+                        className="rounded-circle"
+                        width="60"
+                        height="60"
+                        style={{ objectFit: 'cover' }} />
+
+                      <div className="w-100" style={{ minWidth: 0 }}>
+                        <div className="d-flex justify-content-between align-items-start mb-1 gap-2">
+                          <div className="text-truncate" style={{ color: '#475569', fontSize: '16px', fontWeight: '500' }}>
+                            {user.empName || "FirstOperator"}
+                          </div>
+
+                          <span className="flex-shrink-0 text-capitalize" style={getRoleBadgeStyle(user.role)}>
+                            {user.role}
+                          </span>
+                        </div>
+
+                        <div className="text-truncate" style={{ color: '#64748b', fontSize: '14px', marginBottom: '2px' }}>
+                          {user.empEmail || "iyer.rubina@gmail.com"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Middle: Ref Code & Date */}
+                    <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2" style={{ color: '#64748b', fontSize: '13px', fontWeight: '500' }}>
+                      <div style={{ wordBreak: 'break-all' }}>Ref Id : {user.refranceId}</div>
+                      {/* <div>{user.createdOnCard}</div> */}
+                    </div>
+
+                    {/* Card Bottom: Status & Actions */}
+                    <div className="d-flex justify-content-between align-items-center pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
+
+                      <div className="d-flex align-items-center">
+                        <span style={{ color: '#64748b', fontSize: '16px', fontWeight: '500', marginRight: '12px' }}>
+                          Status:
+                        </span>
+                        <span style={{ backgroundColor: user.isLoggedIn ? '#d1fae5' : '#fee2e2', color: user.isLoggedIn ? '#059669' : '#dc2626', padding: '4px 10px', fontWeight: '500', borderRadius: '6px', fontSize: '14px', }}>
+                          {user.isLoggedIn ? "Active" : "Incomplete"}
+                        </span>
+                      </div>
+
+                      <div className="d-flex align-items-center flex-shrink-0" style={{ gap: "20px" }}>
+                        <span onClick={() => { setCreateModal(true); setUserId(user.empId) }} style={{ color: '#2563eb', cursor: 'pointer' }}><FiEdit size={20} style={{ strokeWidth: "2.5" }} /></span>
+                        <span onClick={() => handleDelete(user.empId)} style={{ color: '#ef4444', cursor: 'pointer' }}><AiOutlineDelete size={22} style={{ strokeWidth: "1.5" }} /></span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* PAGINATION */}
+          <div className="d-flex justify-content-end mt-4 pt-2">
+            <nav>
+              <ul className="pagination mb-0 align-items-center">
+
+                {/* Previous Button */}
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link d-flex align-items-center gap-2 shadow-none"
+                    tabIndex={currentPage === 1 ? "-1" : "0"}
+                    onClick={handlePrev}
+                    style={{
+                      ...paginationLinkStyle,
+                      color: currentPage === 1 ? '#cbd5e1' : '#2563eb', // Gray if disabled, Blue if active
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                    }}>
+                    Prev
+                  </button>
+                </li>
+
+                {/* Dynamic Page Numbers */}
+                {pageNumbers.map((page) => (
+                  <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+                    <button
+                      className="page-link shadow-none"
+                      onClick={() => handlePageClick(page)}
+                      style={currentPage === page ? paginationActiveStyle : paginationLinkStyle}>
+                      {page}
+                    </button>
+                  </li>
+                ))}
+
+                {/* Next Button */}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link d-flex align-items-center gap-2 shadow-none"
+                    tabIndex={currentPage === totalPages ? "-1" : "0"}
+                    onClick={handleNext}
+                    style={{
+                      ...paginationLinkStyle,
+                      color: currentPage === totalPages ? '#cbd5e1' : '#2563eb',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+                    }}>
+                    Next
+                  </button>
+                </li>
+
+              </ul>
+            </nav>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Create Form Modal */}
+      {createModal && <CreateUserForm setCreateModal={setCreateModal} createModal={createModal} userId={userId} />}
+    </>
+  );
+}

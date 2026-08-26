@@ -83,7 +83,7 @@ const ResultTable = ({ tableHeaders = [], tableData = [], resultBlob }) => {
   };
 
   const handleOkay = () => {
-    navigate("/admin/result-generation", { replace: true });
+    navigate("/app/result-generation", { replace: true });
   };
 
 return (
