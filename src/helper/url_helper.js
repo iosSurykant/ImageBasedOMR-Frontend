@@ -1,4 +1,3 @@
-// url_helper.js
 
 import initializeUrls from "./InitializeURL";
 

@@ -24,8 +24,12 @@ axiosApi.interceptors.request.use(
 
 // Response Interceptor
 axiosApi.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error)
+  (response) => {
+    return response;
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
 );
 
 export default axiosApi;

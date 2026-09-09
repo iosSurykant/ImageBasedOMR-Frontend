@@ -114,7 +114,7 @@ const AppLayout = (props) => {
             setIsTabCollapsed={setIsTabCollapsed}
           />
 
-          <div className="mr-4 pb-4 h-100" style={{ overflowY: "auto", height: "calc(100vh - 64px)", scrollbarWidth: "none" }}>
+          <div className="mr-4 pb-4 h-100 bg-white px-4 mb-4" style={{ overflowY: "auto", height: "calc(100vh - 64px)", scrollbarWidth: "none", borderBottomLeftRadius:"20px", borderBottomRightRadius:"20px" }}>
             <Routes>
               {getRoutes()}
               <Route

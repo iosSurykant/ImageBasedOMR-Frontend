@@ -20,7 +20,7 @@ const Sidebar = ({ routes }) => {
     (route) => route.showInSidebar === true
   );
 
-  useEffect(() => { 
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 992) {
         setIsCollapsed(true);
@@ -32,6 +32,17 @@ const Sidebar = ({ routes }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Keep glow on active item
+  useEffect(() => {
+    const activeItem = document.querySelector('.nav-link.active');
+    if (activeItem && !isScanning) {
+      setGlowStyle({
+        top: activeItem.offsetTop + 50,
+        opacity: 1,
+      });
+    }
+  }, [isScanning]);
 
   const handleLogOut = async () => {
     if (!window.confirm("Are you sure you want to logout?")) return;
@@ -130,6 +141,24 @@ const Sidebar = ({ routes }) => {
         }}
       />
 
+      {/* Active Item Glow */}
+      <div
+        style={{
+          position: "absolute",
+          left: "15px",
+          top: glowStyle.top,
+          width: isCollapsed ? "70px" : "240px",
+          height: "200px",
+          borderRadius: "20px",
+          background: "rgba(182, 151, 255, 0.35)",
+          filter: "blur(30px)",
+          transition: "all .3s ease",
+          opacity: glowStyle.opacity,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
       <ul
         className="nav flex-column align-items-start flex-grow-1"
         style={{
@@ -172,15 +201,22 @@ const Sidebar = ({ routes }) => {
             }}
             onMouseLeave={(e) => {
               if (!isScanning) {
-                setGlowStyle((prev) => ({
-                  ...prev,
-                  opacity: 0,
-                }));
-
+                // Only hide glow if not active
                 if (!e.currentTarget.classList.contains("active")) {
+                  setGlowStyle((prev) => ({
+                    ...prev,
+                    opacity: 0,
+                  }));
                   e.currentTarget.style.backgroundColor = "transparent";
                 }
               }
+            }}
+            onClick={(e) => {
+              // Keep glow on clicked item
+              setGlowStyle({
+                top: e.currentTarget.offsetTop + 50,
+                opacity: 1,
+              });
             }}
           >
             <span className="d-flex justify-content-center">

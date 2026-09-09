@@ -116,6 +116,15 @@ const Login = () => {
         const userName = decoded.unique_name;
         const userEmail = decoded.email;
         const referenceId = decoded.refranceId;
+        const lastName = decoded.LastName;
+        const address = decoded.address;
+        const city = decoded.city;
+        const country = decoded.contory;
+        const profileImage = decoded.profileImage;
+        const state = decoded.state;
+        const dob = decoded.DateOfBirth;
+        const gender = decoded.gender
+        const zip = decoded?.pin
 
         localStorage.setItem(
           "userData",
@@ -126,6 +135,15 @@ const Login = () => {
             email: userEmail,
             userName,
             referenceId,
+            lastName,
+            address,
+            city,
+            country,
+            profileImage,
+            state,
+            dob,
+            gender,
+            zip
           }),
         );
         toast.success(res.message);

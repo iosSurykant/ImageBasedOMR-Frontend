@@ -82,8 +82,8 @@ const styles = {
     },
     modalCard: {
         backgroundColor: '#ffffff',
-        width: '100%',
-        maxWidth: '520px',
+        width: '80%',
+        maxWidth: '450px',
         borderRadius: '16px',
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
         padding: '32px',
@@ -254,8 +254,7 @@ return (
                         <button
                             type="button"
                             style={styles.btnChooseFile}
-                            onClick={triggerFileInput}
-                        >
+                            onClick={triggerFileInput}  >
                             Choose File
                         </button>
                     </div>

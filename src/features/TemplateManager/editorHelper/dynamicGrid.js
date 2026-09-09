@@ -16,19 +16,19 @@ const DynamicGrid = ({
     return null;
   }
 
-
-  const cellWidth = Number(width) / numCols;
-  const cellHeight = Number(height) / numRows;
+  // 1. Force strict integer sizes for the cells
+  const cellWidth = Math.floor(Number(width) / numCols);
+  const cellHeight = Math.floor(Number(height) / numRows);
 
   const factor = Number(radiusFactor) > 1 ? Number(radiusFactor) / 10 : Number(radiusFactor);
-
   const calculatedRadius = Math.min(cellWidth, cellHeight) * factor;
-  const bubbleDiameter = Math.max(calculatedRadius * 2, 2); 
+  
+  // 2. Force strict integer sizes for the bubbles
+  const bubbleDiameter = Math.max(Math.floor(calculatedRadius * 2), 2); 
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       
-      {/* 2. FLOATING NAME LABEL */}
       {name && (
         <div
         className="px-1 rounded-sm"
@@ -49,19 +49,21 @@ const DynamicGrid = ({
         </div>
       )}
 
-      {/* 3. ORIGINAL GRID */}
       <div
         style={{
           width: '100%',
           height: '100%',
           boxSizing: 'border-box',
           display: 'grid',
-          gridTemplateColumns: `repeat(${numCols}, 1fr)`,
-          gridTemplateRows: `repeat(${numRows}, 1fr)`,
+          // 3. Use strict pixel values instead of '1fr'
+          gridTemplateColumns: `repeat(${numCols}, ${cellWidth}px)`,
+          gridTemplateRows: `repeat(${numRows}, ${cellHeight}px)`,
+          // 4. Distribute any leftover sub-pixel gaps evenly
+          justifyContent: 'space-evenly', 
+          alignContent: 'space-evenly',
           placeItems: 'center',
           backgroundColor: 'rgba(36, 96, 251, 0.22)',
           border: `1px solid #2460FB`,
-          borderRadius: '2px',
           overflow: 'hidden',
           userSelect: 'none',
         }}
@@ -72,9 +74,9 @@ const DynamicGrid = ({
             style={{
               width: `${bubbleDiameter}px`,
               height: `${bubbleDiameter}px`,
-              borderRadius: '50%',
               backgroundColor: bubbleColor,
-              border: `1px solid ${borderColor}`,
+              // 5. Use box-shadow instead of border to prevent pixel snapping
+              boxShadow: `inset 0 0 0 0.5px ${borderColor}`,
               boxSizing: 'border-box',
             }}
           />

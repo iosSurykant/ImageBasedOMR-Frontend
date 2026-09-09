@@ -1,221 +1,166 @@
-import { useEffect, useRef, useCallback } from "react";
+  import { useEffect, useRef, useCallback } from "react";
 
-export function useWebSocket({
-  baseUrl,
-  // writableRef,
-  // headerWrittenRef,
-  // fileClosingRef,
-  onMessage,
-  onAccuracyChange,
-}) {
-  const serialNumberRef = useRef(1);
-  const totalCountRef = useRef(0);
-  const trueCountRef = useRef(0);
+  export function useWebSocket({
+    baseUrl,
+    onMessage,
+    onAccuracyChange,
+  }) {
+    const serialNumberRef = useRef(1);
+    const totalCountRef = useRef(0);
+    const trueCountRef = useRef(0);
 
-  const mountedRef = useRef(true);
+    const mountedRef = useRef(true);
 
-  // latest callbacks refs
-  const onMessageRef = useRef(onMessage);
-  const onAccuracyChangeRef = useRef(onAccuracyChange);
+    // latest callbacks refs
+    const onMessageRef = useRef(onMessage);
+    const onAccuracyChangeRef = useRef(onAccuracyChange);
 
-  useEffect(() => {
-    onMessageRef.current = onMessage;
-  }, [onMessage]);
+    useEffect(() => {
+      onMessageRef.current = onMessage;
+    }, [onMessage]);
 
-  useEffect(() => { 
-    onAccuracyChangeRef.current = onAccuracyChange;
-  }, [onAccuracyChange]);
+    useEffect(() => { 
+      onAccuracyChangeRef.current = onAccuracyChange;
+    }, [onAccuracyChange]);
 
-  // UI batching
-  // ─────────────────────────────────────────────────────────────
-  const messageQueueRef = useRef([]);
+    // UI batching
+    // ─────────────────────────────────────────────────────────────
+    const messageQueueRef = useRef([]);
 
-  const flushTimerRef = useRef(null);
+    const flushTimerRef = useRef(null);
 
-  const BATCH_INTERVAL = 300;
+    const BATCH_INTERVAL = 300;
 
-  // CSV batching
-  // ─────────────────────────────────────────────────────────────
-  // const csvQueueRef = useRef([]);
 
-  // const csvFlushTimerRef = useRef(null);
+    // Reset refs for new scan
+    // ─────────────────────────────────────────────────────────────
+    const resetRefs = useCallback(() => {
+      serialNumberRef.current = 1;
+      totalCountRef.current = 0;
+      trueCountRef.current = 0;
+    }, []);
 
-  // const CSV_FLUSH_INTERVAL = 1000;
+    // Main WS effect
+    // ─────────────────────────────────────────────────────────────
+    useEffect(() => {
+      if (!baseUrl) return;
 
-  // Reset refs for new scan
-  // ─────────────────────────────────────────────────────────────
-  const resetRefs = useCallback(() => {
-    serialNumberRef.current = 1;
-    totalCountRef.current = 0;
-    trueCountRef.current = 0;
-  }, []);
+      mountedRef.current = true;
 
-  // Main WS effect
-  // ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!baseUrl) return;
+      const token = localStorage.getItem("token");
 
-    mountedRef.current = true;
+      const ws = new WebSocket(`ws://${baseUrl}/ws?token=${token}`);
 
-    const token = localStorage.getItem("token");
+      // Connected
+      // ───────────────────────────────────────────────────────────
+      ws.onopen = () => {
+        console.log("[WS] connected");
+      };
 
-    const ws = new WebSocket(
-      `ws://${baseUrl}/ws?token=${token}`
-    );
+      // Incoming WS message
+      // ───────────────────────────────────────────────────────────
+      ws.onmessage = async (event) => {
+        if (event.data === "success") return;
 
-    // Connected
-    // ───────────────────────────────────────────────────────────
-    ws.onopen = () => {
-      console.log("[WS] connected");
-    };
+        let data;
 
-    // Incoming WS message
-    // ───────────────────────────────────────────────────────────
-    ws.onmessage = async (event) => {
-      if (event.data === "success") return;
+        try {
+          
+          data = JSON.parse(event.data);
+          console.log("[WS] message:", data);
 
-      // if (fileClosingRef.current) return;
+        } catch {
+          console.error("[WS] non-JSON message:", event.data);
+          return;
+        }
 
-      // parse
-      let data;
+        if (!data) return;
 
-      try {
+        // Accuracy counters
+        // ─────────────────────────────────────────────────────────
+        totalCountRef.current++;
+
+        if (
+          data.Status === true ||
+          data.Status === "True"
+        ) {
+          trueCountRef.current++;
+        }
+
+
+        // Row enrichment
+        // ─────────────────────────────────────────────────────────
+        const row = { ...data };
+
+        if (!row["Serial No"]) {
+          row["Serial No"] = serialNumberRef.current++;
+        }
+
         
-        data = JSON.parse(event.data);
-        console.log("[WS] message:", data);
+    
+        messageQueueRef.current.push(row);
 
-      } catch {
-        console.error("[WS] non-JSON message:", event.data);
-        return;
-      }
+        if (!flushTimerRef.current) {
 
-      if (!data) return;
+          flushTimerRef.current = setTimeout(() => {
 
-      // Accuracy counters
-      // ─────────────────────────────────────────────────────────
-      totalCountRef.current++;
+            const batch = [...messageQueueRef.current];
 
-      if (
-        data.Status === true ||
-        data.Status === "True"
-      ) {
-        trueCountRef.current++;
-      }
+            messageQueueRef.current.length = 0;
 
+            flushTimerRef.current = null;
 
-      // Row enrichment
-      // ─────────────────────────────────────────────────────────
-      const row = { ...data };
+            if (!mountedRef.current) return;
 
-      if (!row["Serial No"]) {
-        row["Serial No"] = serialNumberRef.current++;
-      }
+            // accuracy update
+            if (totalCountRef.current > 0) {
 
-      
-  
-      messageQueueRef.current.push(row);
+              const accuracy = Number(
+                (
+                  (trueCountRef.current /
+                    totalCountRef.current) *
+                  100
+                ).toFixed(2)
+              );
 
-      if (!flushTimerRef.current) {
+              onAccuracyChangeRef.current(
+                accuracy
+              );
+            }
 
-        flushTimerRef.current = setTimeout(() => {
+            // push batch to UI
+            if (batch.length) {
+              onMessageRef.current(batch);
+            }
 
-          const batch = [...messageQueueRef.current];
+          }, BATCH_INTERVAL);
+        }
+      };
 
-          messageQueueRef.current.length = 0;
+      // WS error
+      // ───────────────────────────────────────────────────────────
+      ws.onerror = (err) => {
+        console.error("[WS] error:", err);
+      };
 
-          flushTimerRef.current = null;
+      // WS close
+      // ───────────────────────────────────────────────────────────
+      ws.onclose = async () => {
 
-          if (!mountedRef.current) return;
+        console.log("[WS] closed");
 
-          // accuracy update
-          if (totalCountRef.current > 0) {
+      };
 
-            const accuracy = Number(
-              (
-                (trueCountRef.current /
-                  totalCountRef.current) *
-                100
-              ).toFixed(2)
-            );
+      // Cleanup
+      // ───────────────────────────────────────────────────────────
+      return () => {
+        mountedRef.current = false;
+        clearTimeout(flushTimerRef.current);
+        ws.close();
+      };
 
-            onAccuracyChangeRef.current(
-              accuracy
-            );
-          }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [baseUrl]);
 
-          // push batch to UI
-          if (batch.length) {
-            onMessageRef.current(batch);
-          }
-
-        }, BATCH_INTERVAL);
-      }
-    };
-
-    // WS error
-    // ───────────────────────────────────────────────────────────
-    ws.onerror = (err) => {
-      console.error("[WS] error:", err);
-    };
-
-    // WS close
-    // ───────────────────────────────────────────────────────────
-    ws.onclose = async () => {
-
-      console.log("[WS] closed");
-
-      // if (
-      //   writableRef.current &&
-      //   !fileClosingRef.current
-      // ) {
-
-      //   fileClosingRef.current = true;
-
-      //   try {
-
-      //     // final CSV flush
-      //     if (csvQueueRef.current.length) {
-
-      //       await writableRef.current.write(
-      //         csvQueueRef.current.join("")
-      //       );
-
-      //       csvQueueRef.current.length = 0;
-      //     }
-
-      //     await writableRef.current.close();
-
-      //     writableRef.current = null;
-
-      //     toast.success(
-      //       "CSV file saved successfully"
-      //     );
-
-      //   } catch (err) {
-
-      //     console.error(
-      //       "[WS] CSV close error:",
-      //       err
-      //     );
-      //   }
-      // }
-    };
-
-    // Cleanup
-    // ───────────────────────────────────────────────────────────
-    return () => {
-
-      mountedRef.current = false;
-
-      clearTimeout(flushTimerRef.current);
-
-      // clearTimeout(csvFlushTimerRef.current);
-
-      ws.close();
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseUrl]);
-
-  return { resetRefs };
-}
+    return { resetRefs };
+  }

@@ -8,15 +8,15 @@ import { store } from "./redux/store"
 import "./App.css";
 
 // Argon + Icons
-import "assets/plugins/nucleo/css/nucleo.css";
-import "@fortawesome/fontawesome-free/css/all.min.css";
-import "assets/scss/argon-dashboard-react.scss";
+// import "assets/plugins/nucleo/css/nucleo.css";
+// import "@fortawesome/fontawesome-free/css/all.min.css";
+// import "assets/scss/argon-dashboard-react.scss";
 
 // Toast
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import DataProviderOne from "./context/DataProvider";        // Project 1
+import DataProviderOne from "./context/DataProvider";
 
 import { ScanProvider } from "./context/ScanningContext";
 

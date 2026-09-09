@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { GoSidebarExpand } from "react-icons/go";
 import { IoNotificationsOutline, IoWalletOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const AdminNavbar = ({ brandText, isTabCollapsed, setIsTabCollapsed }) => {
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const userData = JSON.parse(localStorage.getItem("userData"));
   const role = userData?.role;
@@ -124,9 +126,8 @@ const AdminNavbar = ({ brandText, isTabCollapsed, setIsTabCollapsed }) => {
                   minWidth: "150px",
                   zIndex: 1000,
                   border: "1px solid #e2e8f0"
-                }}
-              >
-                <div className="px-3 py-1 text-dark" style={{ cursor: "pointer" }}>Profile</div>
+                }}>
+                <div className="px-3 py-1 text-dark" style={{ cursor: "pointer" }} onClick={() => navigate(`/app/user-profile`)}>Profile</div>
                 <div className="px-3 py-1 text-dark" style={{ cursor: "pointer" }}>Settings</div>
                 <hr className="my-1" />
                 <div className="px-3 py-1 text-danger" style={{ cursor: "pointer" }}>Logout</div>

@@ -77,6 +77,17 @@ const MappingForm = () => {
       : value;
 
     setFormData((prev) => ({ ...prev, [name]: parsedValue }));
+
+    // Save specific fields to Redux immediately for live updates (bubble intensity and size)
+    // Only save if we have a selected box and the field is one we want to update live
+    if (selectedBox && (name === 'bubbleIntensity' || name === 'radius')) {
+      // Create a minimal update object with just the changed field
+      const updateData = {};
+      updateData[name] = parsedValue;
+      // Also need the id to identify which box to update
+      updateData.id = selectedBox.id;
+      dispatch(saveBox(updateData));
+    }
   };
 
   const accordionItems = [
@@ -350,12 +361,7 @@ const MappingForm = () => {
   return (
     <div
       className="card border-0 rounded-lg overflow-hidden d-flex flex-column"
-      style={{
-        backgroundColor: '#f8fafd',
-        height: "100%",
-        boxShadow: "rgba(0, 0, 0, 0.11) -3px 0px 6px 0px"
-      }}
-    >
+      style={{backgroundColor: '#f8fafd', height: "100%", boxShadow: "rgba(0, 0, 0, 0.11) -3px 0px 6px 0px"}}>
       {/* Main Content Area */}
       <div className="card-body p-0 overflow-auto bg-white flex-grow-1">
 
@@ -367,23 +373,11 @@ const MappingForm = () => {
               <button
                 type="button"
                 className="btn btn-block text-left py-3 px-4 d-flex justify-content-between align-items-center w-100"
-                style={{
-                  color: '#4c5c75',
-                  fontSize: '0.85rem',
-                  boxShadow: 'none',
-                  fontWeight: "600",
-                  letterSpacing: "1px",
-                  backgroundColor: openSection === item.id ? '#ffffff' : 'transparent',
-                }}
-                onClick={() => toggleSection(item.id)}
-              >
+                style={{color: '#4c5c75', fontSize: '0.85rem', boxShadow: 'none', fontWeight: "600", letterSpacing: "1px", backgroundColor: openSection === item.id ? '#ffffff' : 'transparent',}}
+                onClick={() => toggleSection(item.id)}>
                 <span>{item.title}</span>
                 <span
-                  style={{
-                    transform: openSection === item.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s'
-                  }}
-                >
+                  style={{transform: openSection === item.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
                   <IoIosArrowDown size={18} color="#6c757d" />
                 </span>
               </button>

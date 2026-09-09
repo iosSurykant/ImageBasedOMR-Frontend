@@ -131,17 +131,7 @@ const TemplateEditor = () => {
 
   const boxes = useSelector((state) => state.BoxData.boxes);
   const mergeFields = useSelector((state) => state.BoxData.mergefields);
-  const mergeBoxes = useSelector((state) => state.BoxData.mergeBoxes);
-
   const selectedBoxId = useSelector((state) => state.BoxData.selectedBoxId);
-
-
-
-  console.log("boxes", boxes)
-  console.log("mergerboxes------->>>>>>", mergeBoxes)
-  console.log("mergefields------->>>>>>", mergeFields)
-  console.log("jsonData", jsonData);
-
 
 
   const getJsonData = useCallback(async () => {
@@ -560,15 +550,8 @@ const TemplateEditor = () => {
 
             <span
               className="form-control bg-white border-1 px-3"
-              style={{
-                borderRadius: "8px",
-                color: "#495057",
-                fontWeight: 500,
-                minWidth: "210px",
-                overflowX: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              style={{borderRadius: "8px",
+                color: "#495057", fontWeight: 500, minWidth: "210px",overflowX: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",}}
             >
               {tempData?.data?.fileName}
             </span>
@@ -583,15 +566,8 @@ const TemplateEditor = () => {
             type="button"
             onClick={startTour}
             title="Start Editor Tour"
-            className="btn btn-primary  px-4 py-2"
-            style={{
-              fontWeight: 500,
-              fontFamily: "outfit",
-              backgroundColor: "#2563eb",
-              borderColor: "#2563eb",
-              borderRadius: "8px",
-            }}
-          >
+            className="btn btn-primary  px-4 py-2 mr-3"
+            style={{fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb",borderColor: "#2563eb", borderRadius: "8px", }} >
             Tutorial Tour
           </button>
 
@@ -625,13 +601,7 @@ const TemplateEditor = () => {
             onClick={handleSaveTemplate}
             type="button"
             className="btn btn-primary  px-4 py-2"
-            style={{
-              fontWeight: 500,
-              fontFamily: "outfit",
-              backgroundColor: "#2563eb",
-              borderColor: "#2563eb",
-              borderRadius: "8px",
-            }}
+            style={{ fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb", borderColor: "#2563eb", borderRadius: "8px", }}
           >
             Save <span>Template</span>
           </button>
@@ -642,7 +612,7 @@ const TemplateEditor = () => {
       <div
         ref={containerRef}
         className="position-relative rounded-lg overflow-hidden shadow-sm d-flex justify-content-center align-items-center"
-        style={{ height: "90%",  backgroundColor: "#EAF2FC", backgroundImage: "radial-gradient(#cbd5e1 2.5px, transparent 1.5px)", backgroundSize: "35px 35px", cursor: isPanMode ? (isDragging ? "grabbing" : "grab") : "default", }}
+        style={{ height: "90%", backgroundColor: "#EAF2FC", backgroundImage: "radial-gradient(#cbd5e1 2.5px, transparent 1.5px)", backgroundSize: "35px 35px", cursor: isPanMode ? (isDragging ? "grabbing" : "grab") : "default", }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -670,26 +640,10 @@ const TemplateEditor = () => {
                     disableDragging={isPanMode}
                     resizeHandleStyles={{
                     }}
-                    enableResizing={
-                      isPanMode
-                        ? false
-                        : {
-                          top: false,
-                          right: false,
-                          bottom: false,
-                          left: false,
-                          topRight: true,
-                          bottomRight: true,
-                          bottomLeft: true,
-                          topLeft: true,
-                        }
+                    enableResizing={isPanMode ? false : {top: false, right: false, bottom: false, left: false, topRight: true, bottomRight: true, bottomLeft: true,topLeft: true,}
                     }
                     style={{
-                      backgroundColor: "rgba(255, 193, 7, 0.65)",
-                      border: "1px solid #dc3545",
-                      boxSizing: "border-box",
-                      zIndex: 900,
-                      pointerEvents: isPanMode ? "none" : "auto",
+                      backgroundColor: "rgba(255, 193, 7, 0.65)",border: "1px solid #dc3545", boxSizing: "border-box", zIndex: 900, pointerEvents: isPanMode ? "none" : "auto",
                     }}
                     onDragStop={(e, d) => {
                       dispatch(
@@ -718,16 +672,12 @@ const TemplateEditor = () => {
 
             {/* Render Dynamic Grid Boxes */}
             {boxes.map((box) => {
-              const minW = box.totalCol * (box.radius * 2);
-              const minH = box.totalRow * (box.radius * 2);
               return (
                 <Rnd
                   onClick={() => handleBoxClick(box)}
                   key={box.id}
                   position={{ x: box.x, y: box.y }}
                   size={{ width: box.width, height: box.height }}
-                  minWidth={minW}
-                  minHeight={minH}
                   scale={zoomLevel / 100}
                   bounds="parent"
                   disableDragging={isPanMode}
@@ -744,7 +694,8 @@ const TemplateEditor = () => {
                       }),
                     );
                   }}
-                  onResizeStop={(e, direction, ref, delta, position) => {
+                  
+                  onResize={(e, direction, ref, delta, position) => {
                     dispatch(
                       updateBoxGeometry({
                         id: box.id,
@@ -752,24 +703,15 @@ const TemplateEditor = () => {
                         height: ref.offsetHeight,
                         x: position.x,
                         y: position.y,
-                      }),
+                      })
                     );
                   }}
+                  
+                  resizeGrid={[0.2, 0.2]} 
+
                   enableResizing={
-                    isPanMode
-                      ? false
-                      : {
-                        top: true,
-                        right: true,
-                        bottom: true,
-                        left: true,
-                        topRight: false,
-                        bottomRight: true,
-                        bottomLeft: true,
-                        topLeft: false,
-                      }
-                  }
-                >
+                    isPanMode ? false : {top: true, right: true, bottom: true, left: true, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false,}
+                  }>
                   <DynamicGrid
                     rows={box.totalRow}
                     cols={box.totalCol}

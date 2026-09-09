@@ -22,29 +22,8 @@ import ResultTablePage from "../common/ResultTablePage";
 import Login from "../auth/Login";
 import Signup from "../auth/Signup";
 
-// WebData Components (Imported but not modified)
-// import UserTaskAssined from "WebData/pages/DataMatching/UserTaskAssined";
-// import DataMatching from "WebData/pages/DataMatching/DataMatching";
-// import ImageScanner from "WebData/pages/ImageScanner/ImageScanner";
-// import CsvUploader from "WebData/pages/CsvUploader/CsvUploader";
-// import FieldDecision from "WebData/pages/FieldDecision/FieldDecision";
-// import TemplateMapping from "WebData/pages/TemplateMapping/TemplateMapping";
-// import UserCorrectionData from "WebData/pages/CSV Comparer/UserCorrectionData";
-// import Assignee from "WebData/pages/CSV Comparer/Assignee";
-// import ImageUpload from "WebData/pages/ImageUploader/ImageUploader";
-// import TaskManager from "WebData/pages/TaskManager/TaskManager";
-// import DataMapping from "WebData/DataEntryMapping/DataMapping";
-// import CsvTaskStatus from "WebData/pages/CsvTaskStatus/CsvTaskStatus";
-// import CsvHomepage from "WebData/pages/CSV Comparer/CsvHomepage";
-// import DuplicityDetect from "WebData/pages/DuplicityDetect/DuplicityDetect";
-
-// Wrapper component to handle Data Entry routing based on role at render-time
-// const DataMatchingRoute = () => {
-//   const role = JSON.parse(localStorage.getItem("userData"))?.role;
-//   return role !== "admin" ? <UserTaskAssined /> : <DataMatching />;
-// };
-
-// import Mergecsv from "../features/MergeCsv/mergecsv";
+// Test Managment
+import TestManagment from "features/TestManagment/TestManagment";
 
 // Font Awesome Icons
 import { BiHomeAlt2, BiScan } from "react-icons/bi";
@@ -54,6 +33,7 @@ import { BsBarChart } from "react-icons/bs";
 import { IoPricetagsOutline } from "react-icons/io5";
 import { AiOutlineFolderOpen } from "react-icons/ai";
 import { CiMenuFries } from "react-icons/ci";
+import { MdOutlineTaskAlt } from "react-icons/md";
 
 
 
@@ -64,9 +44,7 @@ import { CiMenuFries } from "react-icons/ci";
 
 const routes = [
 
-  // ==========================================
   // AUTH LAYOUT ROUTES
-  // ==========================================
 
   {
     path: "/login",
@@ -81,9 +59,7 @@ const routes = [
     showInSidebar: false,
   },
 
-  // ==========================================
   // APP NESTED LAYOUT ROUTES (With Sidebar/Navbar)
-  // ==========================================
 
   {
     path: "/index",
@@ -95,6 +71,14 @@ const routes = [
     // roles: [ ADMIN, OPERATOR, MODERATOR ]
   },
   {
+    path: "/user-managment",
+    name: "User Managment",
+    icon: <HiOutlineUsers />,
+    component: UserManagment,
+    layout: "/app",
+    showInSidebar: true,
+  },
+  {
     path: "/template",
     name: "Template Manager",
     icon: <ImInsertTemplate />,
@@ -103,14 +87,20 @@ const routes = [
     showInSidebar: true,
     // roles: [ADMIN],
   },
+
+  // Scanning Routes
+
   {
-    path: "/user-managment",
-    name: "User Managment",
-    icon: <HiOutlineUsers />,
-    component: UserManagment,
+    path: "/test-mgt",
+    name: "Test Managment",
+        icon: <MdOutlineTaskAlt />,
+    component: TestManagment,
     layout: "/app",
     showInSidebar: true,
   },
+
+  // OLD SCANNING
+
   {
     path: "/job-queue",
     name: "Scan OMR Sheets",
@@ -131,10 +121,12 @@ const routes = [
     layout: "/app",
     showInSidebar: false,
   },
+
+
   {
     path: "/scaned-list",
     name: "Scanned List",
-    icon:<CiMenuFries />,
+    icon: <CiMenuFries />,
     component: ScanedList,
     layout: "/app",
     showInSidebar: true,
@@ -148,59 +140,14 @@ const routes = [
     showInSidebar: true,
   },
   {
-    path: "/user-profile",
-    name: "Profile",
-    component: Profile,
-    layout: "/app",
-    showInSidebar: false,
-  },
-  {
     path: "/result-generation",
     name: "Result Generation",
-    icon:  <BsBarChart />,
+    icon: <BsBarChart />,
     component: ResultGeneration,
     layout: "/app",
     showInSidebar: true,
   },
 
-  // {
-  //   path: "/mergecsv",
-  //   name: "Merge CSV",
-  //   component: Mergecsv,
-  //   layout: "/app",
-  //   showInSidebar: true,
-  // },
-  // {
-  //   path: "/imageuploader",
-  //   name: "Create Template",
-  //   component: ImageUpload,
-  //   layout: "/app",
-  //   showInSidebar: true,
-  //   roleRequired: "admin",
-  // },
-  // {
-  //   path: "/imageuploader/scanner",
-  //   name: "Scanner",
-  //   component: ImageScanner,
-  //   layout: "/app",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/csvuploader",
-  //   name: "CSV Uploader",
-  //   component: CsvUploader,
-  //   layout: "/app",
-  //   showInSidebar: true,
-  //   roleRequired: "admin",
-  // },
-  // {
-  //   path: "/datamatching",
-  //   name: "Data Entry",
-  //   component: DataMatchingRoute,
-  //   layout: "/app",
-  //   showInSidebar: true,
-  // },
-  
   {
     path: "/pricing",
     name: "Subscription",
@@ -209,14 +156,7 @@ const routes = [
     layout: "/app",
     showInSidebar: true,
   },
-  // {
-  //   path: "/support",
-  //   name: "Support",
-  //   icon: <IoPricetagsOutline />,
-  //   component: Support,
-  //   layout: "/app",
-  //   showInSidebar: true,
-  // },
+
   {
     path: "/payment-status",
     component: PaymentStatus,
@@ -229,7 +169,15 @@ const routes = [
     layout: "/app",
     showInSidebar: false,
   },
-  
+
+  {
+    path: "/user-profile",
+    name: "Profile",
+    component: Profile,
+    layout: "/app",
+    showInSidebar: false,
+  },
+
   // ==========================================
   // STANDALONE / FULL PAGE ROUTES (No Sidebar Layout)
   // ==========================================
@@ -254,61 +202,6 @@ const routes = [
     layout: "standalone",
     showInSidebar: false,
   },
-
-  // {
-  //   path: "/app/dmin/csvuploader/duplicatedetector/:id",
-  //   component: DuplicityDetect,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/csvuploader/templatemap/:id",
-  //   component: TemplateMapping,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/csvuploader/fieldDecision/:id",
-  //   component: FieldDecision,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/csvuploader/taskAssign/:id",
-  //   component: TaskManager,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/datamatching/:id",
-  //   component: DataMapping,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/datamatching/csvtaskstatus",
-  //   component: CsvTaskStatus,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/datamatching/correct_compare_csv",
-  //   component: UserCorrectionData,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/comparecsv",
-  //   component: CsvHomepage,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
-  // {
-  //   path: "/app/comparecsv/assign_operator/:id",
-  //   component: Assignee,
-  //   layout: "standalone",
-  //   showInSidebar: false,
-  // },
 ];
 
 export default routes;

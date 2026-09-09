@@ -1,22 +1,27 @@
 import React, { useEffect, useState } from "react";
-import {
-  FaSearch,
-  FaRegEdit,
-  FaRegTrashAlt,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
+import { FaSearch, FaRegEdit, FaRegTrashAlt, FaChevronLeft, FaChevronRight, } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTemplates, deleteTemplate, getLayoutData, } from "../../redux/reducers/templateSlice";
 import CreateTemplateModal from "./CreateTemplateModel";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+// import { Modal, Button } from 'react-bootstrap';
 
 const Template = () => {
+  // const [show, setShow] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { list: templates, loading, error, } = useSelector((state) => state.templates);
+
+  // const handleClose = () => setShow(false);
+  // const handleShow = () => setShow(true);
+
+  // const handleSelect = (option) => {
+  //   console.log(`Selected: ${option}`);
+  //   handleClose();
+  // };
+
 
   const handleEdit = async (id) => {
     try {
@@ -98,7 +103,7 @@ const Template = () => {
       fontSize: "14px",
       borderBottom: "none",
       padding: "14px 16px",
-      textTransform: "capitalize" 
+      textTransform: "capitalize"
     },
     td: {
       verticalAlign: "middle",
@@ -166,9 +171,8 @@ const Template = () => {
 
   return (
     <div
-      className="container-fluid pb-4 pt-2 bg-white h-100"
-      style={{ overflowY: "scroll" }}
-    >
+      className="container-fluid pb-4 bg-white h-100"
+      style={{ overflowY: "scroll" }}>
       <div className="p-4 mx-auto" style={{ ...styles.container }}>
         {/* Top Header Section */}
         <div className="d-flex justify-content-between align-items-center mb-4">
@@ -187,13 +191,12 @@ const Template = () => {
               />
             </div>
 
-            <button
-              onClick={() => setShowModal(true)}
-              className="btn btn-primary"
-              style={styles.btnCreate}
-            >
-              Create Template
-            </button>
+              <button
+                onClick={() => setShowModal(true)}
+                // onClick={handleShow}
+                className="btn btn-primary" style={styles.btnCreate} >
+                Create Template
+              </button>
           </div>
         </div>
 
@@ -335,6 +338,41 @@ const Template = () => {
           </div>
         </div>
       </div>
+
+      {/* First MoDAL */}
+
+      {/* <div className="p-4 text-center">
+
+      <Modal show={show} onHide={handleClose} centered size="sm">
+        <Modal.Header closeButton className="border-bottom-0 pb-0">
+          <Modal.Title className="h5 font-weight-bold">
+            Select Option
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body className="pt-2 pb-4">
+          <p className="text-muted small mb-4">
+            Choose how you would like to proceed with the answer evaluation.
+          </p>
+
+          <div className="d-flex flex-column gap-2">
+            <Button
+              variant="outline-primary"
+              className="mb-2 py-2 font-weight-bold d-flex justify-content-between align-items-center"
+              onClick={() => handleSelect('OMR Image')} >
+              <span onClick={() => setShowModal(true)}>Continue with OMR Image</span>
+            </Button>
+
+            <Button
+              variant="outline-dark"
+              className="py-2 font-weight-bold d-flex justify-content-between align-items-center"
+              onClick={() => handleSelect('Blank Sheet')} >
+              <span>Continue with Blank Sheet</span>
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+    </div> */}
 
       <CreateTemplateModal
         isOpen={showModal}

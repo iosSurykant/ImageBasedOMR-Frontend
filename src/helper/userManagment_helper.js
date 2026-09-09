@@ -22,12 +22,10 @@ export const fetchAllUsers = async (currentPage,statusFilter,roleFilter,debounce
   return post(urls.GET_USERS, { pageNumber, range, isLogg, role, search });
 };
 
-
 export const removeUser = async (id) => {
   const urls = await url.getUrls();
   return del(`${urls.DELETE_USER}?idEmp=${id}`);
 };
-
 
 export const updateUser = async (data) => {
   const urls = await url.getUrls();
@@ -35,7 +33,6 @@ export const updateUser = async (data) => {
   return put(urls.UPDATE_USER, null, {
     params: {
       EmpId: data.EmpId,
-      // referenceId: data.referenceId,
       name: data.name,
       email: data.email,
       pwd: data.pwd,
@@ -44,7 +41,6 @@ export const updateUser = async (data) => {
     },
   });
 };
-
 
 export const logout = async () =>{
   const urls = await url.getUrls();
@@ -79,4 +75,35 @@ export const createQREndpoint = async (oldSessionId) => {
     : "";
 
   return post(`${urls.CREATE_QR_ENDPOINT}${query}`);
+};
+
+
+// PROFILE UPDATE
+export const updateProfile = async (data) => {
+  const urls = await url.getUrls();
+
+  const { dob, gender, address,  city,  stateProvince, zipCode, country, firstName, lastName,  phone, profilePicture } = data;
+
+  console.log(profilePicture)
+
+  const formData = new FormData();
+  formData.append("firstName", firstName || "");
+  formData.append("lastName", lastName || "");
+  formData.append("contact", phone || "");
+  formData.append("DOB", dob || "");
+  formData.append("gender", gender || ""); 
+  formData.append("address", address || "");
+  formData.append("city", city || "");
+  formData.append("state", stateProvince || "");
+  formData.append("pin", zipCode || "");
+  formData.append("country", country || "");
+
+  // Always append Updateimage
+  if (profilePicture instanceof File) {
+    formData.append("Updateimage", profilePicture);
+  } else {
+    formData.append("Updateimage", "");
+  }
+
+  return post(urls.UPDATE_PROFILE, formData);
 };
