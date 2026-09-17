@@ -7,6 +7,7 @@ import { getAllUsers } from 'redux/reducers/UserManagementSlice';
 import CreateUserForm from './CreateUserForm';
 import { deleteUser } from 'redux/reducers/UserManagementSlice';
 import Swal from 'sweetalert2';
+import Pagination from 'common/Pagination';
 
 
 // Common base styles for badges
@@ -49,24 +50,12 @@ export default function UserManagment() {
   const refreshUsers = useSelector((state) => state.UserData?.refreshUsers);
   const dispatch = useDispatch()
 
+  const userDatabylocal = JSON.parse(localStorage.getItem('userData'))
+  const referenceId = userDatabylocal?.referenceId
 
   // --- Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = useSelector((state) => state.UserData?.totalPages)
-
-  const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handlePageClick = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   // DEBOUNCING
   useEffect(() => {
@@ -78,8 +67,8 @@ export default function UserManagment() {
 
 
   useEffect(() => {
-    dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery }))
-  }, [currentPage, dispatch, statusFilter, roleFilter, debouncedSearchQuery, refreshUsers])
+    dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery, referenceId }))
+  }, [currentPage, dispatch, statusFilter, roleFilter, debouncedSearchQuery, refreshUsers, referenceId])
 
 
   const handleDelete = async (id) => {
@@ -99,7 +88,7 @@ export default function UserManagment() {
     try {
       await dispatch(deleteUser(id)).unwrap();
 
-      dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery }))
+      dispatch(getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery, referenceId }))
 
       await Swal.fire({
         title: "Deleted!",
@@ -120,17 +109,12 @@ export default function UserManagment() {
   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px' };
   const textDarkBlue = { color: '#5A5A5A', fontWeight: '600' };
   const textLightGrey = { color: '#64748b' };
-
   const btnCreateStyle = { backgroundColor: '#2563eb', border: 'none', color: '#ffffff', fontWeight: '500', borderRadius: '8px', padding: '8px 20px', cursor: 'pointer' };
-
   const inputStyle = { border: '1px solid #e2e8f0', borderRadius: '8px', height: '42px', color: '#64748b', boxShadow: 'none', appearance: "none", };
+  const tableWrapperStyle = { overflow: 'auto' };
+  const thStyle = { fontSize: "16px", fontFamily: "outfit", backgroundColor: '#f4f6fa', color: '#252525', fontWeight: '500', letterSpacing: ".5px", borderTop: 'none', borderBottom: '1px solid #e2e8f0', textTransform: "capitalize" };
+  const tdStyle = { verticalAlign: 'middle', color: '#475569', fontWeight: '500', borderTop: '1px solid #f1f5f9', fontSize: "15px", };
 
-  const tableWrapperStyle = { overflow: 'hidden' };
-  const thStyle = { fontSize: "14px", backgroundColor: '#f4f6fa', color: '#252525', fontWeight: '600', borderTop: 'none', borderBottom: '1px solid #e2e8f0', textTransform: "capitalize" };
-  const tdStyle = { verticalAlign: 'middle', color: '#475569', fontWeight: '500', borderTop: '1px solid #f1f5f9' };
-
-  const paginationLinkStyle = { border: 'none', color: '#64748b', fontWeight: '500', margin: '0 4px', borderRadius: '6px', background: 'transparent' };
-  const paginationActiveStyle = { ...paginationLinkStyle, backgroundColor: '#2563eb', color: '#ffffff' };
 
   return (
     <>
@@ -164,14 +148,7 @@ export default function UserManagment() {
           <div className="col-lg-3 col-xl-2 col-md-3 col-6 mb-3 mb-lg-0 position-relative">
             <IoIosArrowDown
               size={22}
-              className='position-absolute'
-              style={{
-                right: '30px',
-                top: '10px',
-                pointerEvents: 'none',
-                transition: 'transform 0.3s ease',
-                transform: activeDropdown === 'All Roles' ? 'rotate(180deg)' : 'none'
-              }} />
+              className='position-absolute' style={{ right: '30px', top: '10px', pointerEvents: 'none', transition: 'transform 0.3s ease', transform: activeDropdown === 'All Roles' ? 'rotate(180deg)' : 'none' }} />
             <select
               onChange={(e) => {
                 setRoleFilter(e.target.value);
@@ -192,19 +169,9 @@ export default function UserManagment() {
             <IoIosArrowDown
               size={22}
               className='position-absolute'
-              style={{
-                right: '30px',
-                top: '10px',
-                pointerEvents: 'none',
-                transition: 'transform 0.3s ease',
-                transform: activeDropdown === 'Active' ? 'rotate(180deg)' : 'none'
-              }} />
+              style={{ right: '30px', top: '10px', pointerEvents: 'none', transition: 'transform 0.3s ease', transform: activeDropdown === 'Active' ? 'rotate(180deg)' : 'none' }} />
             <select
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setActiveDropdown(null);
-                e.target.blur();
-              }}
+              onChange={(e) => { setStatusFilter(e.target.value); setActiveDropdown(null); e.target.blur(); }}
               onFocus={() => setActiveDropdown('Active')}
               onBlur={() => setActiveDropdown(null)}
               className="form-control apear"
@@ -217,7 +184,7 @@ export default function UserManagment() {
           </div>
         </div>
 
-        {/* DESKTOP VIEW        */}
+        {/* DESKTOP VIEW */}
         <div className="d-none d-lg-block">
           <div style={tableWrapperStyle}>
             <table className="table table-hover mb-0" style={{ backgroundColor: '#ffffff' }}>
@@ -270,7 +237,7 @@ export default function UserManagment() {
           </div>
         </div>
 
-        {/* TABLET / MOBILE VIEW (Cards)   */}
+        {/* TABLET / MOBILE VIEW (Cards) */}
         <div className="d-block d-lg-none">
           <div className="row">
             {userData?.map((user) => (
@@ -336,55 +303,11 @@ export default function UserManagment() {
         </div>
 
         {/* PAGINATION */}
-        <div className="d-flex justify-content-end mt-4 pt-2">
-          <nav>
-            <ul className="pagination mb-0 align-items-center">
-
-              {/* Previous Button */}
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button
-                  className="page-link d-flex align-items-center gap-2 shadow-none"
-                  tabIndex={currentPage === 1 ? "-1" : "0"}
-                  onClick={handlePrev}
-                  style={{
-                    ...paginationLinkStyle,
-                    color: currentPage === 1 ? '#cbd5e1' : '#2563eb', // Gray if disabled, Blue if active
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                  }}>
-                  Prev
-                </button>
-              </li>
-
-              {/* Dynamic Page Numbers */}
-              {pageNumbers.map((page) => (
-                <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
-                  <button
-                    className="page-link shadow-none"
-                    onClick={() => handlePageClick(page)}
-                    style={currentPage === page ? paginationActiveStyle : paginationLinkStyle}>
-                    {page}
-                  </button>
-                </li>
-              ))}
-
-              {/* Next Button */}
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button
-                  className="page-link d-flex align-items-center gap-2 shadow-none"
-                  tabIndex={currentPage === totalPages ? "-1" : "0"}
-                  onClick={handleNext}
-                  style={{
-                    ...paginationLinkStyle,
-                    color: currentPage === totalPages ? '#cbd5e1' : '#2563eb',
-                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                  }}>
-                  Next
-                </button>
-              </li>
-
-            </ul>
-          </nav>
-        </div>
+        <Pagination
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
 
       </div>
 

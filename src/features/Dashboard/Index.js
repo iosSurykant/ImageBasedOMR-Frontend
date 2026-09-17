@@ -40,7 +40,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="container-fluid" style={{ backgroundColor: 'white', fontFamily: 'Inter, sans-serif', borderBottomRightRadius: "20px", borderBottomLeftRadius: "20px" }}>
+    <div className="container-fluid" style={{ backgroundColor: 'white', fontFamily: 'outfit', borderBottomRightRadius: "20px", borderBottomLeftRadius: "20px" }}>
 
 
       {/* HERO  BANNER */}
@@ -50,12 +50,7 @@ const Dashboard = () => {
 
           <div
             className="p-3 p-md-4 mb-4 mb-md-0"
-            style={{
-              width: '100%',
-              height: "100%",
-              maxWidth: 'var(--text-width, 100%)',
-            }}
-          >
+            style={{ width: '100%', height: "100%",  maxWidth: 'var(--text-width, 100%)', }} >
             <style>{`@media (min-width: 1024px) {:root { --text-width: 45%; --title-size: 0.9rem; --desc-size: 0.75rem; --card-scale-1: -40px; --card-scale-2: -80px; }}
                      @media (min-width: 1440px) {:root { --text-width: 35%; --title-size: 1.3rem; --desc-size: 0.8rem; --card-scale-1: -60px; --card-scale-2: -130px;}`}
             </style>
@@ -76,8 +71,7 @@ const Dashboard = () => {
 
             {/* Top Floating Card: Scanning Progress */}
             <div className="bg-white p-2 rounded shadow-sm position-absolute d-flex align-items-center"
-              style={{
-                top: '28px',
+              style={{ top: '28px',
                 left: 'var(--card-scale-1, -20px)',
                 width: '180px',
                 mdWidth: '210px',

@@ -28,8 +28,8 @@ export const getLayoutDataById = async (id) => {
 // TEST MODULE
 export const createTest = async (formData) => {
   const urls = await url.getUrls();
-  const  { testName, template, testId, notes, } = formData
-  const body = { testName, tempId:template, testId, notes, }
+  const { testName, template, testId, notes, } = formData
+  const body = { testName, templateId: template, testId, notes, }
   return await axiosApi.post(urls.CREATE_TEST, body);
 };
 
@@ -44,17 +44,38 @@ export const getTestList = async (search, page, range) => {
   return response;
 };
 
-export const uploadImagesFiles = async ({testName, formData}) => {
-    const urls = await url.getUrls();
 
-    const endpoint = urls.UPLOAD_IMAGES_FILE;
+export const uploadImagesFiles = async ({ testName, formData }) => {
+  const urls = await url.getUrls();
 
-    return await axiosApi.post(endpoint, formData, {
-        params: {
-            TestName:testName,
-        },
-    });
+  const endpoint = urls.UPLOAD_IMAGES_FILE;
+
+  return await axiosApi.post(endpoint, formData, {
+    params: {
+      TestName: testName,
+    },
+  });
 };
+
+export const deleteTest = async (testId) => {
+  const urls = await url.getUrls();
+  return axiosApi.delete(`${urls.DELETE_TEST}?testId=${testId}`)
+}
+
+export const updateTest = async (formData) => {
+  const urls = await url.getUrls();
+
+  console.log(formData)
+
+  const body = {
+    templateId: formData.template,
+    testName: formData.testName,
+    testId: formData.testId,
+    notes: formData.notes,
+    status: "string"
+  }
+  return axiosApi.put(`${urls.UPDATE_TEST}`, body)
+}
 
 
 
@@ -98,44 +119,3 @@ export const updateTemplate = async (FileName, jsonFile) => {
 };
 
 
-// export const sendFile = async (data) => {
-//   const urls = await url.getUrls();
-//   const endpoint = urls.SEND_FILE;
-//   return await postWithFormData(endpoint, data);
-// };
-
-// export const getSampleData = async () => {
-//   const urls = await url.getUrls();
-//   const endpoint = urls.GET_SCANNED_IMAGE;
-//   return await get(endpoint);
-// };
-
-// export const getTemplateImage = async (path) => {
-//   const urls = await url.getUrls();
-//   const endpoint = `${urls.GET_TEMPLATE_IMAGE}?filePath=${path}`;
-//   return await get(endpoint);
-// };
-
-// export const getTemplateCsv = async (path) => {
-//   const urls = await url.getUrls();
-//   const endpoint = `${urls.GET_TEMPLATE_CSV}?csvPath=${path}`;
-//   return await get(endpoint);
-// };
-
-// export const cancelScan = async () => {
-//   const urls = await url.getUrls();
-//   const endpoint = urls.CANCEL_SCAN;
-//   return await get(endpoint);
-// };
-
-// export const checkJobStatus = async (id) => {
-//   const urls = await url.getUrls();
-//   const endpoint = `${urls.CHECK_DELETE_TEMPLATE}?Id=${id}`;
-//   return await get(endpoint);
-// };
-
-// export const getBaseURL = async (id) => {
-//   const urls = await url.getUrls();
-//   const endpoint = `${urls.MAIN_URL}`;
-//   return await get(endpoint);
-// };

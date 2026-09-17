@@ -5,7 +5,7 @@ import { VscCloudUpload } from "react-icons/vsc";
 import { GoCheck } from 'react-icons/go';
 import { uploadImagesFiles } from 'helper/TemplateHelper';
 import getBaseUrl from 'services/BackendApi';
-
+import { toast } from 'react-toastify';
 
 export const buildWsUrl = (baseUrl, token) => {
     if (!baseUrl) return "";
@@ -28,7 +28,6 @@ const UploadFileModal = ({
     onFinishScan,
     onSkip
 }) => {
-    // Flow step state: 'select' | 'uploading' | 'complete'
     const [step, setStep] = useState('select');
     const [displayedStep, setDisplayedStep] = useState('select');
     const [isExiting, setIsExiting] = useState(false);
@@ -38,16 +37,20 @@ const UploadFileModal = ({
     const [selectedFiles, setSelectedFiles] = useState([]);
 
     const baseUrl = getBaseUrl();
-    
+
     // Upload Progress States
     const [isUploading, setIsUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [uploadedCount, setUploadedCount] = useState(0);
-    
+    const [totalFiles, setTotalFiles] = useState(0);
+
+    // Persist total files count across WS messages (since backend sends totalFiles only in message #1)
+    const totalFilesRef = useRef(0);
+
     // WebSocket References and Session State
     const socketRef = useRef(null);
     const [connectionId, setConnectionId] = useState(null);
-    
+
     const transitionToStep = (nextStep, delay = 300) => {
         if (nextStep === displayedStep) return;
         setIsExiting(true);
@@ -59,9 +62,8 @@ const UploadFileModal = ({
         }, delay);
     };
 
-    // --- Step 1: Connect WebSocket once when modal mounts ---
     useEffect(() => {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token');
         const wsUrl = buildWsUrl(baseUrl, token);
 
         const socket = new WebSocket(wsUrl);
@@ -74,27 +76,57 @@ const UploadFileModal = ({
         socket.onmessage = (event) => {
             try {
                 const message = JSON.parse(event.data);
+                console.log("WS Received Message:", message);
 
-                console.log(message)
-
-                // Receive initial connectionId from WS server
+                // 1. Initial connection handshake
                 if (message.type === 'INIT') {
                     setConnectionId(message.connectionId);
+                    return;
                 }
 
-                // Handle item-by-item response from server
-                if (message.type && message.type.includes('Image file uploaded successfully')) {
-                    setUploadedCount(message.uploadedCount);
-                    setProgress(Math.round((message.uploadedCount / message.totalFiles) * 100));
-                    // If all files processed, show completion modal
-                    if (message.uploadedCount === message.totalFiles) {
-                        setIsUploading(false);
-                        transitionToStep("complete", 550);
+                // 2. Extract total count (handles capitalized 'Total' or string format)
+                const rawTotal = message.Total || message.totalFiles;
+                if (rawTotal) {
+                    const parsedTotal = parseInt(rawTotal, 10);
+                    if (!isNaN(parsedTotal) && parsedTotal > 0) {
+                        totalFilesRef.current = parsedTotal;
+                        setTotalFiles(parsedTotal);
                     }
                 }
 
+                // 3. Match progress message ("Image extracted successfully")
+                const isImageExtracted = message.type && (
+                    message.type.includes("Image extracted successfully") ||
+                    message.type.includes("Image file uploaded successfully") ||
+                    message.type === "FILE_UPLOADED"
+                );
+
+                if (isImageExtracted || message.uploadedCount !== undefined) {
+                    const currentUploaded = Number(message.uploadedCount) || 0;
+                    const total = totalFilesRef.current;
+
+                    setUploadedCount(currentUploaded);
+
+                    if (total > 0) {
+                        const calculatedProgress = Math.min(
+                            100,
+                            Math.round((currentUploaded / total) * 100)
+                        );
+                        setProgress(calculatedProgress);
+
+                        // Transition when final file is processed
+                        if (currentUploaded >= total) {
+                            setIsUploading(false);
+                            setTimeout(() => {
+                                transitionToStep("complete", 550);
+                            }, 500);
+                        }
+                    }
+                }
+
+                // 4. Fallback explicit completion signal
                 if (message.type === 'ALL_COMPLETED') {
-                    console.log('All images processed completely.');
+                    setProgress(100);
                     setIsUploading(false);
                     setTimeout(() => {
                         transitionToStep("complete", 550);
@@ -107,19 +139,15 @@ const UploadFileModal = ({
 
         socket.onerror = (err) => console.error('WebSocket Error:', err);
 
-        // Clean up socket when component unmounts
         return () => {
             if (socket) socket.close();
         };
-    }, []);
+    }, [baseUrl]);
 
-    // --- Drag & Drop Handlers ---
     const handleFileChange = (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const fileList = Array.from(e.target.files);
-            const imageFiles = fileList.filter(file => file.type.startsWith('image/'));
-            setSelectedFiles(imageFiles);
-        }
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setSelectedFiles([file]);
     };
 
     const handleDragOver = (e) => {
@@ -131,82 +159,64 @@ const UploadFileModal = ({
         setIsDragging(false);
     };
 
-    const handleDrop = async (e) => {
+    const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
 
-        const items = e.dataTransfer.items;
-        if (!items) return;
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
 
-        const filesArray = [];
+        const isValid =
+            file.name.toLowerCase().endsWith(".zip") ||
+            file.name.toLowerCase().endsWith(".rar");
 
-        const traverseFileTree = (item, path = "") => {
-            return new Promise((resolve) => {
-                if (item.isFile) {
-                    item.file((file) => {
-                        if (file.type.startsWith('image/')) {
-                            filesArray.push(file);
-                        }
-                        resolve();
-                    });
-                } else if (item.isDirectory) {
-                    const dirReader = item.createReader();
-                    dirReader.readEntries(async (entries) => {
-                        for (let entry of entries) {
-                            await traverseFileTree(entry, path + item.name + "/");
-                        }
-                        resolve();
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        };
-
-        const promises = [];
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i].webkitGetAsEntry();
-            if (item) {
-                promises.push(traverseFileTree(item));
-            }
+        if (!isValid) {
+            toast.warning("Please select a ZIP or RAR file.");
+            e.target.value = "";
+            return;
         }
 
-        await Promise.all(promises);
-        setSelectedFiles(filesArray);
+        setSelectedFiles([file]);
     };
 
-    // --- Step 2: Real Upload Execution ---
     const startUploadProcess = async () => {
-        if (!selectedFiles.length) {
-            alert('Please select files first.');
+        const file = selectedFiles[0];
+
+        if (!file) {
+            toast.error("Please select a ZIP/RAR file");
             return;
         }
 
         try {
             transitionToStep("uploading", 500);
+
             setIsUploading(true);
             setProgress(0);
             setUploadedCount(0);
+            setTotalFiles(0);
+            totalFilesRef.current = 0;
 
             const formData = new FormData();
-            selectedFiles.forEach((file) => {
-                formData.append('files', file); 
-            });
+            formData.append("files", file);
 
-            // Trigger API request
-            const response = await uploadImagesFiles({ testName, formData });
-            console.log('API upload response:', response);
+            if (connectionId) {
+                formData.append("connectionId", connectionId);
+            }
+
+            const response = await uploadImagesFiles({ testName, formData, connectionId });
+            console.log("Archive upload response:", response);
 
         } catch (error) {
             console.error("Upload process failed:", error);
+
             setIsUploading(false);
             setProgress(0);
             setUploadedCount(0);
-            alert("Failed to initiate upload. Please check console.");
+            totalFilesRef.current = 0;
+
+            toast.error("Failed to upload ZIP/RAR file.");
         }
     };
-
-    const totalFilesCount = selectedFiles.length;
 
     const modalContent = (
         <div className="position-fixed fixed-top w-100 h-100 d-flex align-items-center justify-content-center p-3"
@@ -221,37 +231,18 @@ const UploadFileModal = ({
                         animation: spin 1.2s linear infinite;
                     }
 
-                    /* Slow Entrance Animation */
                     @keyframes modalStepEnter {
-                        0% {
-                            opacity: 0;
-                            transform: scale(0.92) translateY(-18px);
-                        }
-                        100% {
-                            opacity: 1;
-                            transform: scale(1) translateY(0);
-                        }
+                        0% { opacity: 0; transform: scale(0.92) translateY(-18px); }
+                        100% { opacity: 1; transform: scale(1) translateY(0); }
                     }
 
-                    /* Slow Exit Animation */
                     @keyframes modalStepExit {
-                        0% {
-                            opacity: 1;
-                            transform: scale(1) translateY(0);
-                        }
-                        100% {
-                            opacity: 0;
-                            transform: scale(0.92) translateY(-18px);
-                        }
+                        0% { opacity: 1; transform: scale(1) translateY(0); }
+                        100% { opacity: 0; transform: scale(0.92) translateY(-18px); }
                     }
 
-                    .step-enter {
-                        animation: modalStepEnter 0.6s ease-out forwards;
-                    }
-
-                    .step-exit {
-                        animation: modalStepExit 0.5s ease-in forwards;
-                    }
+                    .step-enter { animation: modalStepEnter 0.6s ease-out forwards; }
+                    .step-exit { animation: modalStepExit 0.5s ease-in forwards; }
                 `}
             </style>
 
@@ -260,7 +251,7 @@ const UploadFileModal = ({
 
                 {/* STEP 1: SELECT / DROP FILES */}
                 {displayedStep === 'select' && (
-                    <div className='py-5' >
+                    <div className='py-5'>
                         <button
                             type="button"
                             onClick={() => setUploadModal(false)}
@@ -272,7 +263,7 @@ const UploadFileModal = ({
                         </button>
 
                         <div className="text-center mb-3 pt-1">
-                            <h5 className=" text-dark mb-1" style={{ fontSize: '1.25rem', fontWeight: "600" }}>
+                            <h5 className="text-dark mb-1" style={{ fontSize: '1.25rem', fontWeight: "600" }}>
                                 TEST Created Successfully
                             </h5>
                             <p className="text-muted small mb-0">
@@ -302,7 +293,6 @@ const UploadFileModal = ({
                             </p>
                         </div>
 
-                        {/* Dropzone Area */}
                         <div
                             className={`rounded-lg p-4 text-center ${isDragging ? 'bg-light' : 'bg-white'}`}
                             style={{
@@ -320,9 +310,7 @@ const UploadFileModal = ({
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 className="d-none"
-                                webkitdirectory="true"
-                                directory="true"
-                                multiple
+                                accept=".zip,.rar"
                             />
 
                             <div className="mb-2">
@@ -331,18 +319,18 @@ const UploadFileModal = ({
 
                             <p className="font-weight-bold text-dark small mb-0">
                                 {selectedFiles.length > 0
-                                    ? `${selectedFiles.length} Image(s) Selected`
-                                    : 'Drag & drop folder here'}
+                                    ? selectedFiles[0].name
+                                    : 'Drag & drop ZIP or RAR file here'}
                             </p>
                             <p className="text-muted small mb-0 mt-1" style={{ fontSize: '13px' }}>
                                 {selectedFiles.length > 0
-                                    ? 'Ready to upload folder contents'
-                                    : 'or browse folder'}
+                                    ? 'Ready to upload archive'
+                                    : 'or browse ZIP / RAR file'}
                             </p>
                         </div>
 
-                        <p className="text-center text-muted small mt-2 mb-4" style={{ fontSize: '12px' }}>
-                            Supports: JPG, PNG
+                        <p className="text-center text-muted small mt-2 mb-4">
+                            Supports: ZIP, RAR
                         </p>
 
                         <div className="d-flex justify-content-end align-items-center">
@@ -375,7 +363,7 @@ const UploadFileModal = ({
                 {displayedStep === 'uploading' && (
                     <div className="py-2">
                         <div className="mb-4">
-                            <span className="badge badge-pill badge-light text-primary border px-3 py-2 d-inline-flex align-items-center" style={{ fontSize: '14px' }}>
+                            <span className="badge badge-pill badge-light text-primary border px-3 py-2 d-inline-flex align-items-center" style={{ fontSize: '14px', fontWeight: "500", letterSpacing: "0.7px" }}>
                                 <span className="bg-primary rounded-circle mr-2" style={{ width: '8px', height: '8px' }}></span>
                                 Uploading
                             </span>
@@ -429,7 +417,9 @@ const UploadFileModal = ({
                             <div className="d-flex justify-content-between align-items-center mt-2 small">
                                 <strong className="text-dark">{progress}%</strong>
                                 <span className="text-muted">
-                                    Uploading {uploadedCount} of {totalFilesCount} files
+                                    {totalFiles > 0
+                                        ? `Uploading ${uploadedCount} of ${totalFiles} files`
+                                        : <span className='text-danger'>Extracting & counting files...</span>}
                                 </span>
                             </div>
                         </div>
@@ -440,7 +430,7 @@ const UploadFileModal = ({
                 {displayedStep === 'complete' && (
                     <div className="py-2">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="badge badge-pill badge-light text-success border px-3 py-2 d-inline-flex align-items-center" style={{ fontSize: '14px' }}>
+                            <span className="badge badge-pill badge-light text-success border px-3 py-2 d-inline-flex align-items-center" style={{ fontSize: '14px', fontWeight: "600", letterSpacing: "0.5px" }}>
                                 <span className="bg-success rounded-circle mr-2" style={{ width: '8px', height: '8px' }}></span>
                                 Upload Complete
                             </span>
@@ -486,38 +476,24 @@ const UploadFileModal = ({
                                 Files uploaded successfully
                             </h5>
                             <p className="text-muted mb-0" style={{ fontSize: '15px', letterSpacing: '0.5px' }}>
-                                {totalFilesCount} files have been uploaded successfully
+                                {totalFiles || uploadedCount || 1} files have been processed successfully
                             </p>
                         </div>
 
                         <div className="d-flex justify-content-between align-items-center mt-4 pt-3">
                             <button
                                 type="button"
-                                className="btn btn-outline-secondary flex-fill mr-2 py-2 font-weight-bold"
-                                style={{ borderRadius: '12px', fontSize: '15px' }}
-                                onClick={() => {
-                                    if (onSkip) onSkip();
-                                    else setUploadModal(false);
-                                }}
-                            >
+                                className="btn btn-outline-secondary flex-fill mr-2 py-2"
+                                style={{ borderRadius: '12px', fontSize: '15px', fontWeight:"500",letterSpacing:"0.5px" }}
+                                onClick={() => { if (onSkip) onSkip(); else setUploadModal(false); }}>
                                 Skip &gt;&gt;
                             </button>
 
                             <button
                                 type="button"
-                                className="btn btn-primary flex-fill ml-2 py-2 font-weight-bold shadow-sm"
-                                style={{
-                                    borderRadius: '12px',
-                                    fontSize: '15px',
-                                    backgroundColor: '#3b82f6',
-                                    borderColor: '#3b82f6',
-                                    boxShadow: '0px 4px 14px rgba(59, 130, 246, 0.35)'
-                                }}
-                                onClick={() => {
-                                    if (onFinishScan) onFinishScan();
-                                    else setUploadModal(false);
-                                }}
-                            >
+                                className="btn btn-primary flex-fill ml-2 py-2 shadow-sm"
+                                style={{fontWeight:"500", letterSpacing:"0.5px", borderRadius: '12px', fontSize: '15px', backgroundColor: '#3b82f6', borderColor: '#3b82f6', boxShadow: '0px 4px 14px rgba(59, 130, 246, 0.35)' }}
+                                onClick={() => { if (onFinishScan) onFinishScan(); else setUploadModal(false); }}>
                                 Start Scan
                             </button>
                         </div>

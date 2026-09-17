@@ -10,7 +10,7 @@ import Omr from '../assets/Auth/Omr.png'
 
 import routes from "../config/routes";
 import "./auth.css";
-   
+
 const AuthLayout = () => {
   const mainContent = useRef(null);
   const location = useLocation();
@@ -26,29 +26,18 @@ const AuthLayout = () => {
 
   // Generate auth routes
   const getRoutes = () =>
-    routes
-      .filter((route) => route.layout === "/auth")
-      .map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={<route.component />}
-        />
-      ));
+    routes.filter((route) => route.layout === "/auth").map((route, index) => (
+      <Route key={index} path={route.path} element={<route.component />} />
+    ));
 
   return (
-    <div
-      className="omr-page-wrapper d-flex align-items-center min-vh-100"
-      ref={mainContent}
-    >
+    <div className="omr-page-wrapper d-flex align-items-center min-vh-100" ref={mainContent}>
       <Container>
         <Row className="align-items-center justify-conten-center">
           <Col lg={7} className="mb-5 mb-lg-0 text-left">
             <div className="d-none d-lg-flex flex-column ">
               <span>
-                <h1 className="text-dark text-nowrap mb-3"
-                  style={{ fontWeight: '700', fontSize: '2.8rem', letterSpacing: '-0.5px' }}
-                >
+                <h1 className="text-dark text-nowrap mb-3" style={{ fontWeight: '700', fontSize: '2.8rem', letterSpacing: '-0.5px' }}>
                   Image-Based <span className="text-primary-blue ">OMR</span>
                 </h1>
               </span>
@@ -59,10 +48,7 @@ const AuthLayout = () => {
 
             </div>
 
-            <Row
-              className="no-gutters mb-5 justify-content-between d-none d-lg-flex"
-              style={{ maxWidth: "500px" }}
-            >
+            <Row className="no-gutters mb-5 justify-content-between d-none d-lg-flex" style={{ maxWidth: "500px" }}            >
               {[
                 { icon: <MdCloudUpload />, label: "Image Upload" },
                 { icon: <BiScan />, label: "OMR Scanning" },
@@ -76,10 +62,7 @@ const AuthLayout = () => {
                       {item.icon}
                     </span>
                   </div>
-                  <span
-                    className="text-dark text-center"
-                    style={{ fontWeight: "700", fontSize: ".75rem", letterSpacing: '0.4px' }}
-                  >
+                  <span className="text-dark text-center" style={{ fontWeight: "700", fontSize: ".75rem", letterSpacing: '0.4px' }}>
                     {item.label}
                   </span>
                 </Col>
@@ -88,23 +71,16 @@ const AuthLayout = () => {
 
             <div className="graphics-container mt-5 d-block d-md-none d-lg-block">
               <div style={{ maxWidth: "480px", width: "100%" }} className="text-center d-flex">
-                <img
-                  src={Omr}
-                  alt="OMR Dashboard Presentation"
-                  className="img-fluid"
-                />
+                <img src={Omr} alt="OMR Dashboard Presentation" className="img-fluid" />
               </div>
             </div>
           </Col>
 
-          {/* Right Column: Dynamic Sub-form rendering (Login / Register Card) */}
+          {/* Right Column */}
           <Col lg={5} md={8} sm={10} className="mx-auto">
             <Routes>
               {getRoutes()}
-              <Route
-                path="*"
-                element={<Navigate to="/auth/login" replace />}
-              />
+              <Route path="*" element={<Navigate to="/auth/login" replace />} />
             </Routes>
           </Col>
 

@@ -28,7 +28,8 @@ export const createTestAsync = createAsyncThunk(
 
 export const fetchTestList = createAsyncThunk(
   "tests/fetchTestList",
-  async ({search, page, range}, { rejectWithValue }) => {
+  async (arg, { rejectWithValue }) => {
+    const { search = "", page = 1, range = 5 } = arg || {};
     try {
       const response = await getTestList(search, page, range);
 
@@ -48,6 +49,7 @@ export const fetchTestList = createAsyncThunk(
 
 const testSlice = createSlice({
   name: "tests",
+  refreshTest: false,
   initialState: {
     list: [],
     loading: false,
@@ -64,8 +66,7 @@ const testSlice = createSlice({
       })
       .addCase(createTestAsync.fulfilled, (state) => {
         state.creating = false;
-        // Optionally add the newly created test to the list
-        // state.list.push(action.payload);
+        state.refreshTest = !state.refreshTest;
       })
       .addCase(createTestAsync.rejected, (state, action) => {
         state.creating = false;

@@ -85,23 +85,14 @@ const CreateUserForm = ({ setCreateModal, createModal, userId }) => {
 
     const overlayStyle = { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.6)', zIndex: 1050, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' };
     const cardStyle = { fontFamily: "outfit", maxWidth: '480px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px 28px', };
-
     const titleStyle = { color: '#0f172a', fontSize: '20px', fontWeight: '600', marginBottom: '5px' };
-
     const subtitleStyle = { color: '#64748b', fontSize: '14px', marginBottom: '28px' };
-
     const closeBtnStyle = { color: '#ef4444', background: 'none', border: 'none', fontSize: '20px', lineHeight: '1', cursor: 'pointer', padding: "6px 6px", borderRadius: "5px", marginTop: '-4px' };
-
     const labelStyle = { color: '#334155', fontSize: '14px', fontWeight: '500', marginBottom: '4px' };
-
     const inputStyle = { borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px 12px', fontSize: '14px', color: '#334155', height: 'auto', boxShadow: 'none' };
-
     const readOnlyStyle = { ...inputStyle, backgroundColor: '#f8fafc', color: '#94a3b8' };
-
     const cancelBtnStyle = { backgroundColor: '#f8fafc', color: '#475569', border: 'none', borderRadius: '8px', padding: '12px 28px', fontWeight: '600', fontSize: '14px', cursor: 'pointer' };
-
     const submitBtnStyle = { background: "linear-gradient(to left, #3969FE, #1047D5)", color: '#ffffff', border: 'none', borderRadius: '8px', padding: '12px 28px', fontWeight: '600', fontSize: '14px', cursor: 'pointer' };
-
     const selectBg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 16px center/16px`;
 
     return (
@@ -111,7 +102,7 @@ const CreateUserForm = ({ setCreateModal, createModal, userId }) => {
                 {/* Header Section */}
                 <div className="d-flex justify-content-between align-items-start">
                     <div>
-                        <h2 style={titleStyle}>Create User</h2>
+                        <h2 style={titleStyle}>{userId ? "Update User" : "Create User"}</h2>
                         <p style={subtitleStyle}>Create a new operator or moderator account.</p>
                     </div>
                     <button style={closeBtnStyle}

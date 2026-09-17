@@ -1,6 +1,6 @@
 import React from "react";
 
-// import { ROLES} from "./roles"
+import { ROLES } from "./roles"
 
 // Non-WebData Feature Components
 import Index from "../features/Dashboard/Index";
@@ -37,9 +37,7 @@ import { MdOutlineTaskAlt } from "react-icons/md";
 
 
 
-// const {
-//   ADMIN, OPERATOR, MODERATOR
-// } = ROLES
+const { ADMIN, OPERATOR, MODERATOR } = ROLES
 
 
 const routes = [
@@ -68,7 +66,7 @@ const routes = [
     component: Index,
     layout: "/app",
     showInSidebar: true,
-    // roles: [ ADMIN, OPERATOR, MODERATOR ]
+    roles: [ADMIN, OPERATOR, MODERATOR]
   },
   {
     path: "/user-managment",
@@ -77,6 +75,7 @@ const routes = [
     component: UserManagment,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN]
   },
   {
     path: "/template",
@@ -85,18 +84,17 @@ const routes = [
     component: Template,
     layout: "/app",
     showInSidebar: true,
-    // roles: [ADMIN],
+    roles: [ADMIN, MODERATOR],
   },
-
-  // Scanning Routes
 
   {
     path: "/test-mgt",
     name: "Test Managment",
-        icon: <MdOutlineTaskAlt />,
+    icon: <MdOutlineTaskAlt />,
     component: TestManagment,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   // OLD SCANNING
@@ -108,19 +106,23 @@ const routes = [
     component: ScanPage,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
   {
     path: "/job-queue/adminscanjobnew",
     component: AdminScanJob,
     layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
-  {
-    path: "/job-queue/adminscanjob",
-    component: AdminScanJob,
-    layout: "/app",
-    showInSidebar: false,
-  },
+
+  // {
+  //   path: "/job-queue/adminscanjob",
+  //   component: AdminScanJob,
+  //   layout: "/app",
+  //   showInSidebar: false,
+  //   roles: [ADMIN],
+  // },
 
 
   {
@@ -130,6 +132,7 @@ const routes = [
     component: ScanedList,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
   {
     path: "/server-folder",
@@ -138,6 +141,7 @@ const routes = [
     component: FolderStructure,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
   {
     path: "/result-generation",
@@ -146,6 +150,7 @@ const routes = [
     component: ResultGeneration,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   {
@@ -155,6 +160,7 @@ const routes = [
     component: Pricing,
     layout: "/app",
     showInSidebar: true,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   {
@@ -162,12 +168,14 @@ const routes = [
     component: PaymentStatus,
     layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
   {
     path: "/template/create-template/:Id",
     component: TemplateEditor,
     layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   {
@@ -176,31 +184,31 @@ const routes = [
     component: Profile,
     layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
-
-  // ==========================================
-  // STANDALONE / FULL PAGE ROUTES (No Sidebar Layout)
-  // ==========================================
 
   {
     path: "/app/result-table",
     component: ResultTablePage,
-    layout: "standalone",
+    layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   {
     path: "/app/Subscription/create",
     component: SubscriptionCreate,
-    layout: "standalone",
+    layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
   {
     path: "/payment-status",
     component: PaymentStatus,
-    layout: "standalone",
+    layout: "/app",
     showInSidebar: false,
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 ];
 

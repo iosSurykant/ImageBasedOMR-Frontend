@@ -5,10 +5,9 @@ import { createUser } from "helper/userManagment_helper";
 import { fetchAllUsers } from "helper/userManagment_helper";
 import { toast } from "react-toastify";
 
-const getAllUsers = createAsyncThunk("users/getAllUsers", async ({ currentPage, statusFilter, roleFilter, debouncedSearchQuery }) => {
+const getAllUsers = createAsyncThunk("users/getAllUsers", async ({ currentPage,referenceId, statusFilter, roleFilter, debouncedSearchQuery }) => {
   try {
-
-    const response = await fetchAllUsers(currentPage, statusFilter, roleFilter, debouncedSearchQuery);
+    const response = await fetchAllUsers(currentPage, statusFilter, roleFilter, debouncedSearchQuery, referenceId);
 
     if (response.state === "false") {
       return [];

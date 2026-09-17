@@ -37,6 +37,8 @@ const initializeUrls = async () => {
 
     // TEST MODULE
     CREATE_TEST: `${baseUrl}api/Template/CreateTest`,
+    DELETE_TEST: `${baseUrl}api/Template/DeleteTest`,
+    UPDATE_TEST: `${baseUrl}api/Template/UpdateTest`,
     
     GET_USER_ROLES: `${baseUrl}GetUserRole`,
     GET_PROCESS_DATA: `${baseUrl}ProcessData`,

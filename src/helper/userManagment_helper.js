@@ -11,15 +11,15 @@ export const createUser = async (data) => {
   );
 };
 
-export const fetchAllUsers = async (currentPage,statusFilter,roleFilter,debouncedSearchQuery) => {
+export const fetchAllUsers = async (currentPage,statusFilter,roleFilter,debouncedSearchQuery,referenceId) => {
   const urls = await url.getUrls();
   const pageNumber = currentPage
   const role = roleFilter
   const search = debouncedSearchQuery
   const isLogg = statusFilter
-  const range = 5
+  const range = 7
 
-  return post(urls.GET_USERS, { pageNumber, range, isLogg, role, search });
+  return post(urls.GET_USERS, { pageNumber, range, isLogg, role, search, referenceId });
 };
 
 export const removeUser = async (id) => {

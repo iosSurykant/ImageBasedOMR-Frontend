@@ -10,8 +10,26 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
   const { isScanning } = useScan();
   const navigate = useNavigate();
 
-  // Filter routes that should appear in the sidebar
-  const renderNavLinks = routes.filter((route) => route.showInSidebar === true);
+  const getUserRole = () => {
+    try {
+      const userData = localStorage.getItem("userData");
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        return parsed.role || "";
+      }
+    } catch (error) {
+      console.error("Error parsing userData from localStorage:", error);
+    }
+    return "";
+  }
+
+  const userRole = getUserRole();
+
+  const renderNavLinks = routes.filter(
+    (route) =>
+      route.showInSidebar === true &&
+      (!route.roles || route.roles.length === 0 || route.roles.includes(userRole))
+  );
 
   const handleLogOut = async () => {
     if (isScanning) {
@@ -42,14 +60,7 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
   return (
     <div
       className="d-flex flex-column py-4 px-3 text-dark position-relative overflow-hidden"
-      style={{
-        width: "280px",
-        height: "100vh",
-        background: "rgba(255, 255, 255, 1)",
-        borderRight: "1px solid #eef2f5",
-        zIndex: 10,
-      }}
-    >
+      style={{ width: "280px", height: "100vh", background: "rgba(255, 255, 255, 1)", borderRight: "1px solid #eef2f5", zIndex: 10, fontFamily: "outfit" }}    >
       <style>{`
         .tablet-drawer-item {
           width: 100%;
@@ -63,7 +74,7 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
           background-color: #FAF7F7 !important;
           color: #000000 !important;
           transform: translateX(6px);
-          font-weight: 700 !important;
+          font-weight: 600 !important;
           box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
         }
         .tablet-drawer-item:hover:not(.active) .drawer-icon {
@@ -73,7 +84,8 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
         .tablet-drawer-item.active {
           background-color: #FFFFFF !important;
           color: #000000 !important;
-          font-weight: 700 !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.5px;
           box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
         }
  
@@ -87,28 +99,11 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
         }
       `}</style>
 
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "20%",
-          transform: "translate(-50%, -50%)",
-          width: "290px",
-          height: "280px",
-          borderRadius: "50%",
-          background: "rgba(182, 151, 255, 0.3)",
-          filter: "blur(30px)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+      <div style={{ position: "absolute", left: "50%", top: "20%", transform: "translate(-50%, -50%)", width: "290px", height: "280px", borderRadius: "50%", background: "rgba(182, 151, 255, 0.3)", filter: "blur(30px)", pointerEvents: "none", zIndex: 0, }} />
 
       {/* Header section */}
       <div className="d-flex justify-content-between align-items-center pr-1 mb-5 mt-2" style={{ zIndex: 2 }}>
-        <h5
-          className="m-0 font-weight-bolder tracking-wide"
-          style={{ fontSize: "1.35rem", whiteSpace: "nowrap" }}
-        >
+        <h5 className="m-0 font-weight-bolder tracking-wide" style={{ fontSize: "1.35rem", whiteSpace: "nowrap" }}>
           Image-Based <span style={{ color: "#2f80ed" }}>OMR</span>
         </h5>
 
@@ -116,8 +111,7 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
           className="btn p-1 border-0 outline-none shadow-none rounded-circle d-flex align-items-center justify-content-center drawer-close-btn"
           style={{ width: "36px", height: "36px" }}
           type="button"
-          onClick={() => setIsTabCollapsed(!isTabCollapsed)}
-        >
+          onClick={() => setIsTabCollapsed(!isTabCollapsed)}>
           <IoClose size={24} color="#333" />
         </button>
       </div>
@@ -125,12 +119,7 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
       {/* Menu Container */}
       <ul
         className="nav flex-column align-items-start flex-grow-1"
-        style={{
-          gap: "0.7rem",
-          width: "100%",
-          zIndex: 2,
-        }}
-      >
+        style={{ gap: "0.7rem", width: "100%", zIndex: 2, }}>
         {renderNavLinks.map((item, index) => {
           const path = item.layout + item.path;
           return (
@@ -138,13 +127,7 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
               key={item.id || path || index}
               to={path}
               className="nav-link d-flex align-items-center px-3 py-2 tablet-drawer-item"
-              style={() => ({
-                textDecoration: "none",
-                fontWeight: "600",
-                whiteSpace: "nowrap",
-                opacity: isScanning ? 0.6 : 1,
-                cursor: isScanning ? "not-allowed" : "pointer",
-              })}
+              style={() => ({ textDecoration: "none", fontWeight: "500", whiteSpace: "nowrap", letterSpacing:"0.5px", opacity: isScanning ? 0.6 : 1, cursor: isScanning ? "not-allowed" : "pointer", })}
               onClick={(e) => {
                 if (isScanning) {
                   e.preventDefault();
@@ -153,20 +136,12 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
                 setIsTabCollapsed(true);
               }}
               onMouseEnter={(e) => {
-                if (!isScanning && !e.currentTarget.classList.contains("active")) {
-                  e.currentTarget.style.backgroundColor = "#fff";
-                }
+                if (!isScanning && !e.currentTarget.classList.contains("active")) { e.currentTarget.style.backgroundColor = "#fff"; }
               }}
               onMouseLeave={(e) => {
-                if (!isScanning && !e.currentTarget.classList.contains("active")) {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }
-              }}
-            >
-              <span
-                className="drawer-icon d-flex justify-content-center text-lg"
-                style={{ fontSize: "1.25rem" }}
-              >
+                if (!isScanning && !e.currentTarget.classList.contains("")) { e.currentTarget.style.backgroundColor = "transparent"; }
+              }}>
+              <span className="drawer-icon d-flex justify-content-center text-lg" style={{ fontSize: "1.25rem" }}>
                 {item.icon || "▪️"}
               </span>
               <span style={{ paddingLeft: "14px", fontSize: "0.95rem" }}>
@@ -188,50 +163,18 @@ const TabletSidebar = ({ routes = [], setIsTabCollapsed, isTabCollapsed }) => {
             handleLogOut();
           }
         }}
-        style={{
-          width: "220px",
-          fontSize: "16px",
-          borderRadius: "50px",
-          transition: "background 0.3s ease",
-          cursor: isScanning ? "not-allowed" : "pointer",
-          opacity: isScanning ? 0.6 : 1,
-          zIndex: 2,
-        }}
-        onMouseOver={(e) => {
-          if (!isScanning) {
-            e.currentTarget.style.background = "#FAFAFA";
-          }
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "transparent";
-        }}
-      >
+        style={{ width: "220px", fontSize: "16px", borderRadius: "50px", transition: "background 0.3s ease", cursor: isScanning ? "not-allowed" : "pointer", opacity: isScanning ? 0.6 : 1, zIndex: 2, }}
+        onMouseOver={(e) => { if (!isScanning) { e.currentTarget.style.background = "#FAFAFA"; } }}
+        onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; }}>
         <span className="mr-2 pl-2">
           <MdLogout size={22} color="red" />
         </span>
         <span style={{ color: "red", fontWeight: "600" }}>Logout</span>
       </div>
 
-      <div className="d-flex mt-3 px-3" style={{ gap: '8px', cursor: 'pointer' }}>
-        <img
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80"
-          alt="Avatar"
-          className="rounded-circle "
-          style={{ width: '36px', height: '36px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-        />
-        <div className="text-left">
-          <div className="font-weight-bold text-dark m-0" style={{ fontSize: '0.85rem', lineHeight: '1.2' }}>
-            Admin Client
-          </div>
-          <small className="text-muted d-block" style={{ fontSize: '0.70rem' }}>
-            Shivam
-          </small>
-        </div>
-        <MdKeyboardArrowDown  />
-      </div>
-
     </div>
   );
 };
+
 
 export default TabletSidebar;
