@@ -4,6 +4,8 @@ const ScanContext = createContext();
 
 export const ScanProvider = ({ children }) => {
   const [isScanning, setIsScanning] = useState(false);
+  const [isLiveScanning, setIsLiveScanning] = useState(true);
+  
   const [isPausedContext, setIsPausedContext] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
 
@@ -16,6 +18,9 @@ export const ScanProvider = ({ children }) => {
         setIsPausedContext,
         isStarting,
         setIsStarting,
+
+        isLiveScanning,
+        setIsLiveScanning
       }}
     >
       {children}

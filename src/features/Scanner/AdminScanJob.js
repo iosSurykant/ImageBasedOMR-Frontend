@@ -29,7 +29,7 @@ import { debounce } from "./utils/scanUtils";
 const AdminScanJob = () => {
   const { setIsScanning, setIsPausedContext } = useScan();
   const location = useLocation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   // ── Infra state ────────────────────────────────────────────────────────────
   const [baseUrl, setBaseUrl] = useState(null);
@@ -137,6 +137,7 @@ const AdminScanJob = () => {
   useEffect(() => {
     setIsScanning(scanning);
   }, [scanning, setIsScanning]);
+  
   useEffect(() => {
     setIsPausedContext(isPaused);
   }, [isPaused, setIsPausedContext]);

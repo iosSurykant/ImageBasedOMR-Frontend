@@ -34,6 +34,7 @@ import { IoPricetagsOutline } from "react-icons/io5";
 import { AiOutlineFolderOpen } from "react-icons/ai";
 import { CiMenuFries } from "react-icons/ci";
 import { MdOutlineTaskAlt } from "react-icons/md";
+import OMRDashboard from "features/LiveScan/OMRDashboard";
 
 
 
@@ -116,13 +117,14 @@ const routes = [
     roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
-  // {
-  //   path: "/job-queue/adminscanjob",
-  //   component: AdminScanJob,
-  //   layout: "/app",
-  //   showInSidebar: false,
-  //   roles: [ADMIN],
-  // },
+  {
+    path: "/omr-dashboard",
+        name: "OMR Scan",
+    component: OMRDashboard,
+    layout: "/app",
+    showInSidebar: true,
+    roles: [ADMIN],
+  },
 
 
   {

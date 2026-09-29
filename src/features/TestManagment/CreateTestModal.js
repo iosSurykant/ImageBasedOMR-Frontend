@@ -215,13 +215,14 @@ const CreateTestModal = ({ setCreateModal, setUploadModal, formData, setFormData
                     {/* Notes Input */}
                     <div className="form-group mb-4">
                         <label style={labelStyle}>
-                            Notes (Optional)
+                            Notes (Required)
                         </label>
                         <textarea
                             name="notes"
                             rows="4"
                             value={formData.notes}
                             maxLength={60}
+                            required
                             placeholder="Enter notes about this test..."
                             onChange={handleChange}
                             style={{ ...inputStyle, resize: 'none' }}

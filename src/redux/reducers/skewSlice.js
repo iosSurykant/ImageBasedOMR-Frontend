@@ -40,7 +40,7 @@ const skewSlice = createSlice({
         updateSkewDimensions: (state, action) => {
             const { corner, width, height, x, y, selected } = action.payload;
             
-            console.log(width, corner, height, x, y, selected)
+            console.log(corner,  x, y)
 
             if (state.skewData[corner]) {
                 state.skewData[corner].width = width;

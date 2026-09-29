@@ -1,0 +1,156 @@
+FEATURES MODULES OVERVIEW
+=========================
+
+This document summarizes the feature‑level modules that were added or modified in the current change set.
+For each module we explain its purpose, the main components, the typical data/control flow, and how it
+integrates with the rest of the application.
+
+--------------------------------------------------------------------
+1. Test Management (src/features/TestManagment/)
+--------------------------------------------------------------------
+Purpose
+  - Central UI for creating, viewing, editing, uploading, deleting, and initiating OMR scans for test
+    definitions.
+
+Main Components
+  - TestManagment.js          – list view with search, pagination, row actions.
+  - CreateTestModal.js        – modal for creating or updating a test (form + auto‑generated testId).
+  - UploadFileModal.js        – (referenced) modal used after test creation to upload OMR sheets.
+  - Uses shared Pagination component (src/common/Pagination.js).
+
+Data / Control Flow
+  1. On mount:
+        - Dispatch fetchTemplates() to populate template dropdown.
+        - Dispatch fetchTestList({search:'', page:1, range}) to load first page of tests.
+  2. User types in search box → onChange sets searchTerm, resets page to 1.
+        - Debounced search (400ms) triggers fetchTestList with debounced term.
+  3. Pagination controls call onPageChange → updates page state → fetchTestList again.
+  4. Each test row shows:
+        - Template name (looked up from templates list via templateId).
+        - Status badge (Active/Inactive).
+        - Action buttons:
+              * Scan (only if active) → navigate to /app/omr-dashboard (Live Scan dashboard).
+              * Upload → opens UploadFileModal with pre‑filled testName/testId.
+              * Three‑dot menu → Edit (opens CreateTestModal in edit mode) or Delete.
+  5. Create Test flow:
+        - User fills form (template, testName, notes).
+        - On submit (create mode):
+              * testId auto‑generated as: <userId>/<DDMM><HHMMSSmmm>.
+              * Dispatch createTestAsync(formData).
+              * On success: toast, fetchTemplates(), fetchTestList(), reset form, open UploadFileModal.
+        - Update Test flow:
+              * Form pre‑filled from selected row.
+              * On submit: dispatch updateTest(formData) → similar success handling.
+  6. Delete flow:
+        - Window.confirm → if ok, call deleteTest(testId) helper → on success refresh list.
+
+Integration
+  - Consumes templates from Redux (templateSlice).
+  - Emits test‑related actions (testSlice): createTestAsync, updateTest, deleteTest, fetchTestList.
+  - Uses InitializeURL.js (via services) to build API endpoints for test CRUD.
+  - Routes.js registers path "/test-mgt" → TestManagment component (admin/moderator/operator access).
+
+--------------------------------------------------------------------
+2. User Management (src/features/UserManagement/UserManagment.js)
+--------------------------------------------------------------------
+Purpose
+  - UI for administrators to list, create, edit, and delete system users with role‑ and status‑based
+    filtering.
+
+Main Components
+  - Single file UserManagment.js (contains table view, card view, filters, pagination, and modal
+    placeholder for CreateUserForm).
+
+Data / Control Flow
+  1. On mount / when filters change:
+        - Dispatch getAllUsers({ currentPage, statusFilter, roleFilter, debouncedSearchQuery, referenceId }).
+        - referenceId taken from logged‑in user’s localStorage.
+  2. Search input → onChange sets searchQuery → debounced (500ms) → triggers getAllUsers.
+  3. Role / Status dropdowns → onChange sets respective filter → triggers getAllUsers.
+  4. Pagination component → onPageChange sets currentPage → triggers getAllUsers.
+  5. Rendering:
+        - Desktop: table with columns Sr., Name, Role, Created On, Status, Action.
+        - Tablet/Mobile: responsive cards showing same fields.
+        - Action column:
+              * Edit icon → opens CreateUserForm modal with user.empId (pre‑fill logic inside modal).
+              * Delete icon → SweetAlert confirmation → if confirmed, dispatch deleteUser(id) → on
+                success re‑fetch list.
+  6. Create User flow (handled in CreateUserForm modal, not shown in diff):
+        - Form submits → dispatch createUser (likely via UserManagementSlice) → on success close modal
+          and refresh list.
+
+Integration
+  - Uses Redux slice UserManagementSlice for all CRUD actions.
+  - Relies on InitializeURL.js for endpoint base (via services/BackendApi).
+  - Routes.js registers "/user-managment" → UserManagment component (admin‑only access).
+
+--------------------------------------------------------------------
+3. Live Scan (src/features/LiveScan/)
+--------------------------------------------------------------------
+Purpose
+  - Real‑time OMR scanning dashboard that lets an operator start a scan job, view live results,
+    pause/resume, and review scanned sheets.
+
+Main Components
+  - OMRDashboard.js                – main view: scanner controls, live status, result summary.
+  - AccurateOMRSheet.js            – logic/helpers for sheet alignment & accuracy scoring.
+  - LiveResultsTable.js            – table that updates with each processed sheet.
+  - FullViewModal.js               – modal to display a scanned sheet in detail.
+  - SidePreviewPanel.js            – sidebar thumbnail preview of the current sheet.
+  - OMRDashboard.css               – styling for the dashboard.
+
+Data / Control Flow (inferred from component names & existing patterns)
+  1. Operator navigates to /omr-dashboard (route protected for admin/operator/moderator).
+        - Component likely fetches scanner configuration or active test via Redux or props.
+  2. On start:
+        - Calls SCAN_FILES (or START_JOB) endpoint from InitializeURL.js to begin processing
+          OMR sheets for the selected test.
+        - Polls or uses WebSocket (not shown) to receive incremental results.
+  3. Each processed sheet:
+        - AccurateOMRSheet.js computes alignment/score.
+        - LiveResultsTable.js appends a row with sheetId, score, timestamp, etc.
+        - SidePreviewPanel.js updates thumbnail of the latest sheet.
+        - Operator can click a row → FullViewModal shows enlarged image + detailed metrics.
+  4. Controls:
+        - Pause button → calls PAUSE_SCAN endpoint.
+        - Resume button → calls RESUME_SCAN endpoint.
+        - Stop / Finish → calls FINISH_JOB or similar, then optionally triggers result generation
+          (GENERATE_RESULT, MERGECSV, etc.) via InitializeURL endpoints.
+  5. When scanning completes:
+        - Dashboard may show summary (total sheets, average accuracy) and enable export options
+          (EXCEL via GENERATE_RESULT, CSV via MERGECSV, etc.).
+
+Integration
+  - Uses same InitializeURL.js for all OMR‑processing endpoints.
+  - Likely dispatches actions to a scan‑related Redux slice (not in diff) to store live results.
+  - Routes.js registers "/omr-dashboard" → OMRDashboard (admin/operator/moderator access).
+  - TestManagment.js links to this view via the Scan button on active tests.
+
+--------------------------------------------------------------------
+Common Infrastructure Used Across Features
+--------------------------------------------------------------------
+- Pagination (src/common/Pagination.js) – reusable component for all list views.
+- InitializeURL.js (src/helper/InitializeURL.js) – centralizes API endpoint construction.
+- Routes.js (src/config/routes.js) – defines protected paths and role‑based visibility.
+- Redux (via useSelector/useDispatch) – shared state for templates, tests, users, scanner.
+- LocalStorage – holds logged‑in user data (userId, referenceId) used for auto‑generation and API calls.
+- UI libraries – React, React‑Icons, SweetAlert2, react‑toastify, etc.
+
+--------------------------------------------------------------------
+Summary of Data Flow
+--------------------------------------------------------------------
+1. User logs in → userData stored in localStorage → referenceId & userId available.
+2. Based on role, Routes.js renders permitted feature links.
+3. Feature modules fetch initial data (templates, tests, users) via Redux thunks that call
+   endpoints built with InitializeURL.js.
+4. User interactions (search, filters, pagination, form submits) trigger Redux actions → API
+   calls → state updates → UI re‑renders.
+5. For test scanning, TestManagment redirects to LiveScan dashboard, which starts a scan job
+   via OMR‑processing endpoints, processes sheets incrementally, and updates live UI.
+6. User management modifications (create/delete) persist via Redux → API → refresh lists.
+
+This structure keeps concerns separated, encourages reuse (pagination, URL helper), and provides a
+clear, role‑guided navigation flow through the application.
+
+--------------------------------------------------------------------
+End of Document

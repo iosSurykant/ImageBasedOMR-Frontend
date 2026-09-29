@@ -22,9 +22,8 @@ const initializeUrls = async () => {
 
     // QR endpoint
     CREATE_QR_ENDPOINT: `${baseUrl}api/auth/qr/create`,
-    GET_TEST_LIST:`${baseUrl}api/Template/GetTest`,
     UPLOAD_IMAGES_FILE: `${baseUrl}api/Template/upload`,
-
+    
     // Template Manager
     GET_ALL_TEMPLATE: `${baseUrl}api/Template/List_ImeTemp`,
     GET_LAYOUT_DATA: `${baseUrl}api/Template/Single_ImeTem`,
@@ -34,10 +33,11 @@ const initializeUrls = async () => {
     GET_TEMPLATE_IMAGE: `${baseUrl}GetTemplateImage`,
     GET_TEMPLATE_CSV: `${baseUrl}GetTemplateCSV`,
 
-
+    
     // TEST MODULE
     CREATE_TEST: `${baseUrl}api/Template/CreateTest`,
     DELETE_TEST: `${baseUrl}api/Template/DeleteTest`,
+    GET_TEST_LIST:`${baseUrl}api/Template/GetTestEmp`,
     UPDATE_TEST: `${baseUrl}api/Template/UpdateTest`,
     
     GET_USER_ROLES: `${baseUrl}GetUserRole`,

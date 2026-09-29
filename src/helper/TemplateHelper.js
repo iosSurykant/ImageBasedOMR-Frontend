@@ -98,20 +98,7 @@ export const fetchAllTemplate = async () => {
 export const updateTemplate = async (FileName, jsonFile) => {
   const urls = await url.getUrls();
 
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-  const empid = userData?.empid;
-
-  if (!empid) {
-    throw new Error("empid not found in localStorage");
-  }
-
-  const baseFileName = FileName.includes("##")
-    ? FileName.split("##")[0]
-    : FileName;
-
-  const updatedFileName = `${baseFileName}##${empid}`;
-
-  const endpoint = `${urls.UPDATE_TEMPLATE}?FileName=${encodeURIComponent(updatedFileName)}`;
+  const endpoint = `${urls.UPDATE_TEMPLATE}?FileName=${encodeURIComponent(FileName)}`;
 
   const formData = new FormData();
   formData.append("tempName", jsonFile);

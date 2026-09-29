@@ -90,9 +90,12 @@ const tourSteps = [
 ];
 
 const TemplateEditor = () => {
+
   const [zoomLevel, setZoomLevel] = useState(100);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [jsonData, setJsonData] = useState([]);
+
+  const [boxGeometry, setBoxGeometry] = useState({});
 
   const [runTour, setRunTour] = useState(false);
 
@@ -134,6 +137,7 @@ const TemplateEditor = () => {
   const selectedBoxId = useSelector((state) => state.BoxData.selectedBoxId);
 
 
+
   const getJsonData = useCallback(async () => {
     if (!Id) return;
 
@@ -166,6 +170,14 @@ const TemplateEditor = () => {
     getJsonData();
   }, [getJsonData]);
 
+  const getBoxGeometry = (box) => {
+    return boxGeometry[box.id] || {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+    };
+  };
 
   // Helper function remains exactly the same!
   const getMergeBoxCoordinates = (selectedBoxes) => {
@@ -246,6 +258,8 @@ const TemplateEditor = () => {
     },
     {},
   );
+
+  console.log(activeSkewCoordinates)
 
   // Calculates The Grid BUBBLE Coordinate For Each Box
   const getBubbleCoordinates = (box) => {
@@ -338,13 +352,18 @@ const TemplateEditor = () => {
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
         return;
       }
+
+      // Optional: Prevent box movement if user is typing inside an input/form field
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) {
+        return;
+      }
+
       e.preventDefault();
       const MOVE_STEP = 1;
 
-
+      // 1. Skew Corner Movement
       if (activeSkewCorner && skewData[activeSkewCorner] && !isPanMode) {
         const currentPoint = skewData[activeSkewCorner];
-
         let newX = currentPoint.x;
         let newY = currentPoint.y;
 
@@ -360,39 +379,55 @@ const TemplateEditor = () => {
             y: newY,
           })
         );
-        return; // Exit early
+        return;
       }
 
-
-      // If a box is selected and we are NOT in pan mode
+      // 2. Selected Box Movement
       if (selectedBoxId && !isPanMode) {
         const selectedBox = boxes.find((b) => b.id === selectedBoxId);
         if (!selectedBox) return;
 
+        // Use current local geometry if available, otherwise fallback to box props
+        const currentGeo = boxGeometry[selectedBoxId] || {
+          x: selectedBox.x,
+          y: selectedBox.y,
+          width: selectedBox.width,
+          height: selectedBox.height,
+        };
 
-        let newX = selectedBox.x;
-        let newY = selectedBox.y;
+        let newX = currentGeo.x;
+        let newY = currentGeo.y;
 
         if (e.key === "ArrowLeft") newX -= MOVE_STEP;
         if (e.key === "ArrowRight") newX += MOVE_STEP;
         if (e.key === "ArrowUp") newY -= MOVE_STEP;
         if (e.key === "ArrowDown") newY += MOVE_STEP;
 
+        // Update local state immediately for smooth UI feedback
+        setBoxGeometry((prev) => ({
+          ...prev,
+          [selectedBoxId]: {
+            ...currentGeo,
+            x: newX,
+            y: newY,
+          },
+        }));
+
+        // Dispatch to Redux
         dispatch(
           updateBoxGeometry({
             id: selectedBoxId,
             x: newX,
             y: newY,
-            width: selectedBox.width,
-            height: selectedBox.height,
+            width: currentGeo.width,
+            height: currentGeo.height,
           })
         );
         return;
       }
 
-      // If no box is selected, pan the background canvas
+      // 3. Background Canvas Panning
       const PAN_STEP = 20;
-
       setPosition((prevPos) => {
         let newX = prevPos.x;
         let newY = prevPos.y;
@@ -402,7 +437,6 @@ const TemplateEditor = () => {
         if (e.key === "ArrowUp") newY += PAN_STEP;
         if (e.key === "ArrowDown") newY -= PAN_STEP;
 
-        // Apply container boundary clamping
         if (!containerRef.current || !imageRef.current)
           return { x: newX, y: newY };
 
@@ -426,7 +460,7 @@ const TemplateEditor = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
 
-  }, [zoomLevel, selectedBoxId, boxes, dispatch, isPanMode, activeSkewCorner, skewData]);
+  }, [zoomLevel, selectedBoxId, boxes, boxGeometry, dispatch, isPanMode, activeSkewCorner, skewData])
 
   // mouse event handler with boundary clamping
   const handleMouseDown = (e) => {
@@ -513,7 +547,6 @@ const TemplateEditor = () => {
   // Srart Tour
   const startTour = () => {
     setRunTour(false);
-
     setTimeout(() => {
       setRunTour(true);
     }, 100);
@@ -528,7 +561,7 @@ const TemplateEditor = () => {
   };
 
   return (
-    <div className="p-4" style={{ backgroundColor: "white", height: "100%" }}>
+    <div className="2" style={{ backgroundColor: "white", height: "100%" }}>
       {/* ACTION TOOLBAR */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className="d-flex align-items-center justify-content-center">
@@ -550,8 +583,10 @@ const TemplateEditor = () => {
 
             <span
               className="form-control bg-white border-1 px-3"
-              style={{borderRadius: "8px",
-                color: "#495057", fontWeight: 500, minWidth: "210px",overflowX: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",}}
+              style={{
+                borderRadius: "8px",
+                color: "#495057", fontWeight: 500, minWidth: "210px", overflowX: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}
             >
               {tempData?.data?.fileName}
             </span>
@@ -567,7 +602,7 @@ const TemplateEditor = () => {
             onClick={startTour}
             title="Start Editor Tour"
             className="btn btn-primary  px-4 py-2 mr-3"
-            style={{fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb",borderColor: "#2563eb", borderRadius: "8px", }} >
+            style={{ fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb", borderColor: "#2563eb", borderRadius: "8px", }} >
             Tutorial Tour
           </button>
 
@@ -578,8 +613,7 @@ const TemplateEditor = () => {
             <button
               type="button"
               className="btn btn-link border-0 shadow-none text-muted p-2 mr-0"
-              onClick={handleZoomIn}
-            >
+              onClick={handleZoomIn}>
               <FiZoomIn size={22} />
             </button>
 
@@ -590,8 +624,7 @@ const TemplateEditor = () => {
             <button
               type="button"
               className="btn btn-link border-0 shadow-none text-muted p-2"
-              onClick={handleZoomOut}
-            >
+              onClick={handleZoomOut}>
               <FiZoomOut size={22} />
             </button>
           </div>
@@ -601,8 +634,7 @@ const TemplateEditor = () => {
             onClick={handleSaveTemplate}
             type="button"
             className="btn btn-primary  px-4 py-2"
-            style={{ fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb", borderColor: "#2563eb", borderRadius: "8px", }}
-          >
+            style={{ fontWeight: 500, fontFamily: "outfit", backgroundColor: "#2563eb", borderColor: "#2563eb", borderRadius: "8px", }}>
             Save <span>Template</span>
           </button>
         </div>
@@ -630,20 +662,17 @@ const TemplateEditor = () => {
                 return (
                   <Rnd
                     key={corner}
-                    onMouseDown={() => {
-                      setActiveSkewCorner(corner);
-                    }}
+                    onMouseDown={() => { setActiveSkewCorner(corner); }}
                     position={{ x: point.x, y: point.y }}
                     size={{ width: point.width, height: point.height }}
                     scale={zoomLevel / 100}
                     bounds="parent"
                     disableDragging={isPanMode}
-                    resizeHandleStyles={{
-                    }}
-                    enableResizing={isPanMode ? false : {top: false, right: false, bottom: false, left: false, topRight: true, bottomRight: true, bottomLeft: true,topLeft: true,}
+                    resizeHandleStyles={{  }}
+                    enableResizing={isPanMode ? false : { top: false, right: false, bottom: false, left: false, topRight: true, bottomRight: true, bottomLeft: true, topLeft: true, }
                     }
                     style={{
-                      backgroundColor: "rgba(255, 193, 7, 0.65)",border: "1px solid #dc3545", boxSizing: "border-box", zIndex: 900, pointerEvents: isPanMode ? "none" : "auto",
+                      backgroundColor: "rgba(255, 193, 7, 0.65)", border: "1px solid #dc3545", boxSizing: "border-box", zIndex: 900, pointerEvents: isPanMode ? "none" : "auto",
                     }}
                     onDragStop={(e, d) => {
                       dispatch(
@@ -672,53 +701,120 @@ const TemplateEditor = () => {
 
             {/* Render Dynamic Grid Boxes */}
             {boxes.map((box) => {
+              const geometry = getBoxGeometry(box);
+
               return (
                 <Rnd
-                  onClick={() => handleBoxClick(box)}
                   key={box.id}
-                  position={{ x: box.x, y: box.y }}
-                  size={{ width: box.width, height: box.height }}
+                  position={{ x: geometry.x, y: geometry.y, }}
+                  size={{ width: geometry.width, height: geometry.height, }}
                   scale={zoomLevel / 100}
                   bounds="parent"
                   disableDragging={isPanMode}
-                  style={{
-                    pointerEvents: isPanMode ? "none" : "auto",
-                    zIndex: 800,
-                  }}
-                  onDragStop={(e, d) => {
-                    dispatch(
-                      updateBoxGeometry({
-                        id: box.id,
+                  onMouseDown={() => { if (!isPanMode) { handleBoxClick(box); } }}
+
+                  style={{ pointerEvents: isPanMode ? "none" : "auto", zIndex: 800, }}
+
+                  onDrag={(e, d) => {
+                    setBoxGeometry((prev) => ({
+                      ...prev,
+
+                      [box.id]: {
+                        ...(prev[box.id] || {
+                          x: box.x,
+                          y: box.y,
+                          width: box.width,
+                          height: box.height,
+                        }),
+
                         x: d.x,
                         y: d.y,
-                      }),
-                    );
+                      },
+                    }));
                   }}
-                  
-                  onResize={(e, direction, ref, delta, position) => {
+
+                  onDragStop={(e, d) => {
+                    const x = Math.round(d.x);
+                    const y = Math.round(d.y);
+
+                    setBoxGeometry((prev) => ({
+                      ...prev,
+
+                      [box.id]: {
+                        ...(prev[box.id] || {
+                          x: box.x,
+                          y: box.y,
+                          width: box.width,
+                          height: box.height,
+                        }),
+
+                        x,
+                        y,
+                      },
+                    }));
+
                     dispatch(
                       updateBoxGeometry({
                         id: box.id,
-                        width: ref.offsetWidth,
-                        height: ref.offsetHeight,
-                        x: position.x,
-                        y: position.y,
+                        x,
+                        y,
                       })
                     );
                   }}
-                  
-                  resizeGrid={[0.2, 0.2]} 
 
-                  enableResizing={
-                    isPanMode ? false : {top: true, right: true, bottom: true, left: true, topRight: false, bottomRight: true, bottomLeft: true, topLeft: false,}
-                  }>
+                  onResize={(e, direction, ref, delta, position) => {
+                    const width = ref.offsetWidth;
+                    const height = ref.offsetHeight;
+
+                    setBoxGeometry((prev) => ({
+                      ...prev,
+
+                      [box.id]: {
+                        ...(prev[box.id] || {
+                          x: box.x,
+                          y: box.y,
+                          width: box.width,
+                          height: box.height,
+                        }),
+
+                        x: position.x,
+                        y: position.y,
+                        width,
+                        height,
+                      },
+                    }));
+                  }}
+
+                  onResizeStop={(e, direction, ref, delta, position) => {
+                    const width = Math.round(ref.offsetWidth);
+                    const height = Math.round(ref.offsetHeight);
+
+                    const x = Math.round(position.x);
+                    const y = Math.round(position.y);
+
+                    setBoxGeometry((prev) => ({
+                      ...prev,
+
+                      [box.id]: {
+                        ...(prev[box.id] || { x: box.x, y: box.y, width: box.width, height: box.height, }), x, y, width, height,
+                      },
+                    }));
+
+                    dispatch(
+                      updateBoxGeometry({ id: box.id, x, y, width, height, }));
+                  }}
+
+                  resizeGrid={[1, 1]}
+                  enableResizing={isPanMode ? false : { top: true, right: true, bottom: true, left: true, topRight: true, bottomRight: true, bottomLeft: true, topLeft: true, }}>
                   <DynamicGrid
                     rows={box.totalRow}
                     cols={box.totalCol}
                     radius={box.radius}
-                    width={box.width}
-                    height={box.height}
+                    width={geometry.width}
+                    height={geometry.height}
                     name={box.fieldName}
+                    selectedBoxId={selectedBoxId}
+                    box={box}
                   />
                 </Rnd>
               );

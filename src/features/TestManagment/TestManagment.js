@@ -6,12 +6,13 @@ import UploadFileModal from './UploadFileModal';
 import { fetchTemplates } from 'redux/reducers/templateSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTestList } from 'redux/reducers/testSlice';
-import { IoMdArrowBack, IoMdArrowForward } from 'react-icons/io';
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { deleteTest } from 'helper/TemplateHelper';
 import { toast } from 'react-toastify';
 import { FiEdit2 } from 'react-icons/fi';
+import Pagination from 'common/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const TestManagementList = () => {
     const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const TestManagementList = () => {
     });
 
     const dispatch = useDispatch();
+    const navigate = useNavigate()
 
     const { list: templates } = useSelector((state) => state.templates);
     const { list: testList, loading } = useSelector((state) => state.tests);
@@ -38,17 +40,15 @@ const TestManagementList = () => {
     const [edit, setEdit] = useState(false);
     const [page, setPage] = useState(1);
 
-    // Ref to track when we should ignore page change effects (to prevent double API calls)
     const ignorePageChangeRef = useRef(false);
     const setIgnorePageChange = useCallback(() => {
         ignorePageChangeRef.current = true;
-        // Reset after a short delay to prevent sticking
         setTimeout(() => {
             ignorePageChangeRef.current = false;
         }, 100);
     }, []);
 
-    const range = 8;
+    const range = 7;
     const totalCount = testList?.count || 0;
     const totalPages = Math.ceil(totalCount / range) || 1;
 
@@ -139,7 +139,7 @@ const TestManagementList = () => {
                     toast.success(res.message);
 
                     if (page === 1) {
-                        dispatch(fetchTestList({ search: debouncedSearch, page: 1, range }));   
+                        dispatch(fetchTestList({ search: debouncedSearch, page: 1, range }));
                     } else {
                         setPage(1);
                     }
@@ -166,6 +166,12 @@ const TestManagementList = () => {
         setThreeDotModal(null);
         setMenuCoords(null);
     };
+
+
+    const handleNaviage = (rowData) => {
+        navigate(`/app/omr-dashboard?tstId=${rowData?.testId}&tstName=${rowData?.testName}&tId=${rowData?.templateId}`);
+    };
+
 
     // --- Style Objects ---
     const containerStyle = { backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #eff2f5', fontFamily: 'Inter, "Outfit", sans-serif', padding: '24px', boxShadow: '0px 0px 20px 0px rgba(76, 87, 125, 0.02)' };
@@ -200,20 +206,12 @@ const TestManagementList = () => {
     const cardValueDarkStyle = { color: '#334155', fontSize: '16px', fontWeight: '500', marginLeft: "5px" };
     const cardFooterStyle = { display: 'flex', alignItems: 'center', marginTop: '20px', justifyContent: "space-between", marginRight: "10px" };
     const btnScanCardStyle = { border: '2px solid #2563eb', color: '#2563eb', backgroundColor: '#ffffff', fontWeight: '500', borderRadius: '4px', padding: '6px 20px', fontSize: '14px', cursor: 'pointer' };
-
-    // PAGINATION style
-    const paginationContainerStyle = { borderTop: '1px solid #eff2f5', paddingTop: '24px', marginTop: '8px' };
-    const paginationLinkStyle = { display: 'flex', justifyContent: 'center', alignItems: 'center', width: '32px', height: '32px', borderRadius: '6px', margin: '0 4px', cursor: 'pointer', fontWeight: '500', color: '#3f4254', background: 'transparent' };
-    const paginationActiveStyle = { ...paginationLinkStyle, backgroundColor: '#2d62ed', color: '#ffffff' };
-    const navBtnStyle = { background: 'transparent', border: 'none', fontWeight: '500', cursor: 'pointer', padding: 0 };
-
     const buttonBaseStyle = { width: '100%', padding: '10px 16px', backgroundColor: 'transparent', border: 'none', fontSize: '15px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', transition: 'background-color 0.15s ease-in-out', display: 'flex', alignItems: 'center', outline: 'none', gap: "14px" };
 
     const isStatusActive = (status) => {
         return status === true || status === 'true' || status === 'Active' || status === 'A' || status === 'a' || status === 'Y' || status === 'y';
     };
 
-    // FIX 3: Calculate Sr number using API page if available, fallback to component page state
     const activeDataPage = testList?.page ?? page;
 
     return (
@@ -251,14 +249,8 @@ const TestManagementList = () => {
                                 style={{ borderRadius: "6px", borderColor: "#e2e8f0", paddingLeft: "35px", fontSize: "14px", height: "38px", color: "#4a5568" }}
                             />
                         </div>
-                        <button
-                            onClick={() => {
-                                setEdit(false);
-                                setFormData({ template: '', testName: '', notes: '', testId: '' });
-                                setCreateModal(true);
-                            }}
-                            style={btnCreateStyle}
-                        >
+                        <button onClick={() => { setEdit(false); setFormData({ template: '', testName: '', notes: '', testId: '' }); setCreateModal(true); }}
+                            style={btnCreateStyle}>
                             Create TEST
                         </button>
                     </div>
@@ -324,7 +316,7 @@ const TestManagementList = () => {
                                             <td className="text-center" style={{ ...tdStyle, paddingRight: '16px' }}>
                                                 <div className="d-flex justify-content-center align-items-center" style={{ whiteSpace: 'nowrap' }}>
                                                     {isActive ? (
-                                                        <button style={btnScanStyle}>Scan</button>
+                                                        <button style={btnScanStyle} onClick={() => handleNaviage(row)}>Scan</button>
                                                     ) : (
                                                         <button
                                                             style={btnUploadStyle}
@@ -405,7 +397,7 @@ const TestManagementList = () => {
 
                                     <div style={cardFooterStyle}>
                                         {isActive ? (
-                                            <button style={btnScanCardStyle}>Scan</button>
+                                            <button style={btnScanCardStyle} onClick={() => handleNaviage(row)} >Scan</button>
                                         ) : (
                                             <button
                                                 style={btnScanCardStyle}
@@ -436,52 +428,15 @@ const TestManagementList = () => {
                 </div>
 
                 {/* Pagination Section */}
-                <div className="d-flex justify-content-end align-items-center" style={paginationContainerStyle}>
-                    <button
-                        className="mr-4 d-flex align-items-center"
-                        style={{ ...navBtnStyle, color: page <= 1 ? '#a1a5b7' : '#3f4254', opacity: page <= 1 ? 0.5 : 1 }}
-                        disabled={page <= 1}
-                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                    >
-                        <IoMdArrowBack size={22} style={{ paddingTop: "2px", paddingRight: "5px" }} /> Prev
-                    </button>
-                    <div className="d-flex">
-                        {(() => {
-                            const maxVisiblePages = 5;
-                            let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-                            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                <Pagination
+                    totalPages={totalPages}
+                    totalItems={range}
+                    currentPage={page}
+                    onPageChange={(page) => setPage(page)}
+                />
 
-                            if (endPage - startPage + 1 < maxVisiblePages) {
-                                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                            }
-
-                            const pages = [];
-                            for (let i = startPage; i <= endPage; i++) {
-                                if (i > 0 && i <= totalPages) {
-                                    pages.push(i);
-                                }
-                            }
-                            return pages;
-                        })().map((pageNum) => (
-                            <div
-                                key={pageNum}
-                                style={page === pageNum ? paginationActiveStyle : paginationLinkStyle}
-                                onClick={() => setPage(pageNum)} >
-                                {pageNum}
-                            </div>
-                        ))}
-                    </div>
-
-                    <button
-                        className="ml-4 d-flex align-items-center"
-                        style={{ ...navBtnStyle, color: page >= totalPages ? '#a1a5b7' : '#3f4254', opacity: page >= totalPages ? 0.5 : 1 }}
-                        disabled={page >= totalPages}
-                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                    >
-                        Next <IoMdArrowForward size={22} style={{ paddingTop: "2px", paddingRight: "5px" }} />
-                    </button>
-                </div>
             </div>
+
 
             {/* Create test Modal */}
             {createModal && (
@@ -499,6 +454,7 @@ const TestManagementList = () => {
                     setIgnorePageChange={setIgnorePageChange}
                 />
             )}
+
             {/* UPLOAD FILE modal */}
             {uploadModal && <UploadFileModal setUploadModal={setUploadModal} testName={formData.testName} testId={formData.testId} />}
 

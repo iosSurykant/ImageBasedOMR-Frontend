@@ -5,6 +5,8 @@ import { fetchTemplates, deleteTemplate, getLayoutData, } from "../../redux/redu
 import CreateTemplateModal from "./CreateTemplateModel";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { resetSkewSelections } from "redux/reducers/skewSlice";
+import { renderBoxes } from "redux/reducers/boxSlice";
 // import { Modal, Button } from 'react-bootstrap';
 
 const Template = () => {
@@ -14,13 +16,11 @@ const Template = () => {
   const navigate = useNavigate();
   const { list: templates, loading, error, } = useSelector((state) => state.templates);
 
-  // const handleClose = () => setShow(false);
-  // const handleShow = () => setShow(true);
-
-  // const handleSelect = (option) => {
-  //   console.log(`Selected: ${option}`);
-  //   handleClose();
-  // };
+    // useEffect(() => {
+    //   dispatch(renderBoxes({ fields: [] }));
+    //   dispatch(resetSkewSelections());
+  
+    // }, [dispatch]);
 
 
   const handleEdit = async (id) => {

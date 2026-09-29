@@ -5,83 +5,91 @@ const DynamicGrid = ({
   cols,
   name,
   radius: radiusFactor = 0.35,
-  bubbleColor = 'transparent',
-  borderColor = '#555d6e',
+  bubbleColor = "transparent",
+  borderColor = "#555d6e",
+  selectedBoxId,
+  box
 }) => {
   const numRows = Number(rows);
   const numCols = Number(cols);
+
+  const gridWidth = Number(width);
+  const gridHeight = Number(height);
+
   const totalBubbles = numRows * numCols;
-  
-  if (!numRows || !numCols || totalBubbles <= 0 || !width || !height) {
+
+  if (
+    !numRows ||
+    !numCols ||
+    totalBubbles <= 0 ||
+    !gridWidth ||
+    !gridHeight
+  ) {
     return null;
   }
 
-  // 1. Force strict integer sizes for the cells
-  const cellWidth = Math.floor(Number(width) / numCols);
-  const cellHeight = Math.floor(Number(height) / numRows);
+  const cellWidth = gridWidth / numCols;
+  const cellHeight = gridHeight / numRows;
 
-  const factor = Number(radiusFactor) > 1 ? Number(radiusFactor) / 10 : Number(radiusFactor);
-  const calculatedRadius = Math.min(cellWidth, cellHeight) * factor;
-  
-  // 2. Force strict integer sizes for the bubbles
-  const bubbleDiameter = Math.max(Math.floor(calculatedRadius * 2), 2); 
+  const factor =
+    Number(radiusFactor) > 1
+      ? Number(radiusFactor) / 10
+      : Number(radiusFactor);
+
+  const bubbleSize = Math.max(
+    Math.min(cellWidth, cellHeight) * factor * 2,
+    2
+  );
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      
+    <div
+      style={{ position: "relative", width: "100%", height: "100%", overflow: "visible", boxSizing: "border-box", backgroundColor: "rgba(36, 96, 251, 0.22)", border: box.id === selectedBoxId ? "1px solid #FF0000" : "1px solid #2460FB", userSelect: "none", }}>
+      {/* Field Name */}
       {name && (
-        <div
-        className="px-1 rounded-sm"
-          style={{
-            position: 'absolute',
-            top: '-8px', 
-            left: '0px',
-            fontSize: '6px',
-            fontWeight: 400,
-            color: '#FFFFFF',
-            backgroundColor: '#2460FB', 
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none', 
-            fontFamily: 'outfit, sans-serif',
-          }}
-        >
+        <div style={{ position: "absolute", bottom: "100%", left: "0px", fontSize: "6px", lineHeight: "8px", fontWeight: 400, color: "#FFFFFF", backgroundColor: "#2460FB", padding: "1px 3px", whiteSpace: "nowrap", pointerEvents: "none", fontFamily: "outfit, sans-serif", zIndex: 9999, }}>
           {name}
         </div>
       )}
 
-      <div
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${gridWidth} ${gridHeight}`}
+        preserveAspectRatio="none"
         style={{
-          width: '100%',
-          height: '100%',
-          boxSizing: 'border-box',
-          display: 'grid',
-          // 3. Use strict pixel values instead of '1fr'
-          gridTemplateColumns: `repeat(${numCols}, ${cellWidth}px)`,
-          gridTemplateRows: `repeat(${numRows}, ${cellHeight}px)`,
-          // 4. Distribute any leftover sub-pixel gaps evenly
-          justifyContent: 'space-evenly', 
-          alignContent: 'space-evenly',
-          placeItems: 'center',
-          backgroundColor: 'rgba(36, 96, 251, 0.22)',
-          border: `1px solid #2460FB`,
-          overflow: 'hidden',
-          userSelect: 'none',
-        }}
-      >
-        {Array.from({ length: totalBubbles }).map((_, index) => (
-          <div
-            key={index}
-            style={{
-              width: `${bubbleDiameter}px`,
-              height: `${bubbleDiameter}px`,
-              backgroundColor: bubbleColor,
-              // 5. Use box-shadow instead of border to prevent pixel snapping
-              boxShadow: `inset 0 0 0 0.5px ${borderColor}`,
-              boxSizing: 'border-box',
-            }}
-          />
-        ))}
-      </div>
+          display: "block",
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}>
+        {Array.from({ length: totalBubbles }).map(
+          (_, index) => {
+            const row = Math.floor(index / numCols);
+            const col = index % numCols;
+            const centerX =
+              col * cellWidth +
+              cellWidth / 2;
+            const centerY =
+              row * cellHeight +
+              cellHeight / 2;
+
+            return (
+              <rect
+                key={index}
+                x={centerX - bubbleSize / 2}
+                y={centerY - bubbleSize / 2}
+                width={bubbleSize}
+                height={bubbleSize}
+                fill={bubbleColor}
+                stroke={borderColor}
+                strokeWidth="0.5"
+                vectorEffect="non-scaling-stroke"
+              />
+            );
+          }
+        )}
+      </svg>
     </div>
   );
 };

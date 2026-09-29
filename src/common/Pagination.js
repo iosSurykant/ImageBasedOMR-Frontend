@@ -29,7 +29,7 @@ const Pagination = ({
     };
 
     // Base Style Helpers
-    const btnBase = { width: "40px", height: "40px", borderRadius: "12px", border: "none", background: "transparent", fontSize: "15px", fontWeight: "500", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" };
+    const btnBase = { width: "35px", height: "35px", borderRadius: "10px", border: "none", background: "transparent", fontSize: "15px", fontWeight: "500", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" };
     const actionBtn = { ...btnBase, width: "auto", padding: "6px 4px", gap: "8px", color: "#1e293b" };
 
     return (

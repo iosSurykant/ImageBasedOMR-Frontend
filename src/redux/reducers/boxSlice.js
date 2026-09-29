@@ -157,8 +157,6 @@ const boxSlice = createSlice({
             const Box = action.payload?.fields?.map((box) => { return box })
             const mergefieldsData = action.payload?.mergedfields?.map((field) => { return field })
 
-            console.log("mergefieldsData: ", mergefieldsData)
-
             state.boxes = [];
             state.mergeBoxes = [];
             state.mergefields = [];

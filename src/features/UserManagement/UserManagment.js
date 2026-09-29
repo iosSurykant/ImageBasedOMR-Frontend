@@ -192,7 +192,7 @@ export default function UserManagment() {
                 <tr>
                   <th style={{ ...thStyle, paddingLeft: '1.5rem' }}>Sr.</th>
                   <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Reference Id</th>
+                  {/* <th style={thStyle}>Reference Id</th> */}
                   <th style={thStyle}>Role</th>
                   <th style={thStyle}>Created On</th>
                   <th style={thStyle}>Status</th>
@@ -212,7 +212,7 @@ export default function UserManagment() {
                         </div>
                       </div>
                     </td>
-                    <td style={tdStyle}><span style={textLightGrey}>{user.refranceId}</span></td>
+                    {/* <td style={tdStyle}><span style={textLightGrey}>{user.refranceId}</span></td> */}
                     <td style={tdStyle}>
                       <span style={getRoleBadgeStyle(user.role)} className="text-capitalize">
                         {user.role}
