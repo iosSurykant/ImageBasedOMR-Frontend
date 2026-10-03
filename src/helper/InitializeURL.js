@@ -33,6 +33,12 @@ const initializeUrls = async () => {
     GET_TEMPLATE_IMAGE: `${baseUrl}GetTemplateImage`,
     GET_TEMPLATE_CSV: `${baseUrl}GetTemplateCSV`,
 
+    // Pre-Design (CustomImg_Temp). Spellings match the backend routes.
+    PD_CREATE: `${baseUrl}api/CustomImg_Temp/CreateImgTemplate`,
+    PD_UPDATE: `${baseUrl}api/CustomImg_Temp/UpdateImgTemplate`,
+    PD_VIEW: `${baseUrl}api/CustomImg_Temp/ViewImgTempale`,
+    PD_DELETE: `${baseUrl}api/CustomImg_Temp/DeleteImgTempale`,
+
     
     // TEST MODULE
     CREATE_TEST: `${baseUrl}api/Template/CreateTest`,
@@ -76,6 +82,9 @@ const initializeUrls = async () => {
     //Result Generation and Merge Csv
     GETCSVHEADER: `${baseUrl}api/OmrProcessing/GetCSVHeader`,
     GENERATE_RESULT: `${baseUrl}api/AmityDemand/GenerateResultExcel`,
+    // CHANGED: this server (port 7400) returned 404 for api/AmityDemand/GenerateResultExcel2.
+    // Path taken from the task. If it is also 404, ask the backend for the exact URL.
+    GENERATE_RESULT_EXCEL2: `${baseUrl}api/ResultGenration/GenerateResultExcel2`,
     MERGECSV: `${baseUrl}api/AmityDemand/MargeCSV`,
     GET_DB_DATA: `${baseUrl}api/showRecord/GetDB_Rec`,
     DELETE_DB_DATA: `${baseUrl}api/showRecord/Delete_Rec`,

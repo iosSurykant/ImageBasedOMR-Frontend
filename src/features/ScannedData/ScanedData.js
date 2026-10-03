@@ -18,7 +18,64 @@ import NormalHeader from "components/Headers/NormalHeader";
 import { getDBRecords, deleteDBRecords } from "helper/ResultGenerationHelper";
 import { fetchAllUsers } from "helper/userManagment_helper";
 
-import { fetchAllTemplate } from "helper/TemplateHelper";
+
+// Columns of the list, in order. `adminOnly` columns are hidden for other roles.
+const COLUMNS = [
+  { key: "folderName", label: "FolderName" },
+  { key: "templateId", label: "TemplateId" },
+  { key: "fileName", label: "FileName" },
+  { key: "dateTime", label: "DateTime" },
+  { key: "userId", label: "UserId" },
+  { key: "username", label: "UserName", adminOnly: true },
+  { key: "useremail", label: "UserEmail", adminOnly: true },
+  { key: "userrole", label: "UserRole", adminOnly: true },
+];
+
+// fetchAllUsers asks the API for 7 users per page
+const USERS_PAGE_SIZE = 7;
+
+// "Tem_1052_$32484$_PrintedOMR_Sheet1_29-09-2026-15:19:07"
+//   -> { userId: "1052", templateId: "32484", folderName: "PrintedOMR_Sheet1", dateTime: "29-09-2026-15:19:07" }
+const parseTableName = (name = "") => {
+  const m = String(name).match(
+    /^Tem_(.+?)_\$(.+?)\$_(.*)_(\d{2}-\d{2}-\d{4}-\d{2}:\d{2}:\d{2})$/,
+  );
+  return m
+    ? { userId: m[1], templateId: m[2], folderName: m[3], dateTime: m[4] }
+    : {};
+};
+
+// The API can send the user id as "Tem_1040"; keep only "1040"
+const cleanUserId = (v) => String(v ?? "").replace(/^Tem_/i, "").trim();
+
+const userKey = (u) => String(u?.empId ?? u?.EmpId ?? u?.id ?? "");
+
+const cellStyle = (key) => {
+  if (key === "dateTime") return { whiteSpace: "nowrap" };
+  if (key === "fileName")
+    return {
+      maxWidth: 260,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    };
+  if (key === "useremail")
+    return {
+      maxWidth: 190,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    };
+  return undefined;
+};
+
+// Actions column stays visible while the table scrolls sideways
+const stickyAction = {
+  position: "sticky",
+  right: 0,
+  zIndex: 1,
+  boxShadow: "-6px 0 6px -6px rgba(0,0,0,.18)",
+};
 
 export default function ScannedList() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,64 +85,61 @@ export default function ScannedList() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const [allTemplates, setAllTemplates] = useState([]);
   const [scaned, setScaned] = useState([]);
 
   const [users, setUsers] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
-  const userData = JSON.parse(localStorage.getItem("userData"));
-  const role = userData.role;
-  const empId = userData.empid;
-  console.log(empId);
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const role = userData?.role;
+  const empId = userData?.empid;
+  const referenceId = userData?.referenceId ?? "";
+  const isAdmin = role === "admin";
 
-  // Fetch all templates
-  const fetchAllTemplates = async () => {
-    try {
-      const result = await fetchAllTemplate();
+  const visibleColumns = COLUMNS.filter((c) => isAdmin || !c.adminOnly);
 
-      const templates = result?.body || [];
-
-      console.log("Fetched Templates:", templates);
-
-      setAllTemplates(templates);
-
-      return templates;
-    } catch (error) {
-      console.error("Failed to fetch templates:", error);
-
-      setAllTemplates([]);
-
-      return [];
-    }
-  };
-
-  //fetch all users
+  // Fetch all users, page by page. A failure here must not hide the records:
+  // the user columns just show "-".
   const fetchUsers = async () => {
+    const all = [];
+    const seen = new Set();
+
     try {
-      const result = await fetchAllUsers();
+      for (let page = 1; page <= 30; page++) {
+        // same arguments the User Management page sends ("" = no filter)
+        const result = await fetchAllUsers(page, "", "", "", referenceId);
+        const list =
+          result?.result ||
+          result?.data?.result ||
+          (Array.isArray(result?.data) ? result.data : []);
+        if (!Array.isArray(list) || !list.length) break;
 
-      const usersData = result?.result || [];
+        let added = 0;
+        list.forEach((u) => {
+          const k = userKey(u);
+          if (k && !seen.has(k)) {
+            seen.add(k);
+            all.push(u);
+            added++;
+          }
+        });
 
-      setUsers(usersData);
-
-      return usersData;
+        // last page, or the API ignored the page number
+        if (list.length < USERS_PAGE_SIZE || added === 0) break;
+      }
     } catch (error) {
-      console.log(error);
-
-      setUsers([]);
-
-      return [];
+      console.error("Could not load users:", error);
     }
+
+    setUsers(all);
+    return all;
   };
 
   // Fetch records
   const fetchRecords = async (
     fileName = "",
-    templates = allTemplates,
     usersData = users,
-    empID = empId,
   ) => {
     try {
       setLoading(true);
@@ -99,61 +153,53 @@ export default function ScannedList() {
         return [];
       }
 
-      // Template lookup
-      const templateMap = {};
-
-      templates.forEach((temp) => {
-        templateMap[temp.id] = temp.fileName;
-      });
-
       // User lookup
       const userMap = {};
-
       usersData.forEach((user) => {
-        userMap[user.empId] = user;
+        userMap[userKey(user)] = user;
       });
+      if (empId && !userMap[String(empId)]) {
+        userMap[String(empId)] = {
+          empName: userData?.empName ?? userData?.name ?? userData?.userName,
+          empEmail: userData?.empEmail ?? userData?.email,
+          role: userData?.role,
+        };
+      }
 
-      // Final data
       const finalData = result.map((item) => {
-        const parts = item.TABLE_NAME.split("_");
-        const cleanTableName = item.TABLE_NAME;
-        const templateId = parts[1];
-        const date = parts.slice(2).join("_");
+        // full table name, e.g. Tem_1052_$32484$_PrintedOMR_Sheet1_29-09-2026-15:19:07
+        const tableName = item.fileName || item.TABLE_NAME || "";
+        const parsed = parseTableName(tableName);
 
-        // templateBoss##1001
-        const fullTemplateName = templateMap[templateId] || "";
+        const templateId = String(item.templateId ?? parsed.templateId ?? "");
 
-        const [templateName = "-", userId = "-"] = fullTemplateName.split("##");
-
-        // Find user
+        const userId = cleanUserId(item.userId || parsed.userId) || "-";
         const user = userMap[userId] || {};
 
         return {
-          ...item,
-          TABLE_NAME: cleanTableName,
-          templateName,
-          date,
+          fileName: tableName || "-", // shown in the list, also used by Open / Delete
+          folderName: item.folderName ?? parsed.folderName ?? "-",
+          templateId: templateId || "-",
+          dateTime: item.dateTime ?? item.date ?? parsed.dateTime ?? "-",
           userId,
-          username: user.empName || "-",
-          useremail: user.empEmail || "-",
-          userrole: user.role || "-",
+          username: user.empName ?? user.name ?? "-",
+          useremail: user.empEmail ?? user.email ?? "-",
+          userrole: user.role ?? "-",
         };
       });
 
-      const roleBaseData =
-        role === "admin"
-          ? finalData
-          : finalData
-              .filter(({ userId }) => String(userId) === String(empId))
-              .map(
-                ({ username, useremail, userId, userrole, ...rest }) => rest,
-              );
+      // Admin sees everything, other roles only their own scans
+      const roleBaseData = isAdmin
+        ? finalData
+        : finalData.filter(({ userId }) => String(userId) === String(empId));
 
       setScaned(roleBaseData);
 
       return finalData;
     } catch (err) {
       console.error(err);
+      toast.error("Could not load the records");
+      setScaned([]);
 
       return [];
     } finally {
@@ -164,28 +210,28 @@ export default function ScannedList() {
   // Initial Load
   useEffect(() => {
     const loadData = async () => {
-      const templates = await fetchAllTemplates();
+      // only admins see the user columns, so others skip the users call
+      const usersData = isAdmin ? await fetchUsers() : [];
 
-      const users = await fetchUsers();
-
-      await fetchRecords("", templates, users, empId);
+      await fetchRecords("", usersData);
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Open Modal
   const handleOpen = async (row) => {
-    const tableName = row?.TABLE_NAME;
+    try {
+      const result = await getDBRecords(row?.fileName);
 
-    const result = await getDBRecords(tableName, allTemplates);
+      setSelectedTableData(result?.queryResult || []);
 
-    const subData = result?.queryResult;
-    console.log(subData);
-
-    setSelectedTableData(subData);
-
-    setIsOpen(true);
+      setIsOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not open this record");
+    }
   };
 
   // Delete
@@ -202,8 +248,7 @@ export default function ScannedList() {
     if (!result.isConfirmed) return;
 
     try {
-      const folderPath = row?.TABLE_NAME;
-      await deleteDBRecords(folderPath);
+      await deleteDBRecords(row?.fileName);
       await fetchRecords();
       Swal.fire("Deleted!", "Record deleted successfully.", "success");
     } catch (err) {
@@ -212,6 +257,7 @@ export default function ScannedList() {
       Swal.fire("Error!", "Failed to delete record.", "error");
     }
   };
+
   // Search debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -221,10 +267,10 @@ export default function ScannedList() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Filtered Data
+  // Filtered Data (searches the columns that are on screen)
   const filteredRecord = scaned.filter((row) =>
-    Object.values(row).some((value) =>
-      value?.toString().toLowerCase().includes(debouncedSearch.toLowerCase()),
+    visibleColumns.some(({ key }) =>
+      row[key]?.toString().toLowerCase().includes(debouncedSearch.toLowerCase()),
     ),
   );
 
@@ -283,11 +329,14 @@ export default function ScannedList() {
             <Card className="shadow">
               {/* Header */}
               <CardHeader className="border-0">
-                <div className="d-flex justify-content-between align-items-center">
+                <div
+                  className="d-flex flex-wrap justify-content-between align-items-center"
+                  style={{ gap: 8 }}
+                >
                   <h3 className="mb-0">All Records</h3>
 
                   {/* Search */}
-                  <div style={{ width: "250px" }}>
+                  <div style={{ width: "250px", maxWidth: "100%" }}>
                     <input
                       type="text"
                       className="form-control"
@@ -313,7 +362,7 @@ export default function ScannedList() {
                     overflow: "auto",
                   }}
                 >
-                  <Table className="align-items-center table-flush">
+                  <Table className="align-items-center table-flush" style={{ fontSize: 14 }}>
                     {/* Table Head */}
                     <thead
                       className="thead-light"
@@ -326,30 +375,26 @@ export default function ScannedList() {
                       <tr>
                         <th>S.No</th>
 
-                        {Object.keys(filteredRecord[0])
-                          .filter((key) => key !== "TABLE_NAME")
-                          .map((key) => (
-                            <th key={key}>{key}</th>
-                          ))}
+                        {visibleColumns.map(({ key, label }) => (
+                          <th key={key} className="text-nowrap">{label}</th>
+                        ))}
 
-                        <th className="text-end">Actions</th>
+                        <th className="text-end" style={{ ...stickyAction, background: "#f6f9fc" }}>Actions</th>
                       </tr>
                     </thead>
 
                     {/* Table Body */}
                     <tbody>
                       {filteredRecord.map((row, index) => (
-                        <tr key={index}>
+                        <tr key={row.fileName || index}>
                           <td>{index + 1}</td>
 
-                          {Object.entries(row)
-                            .filter(([key]) => key !== "TABLE_NAME")
-                            .map(([key, value]) => (
-                              <td key={key}>{value}</td>
-                            ))}
+                          {visibleColumns.map(({ key }) => (
+                            <td key={key} style={cellStyle(key)} title={row[key]}>{row[key]}</td>
+                          ))}
 
                           {/* Actions */}
-                          <td className="text-end">
+                          <td className="text-end" style={{ ...stickyAction, background: "#fff" }}>
                             <UncontrolledDropdown>
                               <DropdownToggle
                                 className="btn btn-sm btn-icon-only text-light"

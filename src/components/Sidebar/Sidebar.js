@@ -1,91 +1,68 @@
 import { useScan } from "context/ScanningContext";
-import React, { useState, useEffect, useCallback } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { GoSidebarExpand } from "react-icons/go";
-import { MdLogout } from "react-icons/md";
-import { logout } from "helper/userManagment_helper";
-import { toast } from "react-toastify";
+import { MdLogout, MdKeyboardArrowDown } from "react-icons/md";
+import { buildSidebarItems, getUserRole, getUserInfo, isGroupActive } from "config/sidebarItems";
+import { useSidebarGroups } from "hooks/useSidebarGroups";
+import { useLogout } from "hooks/useLogout";
 
 const Sidebar = ({ routes }) => {
   const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 992);
   const [glowStyle, setGlowStyle] = useState({ top: 20, opacity: 0 });
+  const listRef = useRef(null);
 
   const { isScanning } = useScan();
-  const navigate = useNavigate();
   const location = useLocation();
-
-  const getUserRole = () => {
-    try {
-      const userData = localStorage.getItem("userData");
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        return parsed.role || "";
-      }
-    } catch (error) {
-      console.error("Error parsing userData from localStorage:", error);
-    }
-    return "";
-  };
+  const handleLogOut = useLogout();
 
   const userRole = getUserRole();
+  const user = getUserInfo();
 
-  const renderNavLinks = routes.filter(
-    (route) =>
-      route.showInSidebar === true &&
-      (!route.roles || route.roles.length === 0 || route.roles.includes(userRole))
-  );
+  const items = useMemo(() => buildSidebarItems(routes, userRole), [routes, userRole]);
+  const { openGroups, openGroup, toggleGroup } = useSidebarGroups(items, location.pathname);
 
-  // Helper function to snap the glow back to the active item
+  // glow position relative to the nav list (accounts for list scrolling)
+  const glowTopFor = useCallback((el) => {
+    const list = el.closest("ul");
+    return el.offsetTop - (list?.scrollTop || 0) + 120;
+  }, []);
+
+  // snap the glow back to the active item
   const snapToActive = useCallback(() => {
     if (isScanning) return;
-    const activeItem = document.querySelector(".nav-link.active");
+    const activeItem = listRef.current?.querySelector(".nav-link.active");
     if (activeItem) {
-      setGlowStyle({
-        top: activeItem.offsetTop + 120,
-        opacity: 1,
-      });
+      setGlowStyle({ top: glowTopFor(activeItem), opacity: 1 });
     } else {
       setGlowStyle((prev) => ({ ...prev, opacity: 0 }));
     }
-  }, [isScanning]);
+  }, [isScanning, glowTopFor]);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 992) {
-        setIsCollapsed(true);
-      } else {
-        setIsCollapsed(false);
-      }
-    };
-
+    const handleResize = () => setIsCollapsed(window.innerWidth < 992);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    snapToActive();
-  }, [location.pathname, snapToActive]);
+    // wait one frame so a just-opened group is in the DOM
+    const id = requestAnimationFrame(snapToActive);
+    return () => cancelAnimationFrame(id);
+  }, [location.pathname, openGroups, isCollapsed, snapToActive]);
 
-  const handleLogOut = async () => {
-    if (!window.confirm("Are you sure you want to logout?")) return;
-
-    try {
-      const res = await logout();
-
-      if (res?.state) {
-        localStorage.clear();
-        toast.success("Logged out successfully");
-        navigate("/auth/login");
-      } else {
-        toast.error(res?.message || "Logout failed");
-      }
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong"
-      );
+  const handleGroupClick = (name) => {
+    if (isScanning) return;
+    if (isCollapsed) {
+      setIsCollapsed(false);
+      openGroup(name);
+      return;
     }
+    toggleGroup(name);
+  };
+
+  const glowOnHover = (e) => {
+    if (!isScanning) setGlowStyle({ top: glowTopFor(e.currentTarget), opacity: 1 });
   };
 
   const styles = {
@@ -128,9 +105,18 @@ const Sidebar = ({ routes }) => {
       pointerEvents: "none",
       zIndex: 0,
     },
-    navList: { gap: "0.7rem", position: "relative", zIndex: 2 },
-    getNavLinkStyle: (isActive) => ({
-      width: "220px",
+    navList: {
+      gap: "0.7rem",
+      position: "relative",
+      zIndex: 2,
+      minHeight: 0,
+      overflowY: "auto",
+      flexWrap: "nowrap",
+      scrollbarWidth: "none",
+    },
+    getNavLinkStyle: (isActive, isChild) => ({
+      width: isChild ? "200px" : "220px",
+      marginLeft: isChild ? 20 : 0,
       borderRadius: "50px",
       backgroundColor: isActive ? "#fff" : "transparent",
       boxShadow: isActive ? "0 .125rem .25rem rgba(0,0,0,0.075)" : "none",
@@ -142,6 +128,31 @@ const Sidebar = ({ routes }) => {
       cursor: isScanning ? "not-allowed" : "pointer",
       transition: "all .2s ease",
     }),
+    // headerActive: the group is collapsed/closed while one of its pages is open,
+    // so the header itself has to carry the "you are here" state.
+    groupHeader: (hasActive, headerActive) => ({
+      width: "220px",
+      borderRadius: "50px",
+      backgroundColor: headerActive ? "#fff" : "transparent",
+      boxShadow: headerActive ? "0 .125rem .25rem rgba(0,0,0,0.075)" : "none",
+      border: "none",
+      color: "#000",
+      textAlign: "left",
+      fontWeight: hasActive ? "600" : "500",
+      whiteSpace: "nowrap",
+      opacity: isScanning ? 0.6 : 1,
+      cursor: isScanning ? "not-allowed" : "pointer",
+      transition: "all .2s ease",
+    }),
+    dot: (isActive) => ({
+      width: 7,
+      height: 7,
+      borderRadius: "50%",
+      backgroundColor: isActive ? "#8b5cf6" : "#c4b5fd",
+      flexShrink: 0,
+      marginLeft: 6,
+      marginRight: 2,
+    }),
     navLinkTextSpan: { paddingLeft: 12 },
     logoutButton: {
       width: "220px",
@@ -149,8 +160,52 @@ const Sidebar = ({ routes }) => {
       borderRadius: "50px",
       transition: "background 0.3s ease",
       cursor: isScanning ? "not-allowed" : "pointer",
+      opacity: isScanning ? 0.6 : 1,
     },
     logoutText: { color: "red", fontWeight: "600" },
+    profile: { width: "220px", gap: 10 },
+    avatar: {
+      width: 36,
+      height: 36,
+      borderRadius: "50%",
+      backgroundColor: "#fff",
+      border: "1px solid #e2e8f0",
+      color: "#2f80ed",
+      fontWeight: 700,
+      flexShrink: 0,
+    },
+  };
+
+  const renderLink = (route, key, isChild) => (
+    <li key={key} className="nav-item">
+      <NavLink
+        to={route.layout + route.path}
+        className="nav-link d-flex align-items-center px-3"
+        style={({ isActive }) => styles.getNavLinkStyle(isActive, isChild)}
+        onClick={(e) => {
+          if (isScanning) e.preventDefault();
+        }}
+        onMouseEnter={glowOnHover}
+      >
+        {({ isActive }) => (
+          <>
+            {isChild ? (
+              <span style={styles.dot(isActive)} />
+            ) : (
+              <span className="d-flex justify-content-center">{route.icon || "▪️"}</span>
+            )}
+            {!isCollapsed && <span style={styles.navLinkTextSpan}>{route.name}</span>}
+          </>
+        )}
+      </NavLink>
+    </li>
+  );
+
+  const logoutKey = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleLogOut();
+    }
   };
 
   return (
@@ -171,13 +226,12 @@ const Sidebar = ({ routes }) => {
         )}
 
         <button
+          type="button"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!isCollapsed}
           className="btn p-0 border-0 outline-none shadow-none mx-auto"
           style={styles.toggleButton}
-          onClick={() => {
-            if (window.innerWidth >= 778) {
-              setIsCollapsed(!isCollapsed);
-            }
-          }}
+          onClick={() => setIsCollapsed((c) => !c)}
         >
           <GoSidebarExpand style={styles.toggleIcon} />
         </button>
@@ -186,33 +240,60 @@ const Sidebar = ({ routes }) => {
       {/* Background Glow */}
       <div style={styles.glowEffect} />
 
-      <ul className="nav flex-column align-items-start flex-grow-1" style={styles.navList}>
-        {renderNavLinks.map((item, index) => (
-          <NavLink
-            key={index}
-            to={item.layout + item.path}
-            className="nav-link d-flex align-items-center px-3"
-            style={({ isActive }) => styles.getNavLinkStyle(isActive)}
-            onMouseEnter={(e) => {
-              if (!isScanning) { setGlowStyle({ top: e.currentTarget.offsetTop + 120, opacity: 1, }); }
-            }}
-          >
-            <span className="d-flex justify-content-center">
-              {item.icon || "▪️"}
-            </span>
+      <ul
+        ref={listRef}
+        className="nav flex-column align-items-start flex-grow-1"
+        style={styles.navList}
+        onScroll={snapToActive}
+      >
+        {items.map((item, index) => {
+          if (item.type === "link") return renderLink(item.route, `link-${index}`, false);
 
-            {!isCollapsed && (
-              <span style={styles.navLinkTextSpan}>{item.name}</span>
-            )}
-          </NavLink>
-        ))}
+          const isOpen = Boolean(openGroups[item.name]) && !isCollapsed;
+          const hasActive = isGroupActive(item, location.pathname);
+          const headerActive = hasActive && !isOpen;
+
+          return (
+            <React.Fragment key={`group-${item.name}`}>
+              <li className="nav-item">
+                <button
+                  type="button"
+                  className={`nav-link d-flex align-items-center px-3${headerActive ? " active" : ""}`}
+                  style={styles.groupHeader(hasActive, headerActive)}
+                  aria-expanded={isOpen}
+                  aria-label={item.name}
+                  onClick={() => handleGroupClick(item.name)}
+                  onMouseEnter={glowOnHover}
+                >
+                  <span className="d-flex justify-content-center">{item.icon || "▪️"}</span>
+                  {!isCollapsed && (
+                    <>
+                      <span style={styles.navLinkTextSpan}>{item.name}</span>
+                      <MdKeyboardArrowDown
+                        size={18}
+                        style={{ marginLeft: "auto", transition: "0.25s", transform: isOpen ? "rotate(180deg)" : "none" }}
+                      />
+                    </>
+                  )}
+                </button>
+              </li>
+              {isOpen && item.children.map((c, i) => renderLink(c, `child-${item.name}-${i}`, true))}
+            </React.Fragment>
+          );
+        })}
       </ul>
 
       <span
+        role="button"
+        tabIndex={0}
+        aria-label="Logout"
         className="py-2 px-3"
         onClick={handleLogOut}
+        onKeyDown={logoutKey}
         style={styles.logoutButton}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#fff")}
+        onMouseOver={(e) => {
+          if (!isScanning) e.currentTarget.style.background = "#fff";
+        }}
         onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
       >
         <span className="mr-2 pl-2">
@@ -220,6 +301,21 @@ const Sidebar = ({ routes }) => {
         </span>
         {!isCollapsed && <span style={styles.logoutText}>Logout</span>}
       </span>
+
+      {/* User profile */}
+      <div className="d-flex align-items-center px-3 pt-3" style={styles.profile}>
+        <div className="d-flex align-items-center justify-content-center" style={styles.avatar}>
+          {user.initial}
+        </div>
+        {!isCollapsed && (
+          <div style={{ minWidth: 0, lineHeight: 1.2 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {user.name}
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b" }}>{user.roleLabel}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

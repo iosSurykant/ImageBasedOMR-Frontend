@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ROLES } from "./roles"
+import { ROLES } from "./roles";
 
 // Non-WebData Feature Components
 import Index from "../features/Dashboard/Index";
@@ -17,6 +17,7 @@ import PaymentStatus from "features/Subscription/pages/PaymentStatus";
 import SubscriptionCreate from "features/Subscription/pages/CreateSubscription";
 import TemplateEditor from "../features/TemplateManager/TemplateEditor";
 import ResultTablePage from "../common/ResultTablePage";
+import { ImInsertTemplate } from "react-icons/im";
 
 // Auth Components
 import Login from "../auth/Login";
@@ -25,10 +26,9 @@ import Signup from "../auth/Signup";
 // Test Managment
 import TestManagment from "features/TestManagment/TestManagment";
 
-// Font Awesome Icons
+// Icons
 import { BiHomeAlt2, BiScan } from "react-icons/bi";
 import { HiOutlineUsers } from "react-icons/hi";
-import { ImInsertTemplate } from "react-icons/im";
 import { BsBarChart } from "react-icons/bs";
 import { IoPricetagsOutline } from "react-icons/io5";
 import { AiOutlineFolderOpen } from "react-icons/ai";
@@ -36,15 +36,13 @@ import { CiMenuFries } from "react-icons/ci";
 import { MdOutlineTaskAlt } from "react-icons/md";
 import OMRDashboard from "features/LiveScan/OMRDashboard";
 
+// Pre-Design
+import PreDesign from "features/PreDesign/PreDesign";
 
-
-const { ADMIN, OPERATOR, MODERATOR } = ROLES
-
+const { ADMIN, OPERATOR, MODERATOR } = ROLES;
 
 const routes = [
-
   // AUTH LAYOUT ROUTES
-
   {
     path: "/login",
     component: Login,
@@ -59,7 +57,6 @@ const routes = [
   },
 
   // APP NESTED LAYOUT ROUTES (With Sidebar/Navbar)
-
   {
     path: "/index",
     name: "Dashboard",
@@ -67,7 +64,7 @@ const routes = [
     component: Index,
     layout: "/app",
     showInSidebar: true,
-    roles: [ADMIN, OPERATOR, MODERATOR]
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
   {
     path: "/user-managment",
@@ -76,13 +73,27 @@ const routes = [
     component: UserManagment,
     layout: "/app",
     showInSidebar: true,
-    roles: [ADMIN]
+    roles: [ADMIN],
   },
+
+  // CUSTOM TEMPLATE GROUP
+  // Custom-Design is the old "Template Manager" screen, moved under the group.
+  // It keeps the path "/template" so TemplateEditor (/template/create-template/:Id)
+  // highlights it, and existing links to /app/template keep working.
   {
     path: "/template",
     name: "Template Manager",
-    icon: <ImInsertTemplate />,
+    icon: <ImInsertTemplate/>,
     component: Template,
+    layout: "/app",
+    showInSidebar: true,
+    roles: [ADMIN, MODERATOR],
+  },
+  {
+    path: "/pre-design",
+    name: "Pre-Design",
+    parent: "Custom Template",
+    component: PreDesign,
     layout: "/app",
     showInSidebar: true,
     roles: [ADMIN, MODERATOR],
@@ -99,7 +110,6 @@ const routes = [
   },
 
   // OLD SCANNING
-
   {
     path: "/job-queue",
     name: "Scan OMR Sheets",
@@ -119,13 +129,12 @@ const routes = [
 
   {
     path: "/omr-dashboard",
-        name: "OMR Scan",
+    name: "OMR Scan",
     component: OMRDashboard,
     layout: "/app",
     showInSidebar: true,
     roles: [ADMIN],
   },
-
 
   {
     path: "/scaned-list",
@@ -190,7 +199,7 @@ const routes = [
   },
 
   {
-    path: "/app/result-table",
+    path: "/result-table",
     component: ResultTablePage,
     layout: "/app",
     showInSidebar: false,
@@ -198,16 +207,8 @@ const routes = [
   },
 
   {
-    path: "/app/Subscription/create",
+    path: "/Subscription/create",
     component: SubscriptionCreate,
-    layout: "/app",
-    showInSidebar: false,
-    roles: [ADMIN, OPERATOR, MODERATOR],
-  },
-
-  {
-    path: "/payment-status",
-    component: PaymentStatus,
     layout: "/app",
     showInSidebar: false,
     roles: [ADMIN, OPERATOR, MODERATOR],

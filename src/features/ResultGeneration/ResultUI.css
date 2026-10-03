@@ -158,3 +158,40 @@
   font-size: 13px;
   color: #374151;
 }
+
+/* ───────── Responsive ───────── */
+
+/* Tablets and phones: the step boxes stack, so let each one grow with its content */
+@media (max-width: 1199.98px) {
+  .result-panel {
+    height: auto;
+    overflow: visible;
+  }
+
+  .panel-body {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .header-box {
+    flex: none;
+    max-height: 220px;
+  }
+}
+
+/* Phones */
+@media (max-width: 575.98px) {
+  .result-wrapper {
+    padding: 12px;
+    margin-top: -60px;
+  }
+
+  .result-card {
+    padding: 16px;
+  }
+
+  .btn-add,
+  .btn-primary-custom {
+    flex: 1 1 auto;
+  }
+}
