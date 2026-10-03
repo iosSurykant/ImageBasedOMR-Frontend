@@ -49,7 +49,7 @@ fetch("/config.json")
   .then((config) => {
     // Global variables (used in old API code)
     window.APP_IP = config.APP_IP;
-    window.SERVER_IP = config.SERVER_IP;
+    // window.SERVER_IP = config.SERVER_IP;
 
     console.log("APP_IP:", window.APP_IP);
     console.log("SERVER_IP:", window.SERVER_IP);

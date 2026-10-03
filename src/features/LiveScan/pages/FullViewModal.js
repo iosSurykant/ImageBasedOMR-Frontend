@@ -1,3 +1,4 @@
+import React, {  useMemo } from "react";
 import AccurateOMRSheet from "./AccurateOMRSheet";
 
 // --- COMPONENT 6: Full Resolution View Modal Component ---
@@ -22,18 +23,81 @@ function FullViewModal({
   handleModalWheel,
   modalViewportRef,
   modalSheetRef,
-  getRecognizedResponses
+  
 }) {
+
+  function processRowData(dataObject) {
+    if (!dataObject || typeof dataObject !== 'object') {
+      return { cleanFileName: '', questions: [], metadata: {} };
+    }
+
+    const questions = [];
+    const metadata = {};
+    let cleanFileName = '';
+
+    Object.entries(dataObject).forEach(([key, value]) => {
+      // 1. Exclude 'Sr' key
+      if (key === 'Sr') return;
+
+      // 2. Extract Questions (matches Q1, Q2, Q10, etc.)
+      if (/^Q\d+$/i.test(key)) {
+        questions.push({
+          q: key,
+          ans: value,
+          qNum: parseInt(key.replace(/\D/g, ''), 10) // Restored qNum so sorting works
+        });
+      }
+      // 3. Extract and clean FileName
+      else if (key === 'FileName') {
+        cleanFileName = value ? value.split('/').pop() : '';
+        metadata.FileName = cleanFileName;
+        metadata.RawFilePath = value;
+      }
+      // 4. Extract all other dynamic metadata fields
+      else {
+        metadata[key] = value;
+      }
+    });
+
+    // Sort questions naturally (Q1, Q2, Q3...)
+    questions.sort((a, b) => a.qNum - b.qNum);
+
+    return {
+      cleanFileName,
+      questions,
+      metadata
+    };
+  }
+
+  const { cleanFileName, questions, metadata } = useMemo(
+    () => processRowData(selectedRow),
+    [selectedRow]
+  );
+
+  const renderBadge = (Status) => {
+    const normalizedStatus = Status;
+
+    if (normalizedStatus === 'True' || normalizedStatus === 'success') {
+      return <span className="badge-soft-success">Successful</span>;
+    } else if (normalizedStatus === 'needs review' || normalizedStatus === 'review') {
+      return <span className="badge-soft-warning">Review</span>;
+    } else {
+      return <span className="badge-soft-danger">Failed</span>;
+    }
+  };
+
+  console.log(selectedRow)
   return (
     <div className="fullview-overlay" onClick={() => setShowFullViewModal(false)}>
       <div className="fullview-card" onClick={(e) => e.stopPropagation()}>
         <div className="fullview-header">
           <div className="fullview-header-left">
             <div className="fullview-header-title-line">
-              <span>#{selectedRow.id}</span>
-              <span className="fullview-status-badge">{selectedRow.statusText}</span>
+              <span>#{selectedRow.Sr}</span>
+              <span style={{fontSize:"14px", fontWeight:"500", letterSpacing:"0.5px"}}><span style={{color:"gray"}}>FileName: </span>{cleanFileName}</span>
+              <span style={{letterSpacing:"0.5px"}}>{renderBadge(selectedRow.Status)}</span>
             </div>
-            <div className="fullview-scanned-time">{selectedRow.fileName} • Scanned {selectedRow.liveTime}</div>
+            <div className="fullview-scanned-time">Scanned At: {selectedRow.LiveTime}</div>
           </div>
 
           <div className="fullview-controls">
@@ -48,14 +112,13 @@ function FullViewModal({
             </button>
 
             <div className="btn-modal-pill">
-              <button
+              {/* <button
                 type="button"
                 style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px', fontWeight: 'bold' }}
                 onClick={() => setModalZoom(prev => Math.max(prev - 15, 50))}
-                title="Zoom Out"
-              >
+                title="Zoom Out">
                 -
-              </button>
+              </button> */}
               <select
                 value={modalZoom}
                 onChange={(e) => setModalZoom(Number(e.target.value))}
@@ -69,14 +132,14 @@ function FullViewModal({
                 <option value={200}>200%</option>
                 <option value={250}>250%</option>
               </select>
-              <button
+              {/* <button
                 type="button"
                 style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px', fontWeight: 'bold' }}
                 onClick={() => setModalZoom(prev => Math.min(prev + 15, 300))}
                 title="Zoom In"
               >
                 +
-              </button>
+              </button> */}
             </div>
 
             <button
@@ -136,8 +199,7 @@ function FullViewModal({
             onTouchMove={handleModalTouchMove}
             onTouchEnd={handleModalTouchEnd}
             onWheel={handleModalWheel}
-            style={{ cursor: isModalPanMode ? (isModalDragging ? 'grabbing' : 'grab') : 'default', position: 'relative', overflow: 'hidden' }}
-          >
+            style={{ cursor: isModalPanMode ? (isModalDragging ? 'grabbing' : 'grab') : 'default', position: 'relative', overflow: 'hidden' }}>
             <div
               ref={modalSheetRef}
               className={`draggable-sheet-wrapper ${isModalDragging ? 'is-dragging' : ''}`}
@@ -145,8 +207,7 @@ function FullViewModal({
                 transform: `translate(${modalPan.x}px, ${modalPan.y}px) rotate(${modalRotation}deg) scale(${modalZoom / 100})`,
                 transition: isModalDragging ? 'none' : 'transform 0.15s ease-out',
                 margin: 'auto'
-              }}
-            >
+              }}>
               <AccurateOMRSheet row={selectedRow} />
             </div>
 
@@ -160,31 +221,27 @@ function FullViewModal({
           </div>
 
           <div className="fullview-details-column">
+
             <div className="details-card-box">
               <div className="details-card-title">Scan Details</div>
-              <div className="details-grid">
-                <div className="details-label">File Name</div>
-                <div className="details-value">SSC_Pre_SectionA_1210.jpg</div>
-
-                <div className="details-label">Template</div>
-                <div className="details-value">SSC OMR Template</div>
-
-                <div className="details-label">Created By</div>
-                <div className="details-value">Operator (ID: 25478)</div>
-
-                <div className="details-label">Scan Time</div>
-                <div className="details-value">11 Sep 2026, 04:17:55 PM</div>
+              <div className="details-grid" style={{height:"150px", overflowY:"scroll", scrollbarWidth:"none", zIndex:"9999"}}>
+                {Object.entries(metadata).map(([key, value]) => {
+                  if (key === 'RawFilePath') return null;
+                  return (
+                    <React.Fragment key={key}>
+                      <div className="details-label">{key}</div>
+                      <div className="details-value">{String(value ?? '—')}</div>
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
 
             <div>
               <div className="details-card-title" style={{ marginBottom: '12px' }}>Recognized Responses</div>
-              <div className="responses-grid">
-                {getRecognizedResponses(selectedRow).map((item, idx) => (
-                  <div
-                    key={idx}
-                    className={`response-chip ${item.isWarning ? 'needs-review-chip' : ''}`}
-                  >
+              <div className="responses-grid" style={{height:"300px", overflowY:"scroll", scrollbarWidth:"none", zIndex:"9999"}}>
+                {questions.map((item) => (
+                  <div key={item.q} className={`response-chip ${item.ans === "" ? 'needs-review-chip' : ''}`}>
                     <span className="response-q-num">{item.q}</span>
                     <span className="response-ans-val">{item.ans}</span>
                   </div>

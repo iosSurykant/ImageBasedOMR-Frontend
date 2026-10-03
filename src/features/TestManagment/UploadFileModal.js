@@ -6,6 +6,9 @@ import { GoCheck } from 'react-icons/go';
 import { uploadImagesFiles } from 'helper/TemplateHelper';
 import getBaseUrl from 'services/BackendApi';
 import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTestList } from 'redux/reducers/testSlice';
+import { useNavigate } from 'react-router-dom';
 
 export const buildWsUrl = (baseUrl, token) => {
     if (!baseUrl) return "";
@@ -26,7 +29,8 @@ const UploadFileModal = ({
     testName,
     testId,
     onFinishScan,
-    onSkip
+    onSkip,
+    rowData
 }) => {
     const [step, setStep] = useState('select');
     const [displayedStep, setDisplayedStep] = useState('select');
@@ -51,8 +55,13 @@ const UploadFileModal = ({
     const socketRef = useRef(null);
     const [connectionId, setConnectionId] = useState(null);
 
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+
+
     const transitionToStep = (nextStep, delay = 300) => {
         if (nextStep === displayedStep) return;
+
         setIsExiting(true);
 
         setTimeout(() => {
@@ -60,6 +69,11 @@ const UploadFileModal = ({
             setDisplayedStep(nextStep);
             setIsExiting(false);
         }, delay);
+
+        // Fetch test list when upload completes
+        if (nextStep === "complete") {
+            dispatch(fetchTestList());
+        }
     };
 
     useEffect(() => {
@@ -206,6 +220,8 @@ const UploadFileModal = ({
             const response = await uploadImagesFiles({ testName, formData, connectionId });
             console.log("Archive upload response:", response);
 
+
+
         } catch (error) {
             console.error("Upload process failed:", error);
 
@@ -217,6 +233,12 @@ const UploadFileModal = ({
             toast.error("Failed to upload ZIP/RAR file.");
         }
     };
+
+
+    const handleNaviage = () => {
+        if (onFinishScan) onFinishScan(); else setUploadModal(false);
+        navigate(`/app/omr-dashboard?tstId=${testId}&tstName=${testName}&tId=${rowData?.templateId || ''}`);
+    }
 
     const modalContent = (
         <div className="position-fixed fixed-top w-100 h-100 d-flex align-items-center justify-content-center p-3"
@@ -484,7 +506,7 @@ const UploadFileModal = ({
                             <button
                                 type="button"
                                 className="btn btn-outline-secondary flex-fill mr-2 py-2"
-                                style={{ borderRadius: '12px', fontSize: '15px', fontWeight:"500",letterSpacing:"0.5px" }}
+                                style={{ borderRadius: '12px', fontSize: '15px', fontWeight: "500", letterSpacing: "0.5px" }}
                                 onClick={() => { if (onSkip) onSkip(); else setUploadModal(false); }}>
                                 Skip &gt;&gt;
                             </button>
@@ -492,8 +514,8 @@ const UploadFileModal = ({
                             <button
                                 type="button"
                                 className="btn btn-primary flex-fill ml-2 py-2 shadow-sm"
-                                style={{fontWeight:"500", letterSpacing:"0.5px", borderRadius: '12px', fontSize: '15px', backgroundColor: '#3b82f6', borderColor: '#3b82f6', boxShadow: '0px 4px 14px rgba(59, 130, 246, 0.35)' }}
-                                onClick={() => { if (onFinishScan) onFinishScan(); else setUploadModal(false); }}>
+                                style={{ fontWeight: "500", letterSpacing: "0.5px", borderRadius: '12px', fontSize: '15px', backgroundColor: '#3b82f6', borderColor: '#3b82f6', boxShadow: '0px 4px 14px rgba(59, 130, 246, 0.35)' }}
+                                onClick={handleNaviage}>
                                 Start Scan
                             </button>
                         </div>

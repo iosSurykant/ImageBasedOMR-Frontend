@@ -1,11 +1,40 @@
-function ProgressCard({ isLiveScanning, setIsLiveScanning, handleStart, processedCount, totalCount, elapsedSeconds, setProcessedCount }) {
-  const percent = Math.round((processedCount / totalCount) * 100);
+function ProgressCard({
+  isLiveScanning,
+  handleStart,
+  handleStop,
+  handlePause,
+  handleResume,
+  processedCount,
+  totalCount,
+  elapsedSeconds,
+  startTime
+}) {
+  const percent = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
 
+  // Format seconds into MM:SS (or HH:MM:SS if needed)
   const formatTime = (secs) => {
-    const mins = Math.floor(secs / 60);
-    const remainingSecs = secs % 60;
+    if (isNaN(secs) || secs <= 0) return '00:00';
+    const hrs = Math.floor(secs / 3600);
+    const mins = Math.floor((secs % 3600) / 60);
+    const remainingSecs = Math.floor(secs % 60);
+
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+    }
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
   };
+
+  // Dynamic Remaining Time Calculation
+  const getRemainingSeconds = () => {
+    if (!processedCount || processedCount === 0 || !elapsedSeconds) return 0;
+    const remainingSheets = totalCount - processedCount;
+    if (remainingSheets <= 0) return 0;
+
+    const timePerSheet = elapsedSeconds / processedCount;
+    return Math.round(remainingSheets * timePerSheet);
+  };
+
+  const remainingSeconds = getRemainingSeconds();
 
   return (
     <div className="omr-card progress-card mb-4">
@@ -19,9 +48,7 @@ function ProgressCard({ isLiveScanning, setIsLiveScanning, handleStart, processe
             </span>
           </div>
         </div>
-        <div className="percentage-text">
-          {percent}%
-        </div>
+        <div className="percentage-text">{percent}%</div>
       </div>
 
       <div className="progress-track">
@@ -32,7 +59,7 @@ function ProgressCard({ isLiveScanning, setIsLiveScanning, handleStart, processe
         <div className="progress-footer-stats mb-3 mb-sm-0">
           <span>
             <span className="stat-label">Started:</span>
-            <span className="stat-value">11:42 AM</span>
+            <span className="stat-value">{startTime || '--:--'}</span>
           </span>
           <span className="stat-divider">|</span>
           <span>
@@ -42,28 +69,36 @@ function ProgressCard({ isLiveScanning, setIsLiveScanning, handleStart, processe
           <span className="stat-divider">|</span>
           <span>
             <span className="stat-label">Est. Remaining:</span>
-            <span className="stat-value">10:12</span>
+            <span className="stat-value">
+              {processedCount > 0 ? formatTime(remainingSeconds) : '--:--'}
+            </span>
           </span>
         </div>
 
-        <div className="d-flex align-items-center">
-          <button
-            type="button"
-            className="btn-pause-custom mr-2"
-            onClick={() => setIsLiveScanning(!isLiveScanning)}
-          >
-            <i className={`fas ${isLiveScanning ? 'fa-pause' : 'fa-play'} mr-2`} style={{ fontSize: '11px' }}></i>
-            {isLiveScanning ? 'Pause Scan' : 'Resume Scan'}
-          </button>
-
+        {startTime === null ? (
           <button type="button" className="btn-start-custom" onClick={handleStart}>
             <i className="fas fa-stop mr-2" style={{ fontSize: '12px' }}></i>
             Start Scan
           </button>
-        </div>
+        ) : (
+          <div className="d-flex align-items-center">
+            <button
+              type="button"
+              className="btn-pause-custom mr-2"
+              onClick={isLiveScanning ? handlePause : handleResume}
+            >
+              <i className={`fas ${isLiveScanning ? 'fa-pause' : 'fa-play'} mr-2`} style={{ fontSize: '11px' }}></i>
+              {isLiveScanning ? 'Pause Scan' : 'Resume Scan'}
+            </button>
+
+            <button type="button" className="btn-stop-custom" onClick={handleStop}>
+              <i className="fas fa-stop mr-2" style={{ fontSize: '12px' }}></i>
+              Stop Scan
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
 export default ProgressCard

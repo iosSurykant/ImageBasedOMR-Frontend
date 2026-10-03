@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 
-function TopMetaCard({tstName, tId, }) {
+function TopMetaCard({tstName, tId, totalCount}) {
   
   const { list: templates } = useSelector((state) => state.templates);
   const templateName = templates?.find((template) => Number(template.id) === Number(tId));
@@ -26,7 +26,7 @@ function TopMetaCard({tstName, tId, }) {
         </div>
         <div className="mt-2 mt-md-0">
           <span className="top-meta-label">Total Images:</span>
-          <span className="total-images-highlight">1,010</span>
+          <span className="total-images-highlight">{totalCount}</span>
         </div>
       </div>
     </div>

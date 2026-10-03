@@ -8,14 +8,16 @@ export const defaultBoxData = {
     fieldName: "",
     fieldType: "",
     ReadingDirection: "Column",
-    multi_Value: "",
-    Blank_value: "",
-    fieldValue: "integer",
-    Custom: "",
-    bubbleIntensity: 14.5,
-    radius: 3.5,
     allowMultiple: false,
-    detectBestBubble: false,
+    multipleBubbleOutput: "",
+    blankOuputSymbol: "",
+    fieldValue: "Integer",
+    radius: 0.4,
+    Custom: "",
+    bubbleIntensity: 30,
+    best_bubble: false,
+    isMerged: false,
+    merge: false,
     height: 100,
     width: 150,
     x: 100,
@@ -70,6 +72,8 @@ const boxSlice = createSlice({
         updateBoxGeometry: (state, action) => {
             const { id, x, y, width, height } = action.payload;
             const box = state.boxes.find((item) => item.id === id);
+
+            console.log("box", x, y)
 
             if (box) {
                 if (x !== undefined) box.x = x;

@@ -49,12 +49,12 @@ export const fetchTestList = createAsyncThunk(
 
 const testSlice = createSlice({
   name: "tests",
-  refreshTest: false,
   initialState: {
     list: [],
     loading: false,
     error: null,
     creating: false,
+    refreshTest: false,
   },
   reducers: {},
   extraReducers: (builder) => {

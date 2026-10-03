@@ -7,17 +7,23 @@ import "./OMRDashboard.css"
 import { useScan } from 'context/ScanningContext';
 import { useWebSocket } from './WebSocket/useWebSocket';
 import { scanFiles } from 'helper/Booklet32Page_helper';
+import { pauseScanning } from 'helper/Booklet32Page_helper';
+import { resumeScanning } from 'helper/Booklet32Page_helper';
+import { resetScanApi } from 'helper/Booklet32Page_helper';
 
 export default function OMRScanningDashboard() {
   const [liveData, setLiveData] = useState([]);
   const { isLiveScanning, setIsLiveScanning } = useScan()
 
+  const params = new URLSearchParams(window.location.search);
+  const totalCount = parseInt(params.get("timgs"), 10);
+  const tstName = params.get("tstName");
+  const tId = params.get("tId");
+  const userData = JSON.parse(localStorage.getItem("userData"))
+
   const [processedCount, setProcessedCount] = useState(0);
-  const [totalCount] = useState(1250);
-  const [elapsedSeconds, setElapsedSeconds] = useState(64);
-  const [activePage, setActivePage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [postCodeFilter, setPostCodeFilter] = useState('All');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // const [activePage, setActivePage] = useState(1);
 
   const [selectedRow, setSelectedRow] = useState(null);
   const [showFullViewModal, setShowFullViewModal] = useState(false);
@@ -35,21 +41,24 @@ export default function OMRScanningDashboard() {
   const modalDragStartRef = useRef({ x: 0, y: 0 });
   const modalPanStartRef = useRef({ x: 0, y: 0 });
 
+  const [startTime, setStartTime] = useState(null); // timestamp in milliseconds for calculation
 
-  const params = new URLSearchParams(window.location.search);
-  // const tstId = params.get("tstId");
-  const tstName = params.get("tstName");
-  const tId = params.get("tId");
-  const userData = JSON.parse(localStorage.getItem("userData"))
+  // Reset scanning state when entering the page to ensure no auto-start
+  useEffect(() => {
+    setIsLiveScanning(false);
+    setProcessedCount(0);
+    setElapsedSeconds(0);
+    setStartTime(null);
+  }, [setIsLiveScanning, setProcessedCount, setElapsedSeconds, setStartTime]);
+
 
   // WebSocket connection for live data
   useWebSocket({
     baseUrl: process.env.REACT_APP_BACKEND_URL,
     onMessage: (data) => {
-      // Handle incoming WebSocket message
       console.log("Received WebSocket data:", data);
-      // Update liveData with the new message
       setLiveData(prev => [...prev, data]);
+      setProcessedCount(prev => Math.min(prev + 1, totalCount));
     },
     onError: (error) => {
       console.error("WebSocket error:", error);
@@ -62,18 +71,55 @@ export default function OMRScanningDashboard() {
     },
   });
 
+
   const handleStart = async () => {
     setIsLiveScanning(true);
+    setProcessedCount(0);
+    setElapsedSeconds(0);
 
-    const userId = userData.empid
+    // Store start timestamp for elapsed calculation
+    const startTimestamp = Date.now();
+    setStartTime(startTimestamp);
+
+    const userId = userData?.empid;
     const makePath = `${userId}\\${tstName}`;
     try {
-      const res = await scanFiles({makePath, tId})
-      console.log(res)
+      const res = await scanFiles({ makePath, tId });
+      console.log(res);
     } catch (error) {
-      console.log(error)
+      console.error(error);
     }
-  }
+  };
+
+  const handleStop = async () => {
+    try {
+      await resetScanApi()
+      setIsLiveScanning(false);
+      setProcessedCount(0);
+      setElapsedSeconds(0);
+      setStartTime(null);
+    } catch (error) {
+      console.error("Error stopping scan:", error);
+    }
+  };
+
+  const handlePause = async () => {
+    try {
+      await pauseScanning();
+      setIsLiveScanning(false);
+    } catch (error) {
+      console.error("Error pausing scan:", error);
+    }
+  };
+
+  const handleResume = async () => {
+    try {
+      await resumeScanning();
+      setIsLiveScanning(true);
+    } catch (error) {
+      console.error("Error resuming scan:", error);
+    }
+  };
 
   const getClampedPan = (x, y, viewportElem, sheetElem, scale, isCenteredVertically = false) => {
     if (!viewportElem || !sheetElem) return { x, y };
@@ -163,24 +209,69 @@ export default function OMRScanningDashboard() {
     isModalDraggingRef.current = false;
     setIsModalDragging(false);
   };
-
-  useEffect(() => {
-    if (modalViewportRef.current && modalSheetRef.current) {
-      setModalPan(prev => getClampedPan(prev.x, prev.y, modalViewportRef.current, modalSheetRef.current, modalZoom / 100, true));
-    }
-  }, [modalZoom, modalRotation]);
-
   useEffect(() => {
     let timer;
-    if (isLiveScanning && processedCount < totalCount) {
-      timer = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-        setProcessedCount((prev) => Math.min(prev + 1, totalCount));
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isLiveScanning, processedCount, totalCount]);
 
+    if (
+      isLiveScanning &&
+      startTime !== null &&
+      totalCount > 0 &&
+      processedCount < totalCount
+    ) {
+      const updateElapsedTime = () => {
+        const elapsed = Math.floor(
+          (Date.now() - new Date(startTime).getTime()) / 1000
+        );
+
+        setElapsedSeconds(Math.max(0, elapsed));
+      };
+
+      // Update immediately instead of waiting for first 1 second
+      updateElapsedTime();
+
+      timer = setInterval(updateElapsedTime, 1000);
+    }
+
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [
+    isLiveScanning,
+    startTime,
+    processedCount,
+    totalCount,
+  ]);
+
+
+  // Auto-stop scanning when all sheets are processed
+  useEffect(() => {
+    if (
+      totalCount > 0 &&
+      processedCount >= totalCount
+    ) {
+      setProcessedCount(totalCount);
+      setIsLiveScanning(false);
+
+      // Freeze final elapsed time
+      if (startTime !== null) {
+        const finalElapsed = Math.floor(
+          (Date.now() - new Date(startTime).getTime()) / 1000
+        );
+
+        setElapsedSeconds(Math.max(0, finalElapsed));
+      }
+    }
+  }, [
+    processedCount,
+    totalCount,
+    startTime,
+    setIsLiveScanning,
+  ]);
+
+
+  // Reset modal state whenever full-view modal opens
   useEffect(() => {
     if (showFullViewModal) {
       setModalZoom(100);
@@ -190,42 +281,6 @@ export default function OMRScanningDashboard() {
     }
   }, [showFullViewModal]);
 
-  const rawData = liveData;
-  const currentDataset = rawData.filter(item => {
-    return item.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.rollNo.includes(searchTerm);
-  });
-
-  const getRecognizedResponses = (row) => {
-    if (!row) return [];
-    return [
-      { q: 'Q1', ans: 'A', isWarning: false },
-      { q: 'Q2', ans: 'C', isWarning: false },
-      { q: 'Q3', ans: 'B', isWarning: false },
-      { q: 'Q4', ans: 'D', isWarning: false },
-      { q: 'Q5', ans: 'A', isWarning: false },
-      { q: 'Q6', ans: 'C', isWarning: false },
-      { q: 'Q7', ans: 'B', isWarning: false },
-      { q: 'Q8', ans: '?', isWarning: true },
-      { q: 'Q9', ans: 'A', isWarning: false },
-      { q: 'Q10', ans: 'D', isWarning: false },
-      { q: 'Q11', ans: 'C', isWarning: false },
-      { q: 'Q12', ans: 'B', isWarning: false },
-      { q: 'Q13', ans: 'A', isWarning: false },
-      { q: 'Q14', ans: 'D', isWarning: false },
-      { q: 'Q15', ans: 'C', isWarning: false },
-      { q: 'Q16', ans: 'B', isWarning: false },
-      { q: 'Q17', ans: '?', isWarning: true },
-      { q: 'Q18', ans: 'A', isWarning: false },
-      { q: 'Q19', ans: 'C', isWarning: false },
-      { q: 'Q20', ans: 'D', isWarning: false },
-      { q: 'Q21', ans: 'B', isWarning: false },
-      { q: 'Q22', ans: 'A', isWarning: false },
-      { q: 'Q23', ans: 'C', isWarning: false },
-      { q: 'Q24', ans: 'D', isWarning: false },
-      { q: 'Q25', ans: 'B', isWarning: false },
-    ];
-  };
 
   const handleRowViewClick = (row) => {
     setSelectedRow(row);
@@ -236,7 +291,7 @@ export default function OMRScanningDashboard() {
   return (
     <div className="dashboard-outer-wrapper">
       <div className="dashboard-container">
-        <TopMetaCard tstName={tstName} tId={tId} />
+        <TopMetaCard tstName={tstName} tId={tId} totalCount={totalCount} />
 
         <ProgressCard
           isLiveScanning={isLiveScanning}
@@ -246,20 +301,22 @@ export default function OMRScanningDashboard() {
           elapsedSeconds={elapsedSeconds}
           setProcessedCount={setProcessedCount}
           handleStart={handleStart}
+          handleStop={handleStop}
+          handlePause={handlePause}
+          handleResume={handleResume}
+          startTime={startTime ? new Date(startTime).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }) : null}
         />
 
         <div className="row">
           <div className={"col-12"}>
             <LiveResultsTable
-              currentDataset={currentDataset}
               selectedRow={selectedRow}
+              liveData={liveData}
               handleRowViewClick={handleRowViewClick}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              postCodeFilter={postCodeFilter}
-              setPostCodeFilter={setPostCodeFilter}
-              activePage={activePage}
-              setActivePage={setActivePage}
             />
           </div>
         </div>
@@ -287,7 +344,6 @@ export default function OMRScanningDashboard() {
           handleModalWheel={handleModalWheel}
           modalViewportRef={modalViewportRef}
           modalSheetRef={modalSheetRef}
-          getRecognizedResponses={getRecognizedResponses}
         />
       )}
     </div>

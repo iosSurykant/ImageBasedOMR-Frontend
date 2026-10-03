@@ -48,6 +48,8 @@ export const getTestList = async (search, page, range) => {
 export const uploadImagesFiles = async ({ testName, formData }) => {
   const urls = await url.getUrls();
 
+  console.log(testName)
+
   const endpoint = urls.UPLOAD_IMAGES_FILE;
 
   return await axiosApi.post(endpoint, formData, {

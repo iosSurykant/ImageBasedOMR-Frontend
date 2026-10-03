@@ -30,6 +30,7 @@ const TestManagementList = () => {
 
     const [createModal, setCreateModal] = useState(false);
     const [uploadModal, setUploadModal] = useState(false);
+    const [uploadRowData, setUploadRowData] = useState(null);
     const [threeDotModal, setThreeDotModal] = useState(null);
     const [menuCoords, setMenuCoords] = useState(null);
 
@@ -169,7 +170,7 @@ const TestManagementList = () => {
 
 
     const handleNaviage = (rowData) => {
-        navigate(`/app/omr-dashboard?tstId=${rowData?.testId}&tstName=${rowData?.testName}&tId=${rowData?.templateId}`);
+        navigate(`/app/omr-dashboard?tstId=${rowData?.testId}&tstName=${rowData?.testName}&tId=${rowData?.templateId}&timgs=${rowData.totalImages}`);
     };
 
 
@@ -322,6 +323,7 @@ const TestManagementList = () => {
                                                             style={btnUploadStyle}
                                                             onClick={() => {
                                                                 setFormData(prev => ({ ...prev, testName: row.testName, testId: row.testId || row.TestId || '' }));
+                                                                setUploadRowData(row);
                                                                 setUploadModal(true);
                                                             }}
                                                         >
@@ -403,6 +405,7 @@ const TestManagementList = () => {
                                                 style={btnScanCardStyle}
                                                 onClick={() => {
                                                     setFormData(prev => ({ ...prev, testName: row.testName, testId: row.testId || row.TestId || '' }));
+                                                    setUploadRowData(row);
                                                     setUploadModal(true);
                                                 }}
                                             >
@@ -456,7 +459,7 @@ const TestManagementList = () => {
             )}
 
             {/* UPLOAD FILE modal */}
-            {uploadModal && <UploadFileModal setUploadModal={setUploadModal} testName={formData.testName} testId={formData.testId} />}
+            {uploadModal && <UploadFileModal setUploadModal={setUploadModal} rowData={uploadRowData} testName={formData.testName} testId={formData.testId} />}
 
             {/* Global Portal Dropdown Menu */}
             {threeDotModal && menuCoords && createPortal(

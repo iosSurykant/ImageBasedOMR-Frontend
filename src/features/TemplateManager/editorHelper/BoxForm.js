@@ -19,6 +19,21 @@ const MappingForm = () => {
     return selectedId ? state.BoxData.boxes.find(b => b.id === selectedId) : null;
   });
 
+  const intensityValues = [0.01, 30, 45, 60, 75, 90, 100];
+
+  const intensityIndex = intensityValues.indexOf(
+    formData.bubbleIntensity
+  );
+
+  const handleIntensityChange = (e) => {
+    const index = Number(e.target.value);
+
+    setFormData((prev) => ({
+      ...prev,
+      bubbleIntensity: intensityValues[index],
+    }));
+  };
+
   useEffect(() => {
     if (selectedBox) {
       setFormData(selectedBox);
@@ -41,11 +56,11 @@ const MappingForm = () => {
 
   const handleSave = () => {
     if (
-      formData.fieldName === "" || 
-      formData.totalCol === null || 
-      formData.totalRow === null || 
-      !formData.fieldType || 
-      formData.multi_Value === ""
+      formData.fieldName === "" ||
+      formData.totalCol === null ||
+      formData.totalRow === null ||
+      !formData.fieldType ||
+      formData.allowMultiple === ""
     ) {
       toast.error("Please fill all the required fields");
       return;
@@ -60,14 +75,14 @@ const MappingForm = () => {
 
     const QUESTION_NAME_REGEX = /^[qQ]\d+-[qQ]\d+$/;
 
-    if (name === "fieldType" && value === "QuestionField") {
+    if (name === "fieldType" && value === "questionfield") {
       if (!QUESTION_NAME_REGEX.test(formData.fieldName.trim())) {
         toast.warning("Use format q1-q10 or Q1-Q10");
         return;
       }
     }
 
-    if (name === "fieldName" && formData.fieldType === "QuestionField") {
+    if (name === "fieldName" && formData.fieldType === "questionfield") {
       toast.warning("Please select field type");
       return;
     }
@@ -156,10 +171,10 @@ const MappingForm = () => {
                 onChange={handleChange}
               >
                 <option value="">Choose Field Type</option>
-                <option value="FormField">Form Field</option>
-                <option value="QuestionField">Question Field</option>
-                <option value="Barcode">Barcode</option>
-                <option value="Lithocode">Lithocode</option>
+                <option value="formfield">Form Field</option>
+                <option value="questionfield">Question Field</option>
+                <option value="barcode">Barcode</option>
+                <option value="lithocode">Lithocode</option>
               </select>
               <IoIosArrowDown
                 style={{
@@ -207,7 +222,7 @@ const MappingForm = () => {
               <div className="d-flex align-items-center mt-4 justify-content-between">
                 <span className="form-label small text-muted font-weight-bold mb-0">Allow Multiple</span>
                 <CustomSwitch
-                  id="allow-multiple"
+                  id="allowMultiple"
                   checked={Boolean(formData.allowMultiple)}
                   onChange={() => handleToggle('allowMultiple')}
                 />
@@ -224,8 +239,8 @@ const MappingForm = () => {
                 type="text"
                 className="form-control shadow-none"
                 placeholder="e.g. *"
-                name="multi_Value"
-                value={formData.multi_Value || ''}
+                name="multipleBubbleOutput"
+                value={formData.multipleBubbleOutput || ''}
                 onChange={handleChange}
               />
             </div>
@@ -239,8 +254,8 @@ const MappingForm = () => {
                   type="text"
                   className="form-control shadow-none"
                   placeholder="e.g. *"
-                  name="multi_Value"
-                  value={formData.multi_Value || ''}
+                  name="multipleBubbleOutput"
+                  value={formData.multipleBubbleOutput || ''}
                   onChange={handleChange}
                 />
               </div>
@@ -250,8 +265,8 @@ const MappingForm = () => {
                   type="text"
                   className="form-control shadow-none"
                   placeholder="e.g. #"
-                  name="Blank_value"
-                  value={formData.Blank_value || ''}
+                  name="blankOutputSymbol"
+                  value={formData.blankOutputSymbol || ''}
                   onChange={handleChange}
                 />
               </div>
@@ -278,9 +293,9 @@ const MappingForm = () => {
                 value={formData.fieldValue || 'integer'}
                 onChange={handleChange}
               >
-                <option value="integer">Integer</option>
-                <option value="alphabet">Alphabet</option>
-                <option value="custom">Custom</option>
+                <option value="Integer">Numeric</option>
+                <option value="Alphabet">Alphabet</option>
+                <option value="Custom">Custom</option>
               </select>
               <IoIosArrowDown
                 style={{
@@ -320,37 +335,40 @@ const MappingForm = () => {
           <div>
             <label className="form-label d-flex justify-content-between align-items-center text-muted">
               <span className="font-weight-bold">Intensity</span>
+
               <span className="px-3 py-1 rounded bg-light text-primary font-weight-bold">
-                {formData.bubbleIntensity ?? 14.5}
+                {formData.bubbleIntensity ?? 30}
               </span>
             </label>
+
             <input
               type="range"
-              step={0.1}
+              min="0"
+              max="6"
+              step="1"
               className="custom-range"
               name="bubbleIntensity"
-              value={formData.bubbleIntensity ?? 14.5}
-              onChange={handleChange}
-              min="0"
-              max="30"
+              value={intensityIndex >= 0 ? intensityIndex : 1}
+              onChange={handleIntensityChange}
             />
           </div>
           <div className="mt-3">
             <label className="form-label d-flex justify-content-between align-items-center text-muted">
               <span className="font-weight-bold">Bubble Size</span>
               <span className="px-3 py-1 rounded bg-light text-primary font-weight-bold">
-                {formData.radius ?? 3.5}
+                {formData.radius ?? 0.4}
               </span>
             </label>
             <input
               type="range"
-              step={0.1}
+              step={0.001}
               className="custom-range"
               name="radius"
-              value={formData.radius ?? 3.5}
+              value={formData.radius ?? 0.4}
               onChange={handleChange}
-              min="0"
-              max="7"
+              min="0.01"
+              max="0.7"
+            // step="0.001"
             />
           </div>
         </div>
@@ -361,7 +379,7 @@ const MappingForm = () => {
   return (
     <div
       className="card border-0 rounded-lg overflow-hidden d-flex flex-column"
-      style={{backgroundColor: '#f8fafd', height: "100%", boxShadow: "rgba(0, 0, 0, 0.11) -3px 0px 6px 0px"}}>
+      style={{ backgroundColor: '#f8fafd', height: "100%", boxShadow: "rgba(0, 0, 0, 0.11) -3px 0px 6px 0px" }}>
       {/* Main Content Area */}
       <div className="card-body p-0 overflow-auto bg-white flex-grow-1">
 
@@ -373,11 +391,11 @@ const MappingForm = () => {
               <button
                 type="button"
                 className="btn btn-block text-left py-3 px-4 d-flex justify-content-between align-items-center w-100"
-                style={{color: '#4c5c75', fontSize: '0.85rem', boxShadow: 'none', fontWeight: "600", letterSpacing: "1px", backgroundColor: openSection === item.id ? '#ffffff' : 'transparent',}}
+                style={{ color: '#4c5c75', fontSize: '0.85rem', boxShadow: 'none', fontWeight: "600", letterSpacing: "1px", backgroundColor: openSection === item.id ? '#ffffff' : 'transparent', }}
                 onClick={() => toggleSection(item.id)}>
                 <span>{item.title}</span>
                 <span
-                  style={{transform: openSection === item.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                  style={{ transform: openSection === item.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
                   <IoIosArrowDown size={18} color="#6c757d" />
                 </span>
               </button>
@@ -403,8 +421,8 @@ const MappingForm = () => {
           </div>
           <CustomSwitch
             id="bestBubble"
-            checked={Boolean(formData.detectBestBubble)}
-            onChange={() => handleToggle('detectBestBubble')}
+            checked={Boolean(formData.best_bubble)}
+            onChange={() => handleToggle('best_bubble')}
           />
         </div>
 

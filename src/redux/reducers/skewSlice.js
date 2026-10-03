@@ -31,6 +31,7 @@ const skewSlice = createSlice({
 
         updateSkewPosition: (state, action) => {
             const { corner, x, y } = action.payload;
+            console.log(corner, x, y)
             if (state.skewData[corner]) {
                 state.skewData[corner].x = x;
                 state.skewData[corner].y = y;
@@ -57,19 +58,16 @@ const skewSlice = createSlice({
             });
         },
 
-
-
-
       setSelectedSkewCorners: (state, action) => {
     const skewBoxes = action.payload;
 
-    // state.skewData = {};
-
     Object.keys(skewBoxes).forEach((key) => {
-        state.skewData[key] = {
-            ...skewBoxes[key],
-            selected: true,
-        };
+        if (state.skewData[key]) {
+            state.skewData[key] = {
+                ...state.skewData[key],
+                ...skewBoxes[key],
+            };
+        }
     });
 }
     },

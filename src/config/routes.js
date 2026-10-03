@@ -123,7 +123,7 @@ const routes = [
     component: OMRDashboard,
     layout: "/app",
     showInSidebar: true,
-    roles: [ADMIN],
+    roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
 

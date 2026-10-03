@@ -16,11 +16,11 @@ const Template = () => {
   const navigate = useNavigate();
   const { list: templates, loading, error, } = useSelector((state) => state.templates);
 
-    // useEffect(() => {
-    //   dispatch(renderBoxes({ fields: [] }));
-    //   dispatch(resetSkewSelections());
+    useEffect(() => {
+      dispatch(renderBoxes({ fields: [] }));
+      dispatch(resetSkewSelections());
   
-    // }, [dispatch]);
+    }, [dispatch]);
 
 
   const handleEdit = async (id) => {
