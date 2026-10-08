@@ -46,7 +46,7 @@ const DynamicGrid = ({
       style={{ position: "relative", width: "100%", height: "100%", overflow: "visible", boxSizing: "border-box", backgroundColor: "rgba(36, 96, 251, 0.22)", border: box.id === selectedBoxId ? "1px solid #FF0000" : "1px solid #2460FB", userSelect: "none", }}>
       {/* Field Name */}
       {name && (
-        <div style={{ position: "absolute", bottom: "100%", left: "0px", fontSize: "6px", lineHeight: "8px", fontWeight: 400, color: "#FFFFFF", backgroundColor: "#2460FB", padding: "1px 3px", whiteSpace: "nowrap", pointerEvents: "none", fontFamily: "outfit, sans-serif", zIndex: 9999, }}>
+        <div style={{ position: "absolute", bottom: "100%", left: "-1px", borderRadius:"2px", fontSize: "4px", lineHeight: "8px", fontWeight: 400, color: "#FFFFFF", backgroundColor: "#2460FB", padding: "1px 2px", whiteSpace: "nowrap", pointerEvents: "none", fontFamily: "outfit, sans-serif", zIndex: 9999, }}>
           {name}
         </div>
       )}

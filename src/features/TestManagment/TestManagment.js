@@ -49,7 +49,7 @@ const TestManagementList = () => {
         }, 100);
     }, []);
 
-    const range = 7;
+    const range = 6;
     const totalCount = testList?.count || 0;
     const totalPages = Math.ceil(totalCount / range) || 1;
 
@@ -168,7 +168,6 @@ const TestManagementList = () => {
         setMenuCoords(null);
     };
 
-
     const handleNaviage = (rowData) => {
         navigate(`/app/omr-dashboard?tstId=${rowData?.testId}&tstName=${rowData?.testName}&tId=${rowData?.templateId}&timgs=${rowData.totalImages}`);
     };
@@ -191,8 +190,9 @@ const TestManagementList = () => {
 
     // Status badges
     const badgeBaseStyle = { padding: '5px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '500', display: 'inline-block', minWidth: '70px', textAlign: 'center', letterSpacing: "0.5px" };
+    const badgeCompleteStyle = { ...badgeBaseStyle, backgroundColor: '#B8C3FF', color: '#000000' };
+    const badgePendingStyle = { ...badgeBaseStyle, backgroundColor: '#E0E0E0', color: '#4A4A4A' };
     const badgeActiveStyle = { ...badgeBaseStyle, backgroundColor: '#d5f5e3', color: '#11a355' };
-    const badgeInactiveStyle = { ...badgeBaseStyle, backgroundColor: '#f3f6f9', color: '#7e8299' };
 
     // Action buttons
     const btnScanStyle = { border: '1px solid #2d62ed', color: '#2d62ed', backgroundColor: 'transparent', fontWeight: '500', borderRadius: '4px', padding: '5px 14px', fontSize: '13px', cursor: 'pointer', minWidth: '72px' };
@@ -209,8 +209,12 @@ const TestManagementList = () => {
     const btnScanCardStyle = { border: '2px solid #2563eb', color: '#2563eb', backgroundColor: '#ffffff', fontWeight: '500', borderRadius: '4px', padding: '6px 20px', fontSize: '14px', cursor: 'pointer' };
     const buttonBaseStyle = { width: '100%', padding: '10px 16px', backgroundColor: 'transparent', border: 'none', fontSize: '15px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', transition: 'background-color 0.15s ease-in-out', display: 'flex', alignItems: 'center', outline: 'none', gap: "14px" };
 
-    const isStatusActive = (status) => {
-        return status === true || status === 'true' || status === 'Active' || status === 'A' || status === 'a' || status === 'Y' || status === 'y';
+
+    const getStatusText = (status) => {
+        if (status === 'C') return 'Complete';
+        if (status === 'Y') return 'Active';
+        if (status === 'N') return 'Pending';
+        return status;
     };
 
     const activeDataPage = testList?.page ?? page;
@@ -263,7 +267,7 @@ const TestManagementList = () => {
                         <thead>
                             <tr>
                                 <th style={{ ...thStyle, width: '4%', paddingLeft: '16px' }}>Sr</th>
-                                <th style={{ ...thStyle, width: '14%' }}>TEST Id</th>
+                                {/* <th style={{ ...thStyle, width: '14%' }}>TEST Id</th> */}
                                 <th style={{ ...thStyle, width: '22%' }}>TEST Name</th>
                                 <th style={{ ...thStyle, width: '20%' }}>Template</th>
                                 <th style={{ ...thStyle, width: '16%' }}>Note</th>
@@ -282,7 +286,7 @@ const TestManagementList = () => {
                                 records.map((row, index) => {
                                     const rowKey = row.testId || index;
                                     const matchingTemplate = getMatchingTemplate(row);
-                                    const isActive = isStatusActive(row.status);
+                                    const statusText = getStatusText(row.status);
                                     const srNumber = (activeDataPage - 1) * range + index + 1;
 
                                     return (
@@ -290,9 +294,9 @@ const TestManagementList = () => {
                                             <td style={{ ...tdStyle, ...textIdStyle, paddingLeft: '16px' }}>
                                                 {srNumber}
                                             </td>
-                                            <td style={{ ...tdStyle, ...textIdStyle, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={row.testId || row.TestId || ''}>
+                                            {/* <td style={{ ...tdStyle, ...textIdStyle, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={row.testId || row.TestId || ''}>
                                                 {row.testId || row.TestId || ''}
-                                            </td>
+                                            </td> */}
                                             <td style={{ ...tdStyle, ...textDarkStyle, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={row.testName}>
                                                 {row.testName}
                                             </td>
@@ -310,14 +314,20 @@ const TestManagementList = () => {
                                                 {row.notes}
                                             </td>
                                             <td className="text-center" style={tdStyle}>
-                                                <span style={isActive ? badgeActiveStyle : badgeInactiveStyle}>
-                                                    {isActive ? 'Active' : 'Inactive'}
+                                                <span style={statusText === 'Complete' ? badgeCompleteStyle : statusText === 'Pending' ? badgePendingStyle : badgeActiveStyle}>
+                                                    {statusText}
                                                 </span>
                                             </td>
                                             <td className="text-center" style={{ ...tdStyle, paddingRight: '16px' }}>
                                                 <div className="d-flex justify-content-center align-items-center" style={{ whiteSpace: 'nowrap' }}>
-                                                    {isActive ? (
-                                                        <button style={btnScanStyle} onClick={() => handleNaviage(row)}>Scan</button>
+                                                    {statusText === 'Complete' ? (
+                                                        <button style={{ ...btnScanStyle, opacity: 0.5, cursor: 'not-allowed' }} disabled>
+                                                            Finished
+                                                        </button>
+                                                    ) : statusText === 'Active' ? (
+                                                        <button style={btnScanStyle} onClick={() => handleNaviage(row)}>
+                                                            Scan
+                                                        </button>
                                                     ) : (
                                                         <button
                                                             style={btnUploadStyle}
@@ -330,11 +340,10 @@ const TestManagementList = () => {
                                                             Upload
                                                         </button>
                                                     )}
-
                                                     <HiOutlineDotsVertical
                                                         size={22}
-                                                        style={{ cursor: "pointer", marginLeft: '12px' }}
-                                                        onClick={(e) => handleDotClick(e, row)}
+                                                        style={{ cursor: statusText === 'Complete' ? 'not-allowed' : 'pointer', marginLeft: '12px', opacity: statusText === 'Complete' ? 0.5 : 1 }}
+                                                        onClick={statusText === 'Complete' ? undefined : (e) => handleDotClick(e, row)}
                                                     />
                                                 </div>
                                             </td>
@@ -362,7 +371,7 @@ const TestManagementList = () => {
                         records.map((row, index) => {
                             const rowKey = row.testId || index;
                             const matchingTemplate = getMatchingTemplate(row);
-                            const isActive = isStatusActive(row.status);
+                            const statusText = getStatusText(row.status);
                             const srNumber = (activeDataPage - 1) * range + index + 1;
 
                             return (
@@ -372,8 +381,8 @@ const TestManagementList = () => {
                                             <span style={{ fontSize: '13px', color: '#94a3b8', marginRight: '8px' }}>#{srNumber}</span>
                                             {row.testName}
                                         </h4>
-                                        <span style={isActive ? badgeActiveStyle : badgeInactiveStyle}>
-                                            {isActive ? 'Active' : 'Inactive'}
+                                        <span style={statusText === 'Complete' ? badgeCompleteStyle : statusText === 'Pending' ? badgePendingStyle : badgeActiveStyle}>
+                                            {statusText}
                                         </span>
                                     </div>
 
@@ -398,8 +407,12 @@ const TestManagementList = () => {
                                     <div style={cardLabelStyle}>Note:<span style={cardValueStyle}>{row.notes || '__'}</span></div>
 
                                     <div style={cardFooterStyle}>
-                                        {isActive ? (
-                                            <button style={btnScanCardStyle} onClick={() => handleNaviage(row)} >Scan</button>
+                                        {statusText === 'Complete' ? (
+                                            <button style={{ ...btnScanCardStyle, opacity: 0.5, cursor: 'not-allowed' }} disabled>
+                                                Finished
+                                            </button>
+                                        ) : statusText === 'Active' ? (
+                                            <button style={btnScanCardStyle} onClick={() => handleNaviage(row)}>Scan</button>
                                         ) : (
                                             <button
                                                 style={btnScanCardStyle}
@@ -415,8 +428,8 @@ const TestManagementList = () => {
 
                                         <span>
                                             <HiOutlineDotsVertical
-                                                style={{ cursor: "pointer", fontSize: "18px" }}
-                                                onClick={(e) => handleDotClick(e, row)}
+                                                style={{ cursor: statusText === 'Complete' ? 'not-allowed' : 'pointer', fontSize: "18px", opacity: statusText === 'Complete' ? 0.5 : 1 }}
+                                                onClick={statusText === 'Complete' ? undefined : (e) => handleDotClick(e, row)}
                                             />
                                         </span>
                                     </div>

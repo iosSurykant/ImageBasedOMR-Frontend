@@ -106,57 +106,7 @@ const scaleGeo = (obj, s) => {
   return out;
 };
 
-
-// const normalizeCorners = (json) => {
-//   // New format: array with one object containing the four corners
-//   if (Array.isArray(json?.referncefield) && json.referncefield.length === 1) {
-//     const obj = json.referncefield[0];
-//     if (obj.topLeft && obj.bottomLeft && obj.topRight && obj.bottomRight) {
-//       return {
-//         topLeft: { ...obj.topLeft, selected: true },
-//         bottomLeft: { ...obj.bottomLeft, selected: true },
-//         topRight: { ...obj.topRight, selected: true },
-//         bottomRight: { ...obj.bottomRight, selected: true },
-//       };
-//     }
-//   }
-
-//   // Existing format: object keyed by corner names
-//   if (json?.referncefield && Object.keys(json.referncefield).length) {
-//     return Object.fromEntries(
-//       Object.entries(json.referncefield).map(([key, value]) => [
-//         key,
-//         { ...value, selected: true },
-//       ])
-//     );
-//   }
-
-//   // Existing format: referenceCoordinate array
-//   if (Array.isArray(json?.referenceCoordinate)) {
-//     return json.referenceCoordinate.reduce((acc, c) => {
-//       acc[c.position] = {
-//         x: c.x,
-//         y: c.y,
-//         width: c.width,
-//         height: c.height,
-//         selected: true,
-//       };
-//       return acc;
-//     }, {});
-//   }
-
-//   return null;
-// };
-
-
 const normalizeCorners = (json) => {
-  // New format:
-  // referncefield: [
-  //   {
-  //     topLeft: {...},
-  //     topRight: {...}
-  //   }
-  // ]
   if (
     Array.isArray(json?.referncefield) &&
     json.referncefield.length > 0
@@ -176,11 +126,6 @@ const normalizeCorners = (json) => {
     }
   }
 
-  // Old format:
-  // referncefield: {
-  //   topLeft: {...},
-  //   topRight: {...}
-  // }
   if (
     json?.referncefield &&
     !Array.isArray(json.referncefield) &&
@@ -197,16 +142,6 @@ const normalizeCorners = (json) => {
     );
   }
 
-  // Existing format:
-  // referenceCoordinate: [
-  //   {
-  //     position: "topLeft",
-  //     x: ...,
-  //     y: ...,
-  //     width: ...,
-  //     height: ...
-  //   }
-  // ]
   if (Array.isArray(json?.referenceCoordinate)) {
     return json.referenceCoordinate.reduce((acc, c) => {
       if (!c?.position) return acc;
@@ -337,7 +272,6 @@ const TemplateEditor = () => {
   const mergeFields = useSelector((state) => state.BoxData.mergefields);
   const selectedBoxId = useSelector((state) => state.BoxData.selectedBoxId);
 
-  // Measure scale once the image has loaded.
   // offsetWidth ignores CSS transform, so zoom does not affect it.
   const handleImageLoad = (e) => {
     const img = e.currentTarget;
@@ -371,76 +305,44 @@ const TemplateEditor = () => {
     getJsonData();
   }, [getJsonData]);
 
-  // LOAD: image px -> screen px, then push into Redux (runs once per file)
-  // useEffect(() => {
-  //   if (!scale || !jsonData) return;
-
-
-  //   const corners = normalizeCorners(jsonData);
-  //   if (!Array.isArray(jsonData.fields) && !corners) return;
-
-  //   console.log(jsonData)
-  //   console.log(corners)
-
-  //   const fields = (jsonData.fields || []).map((f) => scaleGeo(f, scale));
-
-  //   dispatch(
-  //     renderBoxes({
-  //       ...jsonData,
-  //       mergedfields: jsonData.mergedfields ?? jsonData.mergedFields ?? [],
-  //       fields,
-  //     }),
-  //   );
-
-  //   if (corners) {
-  //     const scaledCorners = Object.fromEntries(
-  //       Object.entries(corners).map(([key, p]) => [key, scaleGeo(p, scale)]),
-  //     );
-  //     dispatch(setSelectedSkewCorners(scaledCorners));
-  //   }
-
-  //   setBoxGeometry({});
-  // }, [scale, jsonData, dispatch]);
-
 
   useEffect(() => {
-  if (!scale || !jsonData) return;
+    if (!scale || !jsonData) return;
 
-  const corners = normalizeCorners(jsonData);
+    const corners = normalizeCorners(jsonData);
+    if (!Array.isArray(jsonData.fields) && !corners) return;
 
-  if (!Array.isArray(jsonData.fields) && !corners) return;
+    console.log("JSON DATA:", jsonData);
+    console.log("NORMALIZED CORNERS:", corners);
 
-  console.log("JSON DATA:", jsonData);
-  console.log("NORMALIZED CORNERS:", corners);
-
-  const fields = (jsonData.fields || []).map((f) =>
-    scaleGeo(f, scale)
-  );
-
-  dispatch(
-    renderBoxes({
-      ...jsonData,
-      mergedfields:
-        jsonData.mergedfields ??
-        jsonData.mergedFields ??
-        [],
-      fields,
-    })
-  );
-
-  if (corners && Object.keys(corners).length > 0) {
-    const scaledCorners = Object.fromEntries(
-      Object.entries(corners).map(([key, point]) => [
-        key,
-        scaleGeo(point, scale),
-      ])
+    const fields = (jsonData.fields || []).map((f) =>
+      scaleGeo(f, scale)
     );
 
-    dispatch(setSelectedSkewCorners(scaledCorners));
-  }
+    dispatch(
+      renderBoxes({
+        ...jsonData,
+        mergedfields:
+          jsonData.mergedfields ??
+          jsonData.mergedFields ??
+          [],
+        fields,
+      })
+    );
 
-  setBoxGeometry({});
-}, [scale, jsonData, dispatch]);
+    if (corners && Object.keys(corners).length > 0) {
+      const scaledCorners = Object.fromEntries(
+        Object.entries(corners).map(([key, point]) => [
+          key,
+          scaleGeo(point, scale),
+        ])
+      );
+
+      dispatch(setSelectedSkewCorners(scaledCorners));
+    }
+
+    setBoxGeometry({});
+  }, [scale, jsonData, dispatch]);
 
 
   const getBoxGeometry = (box) =>
@@ -503,19 +405,12 @@ const TemplateEditor = () => {
         ? wrap.offsetWidth / imgEl.naturalWidth
         : null;
 
-    // console.log('SAVE scale check:', {
-    //   displayedWidth: wrap?.offsetWidth,
-    //   naturalWidth: imgEl?.naturalWidth,
-    //   liveScale,
-    //   stateScale: scale,
-    // });
-
     if (!liveScale || !isFinite(liveScale)) {
       toast.error('Image is still loading, please try again');
       return;
     }
 
-    const { fileName } = tempData.data;
+    const { fileName } = tempData?.data;
     const toImg = (v) => Math.round(v / liveScale);
 
     const fields = boxes.map((box) => {
@@ -529,55 +424,46 @@ const TemplateEditor = () => {
       return { ...imgBox, bubbles: getBubbleCoordinates(imgBox) };
     });
 
-   const selectedReferences = Object.entries(
-  activeSkewCoordinates || {}
-);
+    const selectedReferences = Object.entries(
+      activeSkewCoordinates || {}
+    );
 
-const referncefield =
-  selectedReferences.length > 0
-    ? [
-        Object.fromEntries(
-          selectedReferences.map(([position, point]) => [
-            position,
-            {
-              x: toImg(point.x),
-              y: toImg(point.y),
-              width: toImg(point.width),
-              height: toImg(point.height),
-            },
-          ])
-        ),
-      ]
-    : [];
+    const referncefield =
+      selectedReferences.length > 0
+        ? [
+          Object.fromEntries(
+            selectedReferences.map(([position, point]) => [
+              position,
+              {
+                x: toImg(point.x),
+                y: toImg(point.y),
+                width: toImg(point.width),
+                height: toImg(point.height),
+              },
+            ])
+          ),
+        ]
+        : [];
 
-const referenceCoordinate =
-  selectedReferences.length > 0
-    ? selectedReferences.map(([position, point]) => ({
-        position,
-        width: toImg(point.width),
-        height: toImg(point.height),
-        x: toImg(point.x),
-        y: toImg(point.y),
-      }))
-    : [];
-    // const templateData = {
-    //   name: fileName,
-    //   fields,
-    //   mergedfields: mergeFields,
-    //   mergedFields: mergeFields, // old key (capital F) that the old JSON used
-    //   referncefield,
-    //   referenceCoordinate, // old key the backend/engine most likely reads
-    // }; 
+    const referenceCoordinate =
+      selectedReferences.length > 0
+        ? selectedReferences.map(([position, point]) => ({
+          position,
+          width: toImg(point.width),
+          height: toImg(point.height),
+          x: toImg(point.x),
+          y: toImg(point.y),
+        }))
+        : [];
 
 
-const templateData = {
-  name: fileName,
-  fields,
-  // mergedfields: mergeFields,
-  mergedFields: mergeFields,
-  referncefield,
-  referenceCoordinate,
-};
+    const templateData = {
+      name: fileName,
+      fields,
+      mergedFields: mergeFields,
+      referncefield,
+      referenceCoordinate,
+    };
 
     console.log('SAVING templateData:', templateData);
 
@@ -597,15 +483,7 @@ const templateData = {
     } catch (error) {
       toast.error('Failed to save template');
     }
-  }, [
-    tempData?.data,
-    boxes,
-    mergeFields,
-    activeSkewCoordinates,
-    scale,
-    dispatch,
-    navigate,
-  ]);
+  }, [tempData?.data, boxes, mergeFields, activeSkewCoordinates, dispatch, navigate]);
 
   // KEYBOARD: ARROW KEY PANNING & BOX MOVEMENT
   useEffect(() => {
@@ -903,13 +781,14 @@ const templateData = {
       {/* CANVAS WORKSPACE AREA */}
       <div
         ref={containerRef}
-        className='position-relative rounded-lg overflow-hidden shadow-sm d-flex justify-content-center align-items-center'
+        className='position-relative rounded-lg overflow-auto shadow-sm d-flex justify-content-center align-items-center'
         style={{
           height: '90%',
           backgroundColor: '#EAF2FC',
           backgroundImage: 'radial-gradient(#cbd5e1 2.5px, transparent 1.5px)',
           backgroundSize: '35px 35px',
           cursor: isPanMode ? (isDragging ? 'grabbing' : 'grab') : 'default',
+          scrollbarWidth: "thin"
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -922,17 +801,12 @@ const templateData = {
             maxWidth: '450px',
             transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel / 100})`,
             transformOrigin: 'center center',
-            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-            userSelect: 'none',
-            display: 'inline-block',
-          }}
-        >
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out', userSelect: 'none', display: 'inline-block',
+          }}>
           <div
             ref={imageRef}
             className='position-relative'
-            style={{ width: '100%', height: '100%' }}
-          >
-            {/* NOTE: no "border" class on the image, so the image edge == Rnd coordinate origin */}
+            style={{ width: '100%', height: '100%' }}>
             <img
               src={process.env.REACT_APP_BACKEND_URL + tempData?.data?.imgPath}
               alt='OMR Document'
@@ -1126,17 +1000,8 @@ const templateData = {
 
         {/* Floating Controls */}
         <div
-          className='bg-white rounded-pill shadow-lg d-flex align-items-center position-absolute'
-          style={{
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            border: '1px solid #e2e8f0',
-            gap: '16px',
-            padding: '8px 24px',
-          }}
-        >
+          className='bg-white rounded-pill shadow-lg d-flex align-items-center position-fixed'
+          style={{ bottom: '94px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, border: '1px solid #e2e8f0', gap: '16px', padding: '8px 24px', }} >
           <Controls
             tourSteps={tourSteps}
             runTour={runTour}
@@ -1145,42 +1010,18 @@ const templateData = {
         </div>
 
         {/* Skews Dropdown Panel */}
-        <div
-          style={{
-            zIndex: '1000',
-            position: 'absolute',
-            left: '5%',
-            top: '50px',
-            pointerEvents: isPanelOpen ? 'auto' : 'none',
-          }}
-        >
+        <div style={{ zIndex: '1000', position: 'absolute', left: '5%', top: '50px', pointerEvents: isPanelOpen ? 'auto' : 'none', }}>
           {isPanelOpen && <Skews />}
         </div>
 
         {/* FORM */}
         <div
-          style={{
-            height: '100%',
-            width: '350px',
-            zIndex: '1000',
-            position: 'absolute',
-            top: '0px',
-            right: '0px',
-            pointerEvents: isFormOpen ? 'auto' : 'none',
-          }}
-        >
+          style={{ height: '100%', width: '350px', zIndex: '1000', position: 'absolute', top: '0px', right: '0px', pointerEvents: isFormOpen ? 'auto' : 'none', }}>
           {isFormOpen && <MappingForm />}
         </div>
 
         {/* Merge Panel */}
-        <div
-          style={{
-            zIndex: '1000',
-            position: 'absolute',
-            top: '50px',
-            pointerEvents: isMergePanel ? 'auto' : 'none',
-          }}
-        >
+        <div style={{ zIndex: '1000', position: 'absolute', top: '50px', pointerEvents: isMergePanel ? 'auto' : 'none', }}>
           {isMergePanel && <MergeModal />}
         </div>
       </div>

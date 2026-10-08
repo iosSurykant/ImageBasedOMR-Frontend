@@ -100,29 +100,29 @@ const routes = [
 
   // OLD SCANNING
 
-  {
-    path: "/job-queue",
-    name: "Scan OMR Sheets",
-    icon: <BiScan />,
-    component: ScanPage,
-    layout: "/app",
-    showInSidebar: true,
-    roles: [ADMIN, OPERATOR, MODERATOR],
-  },
-  {
-    path: "/job-queue/adminscanjobnew",
-    component: AdminScanJob,
-    layout: "/app",
-    showInSidebar: false,
-    roles: [ADMIN, OPERATOR, MODERATOR],
-  },
+  // {
+  //   path: "/job-queue",
+  //   name: "Scan OMR Sheets",
+  //   icon: <BiScan />,
+  //   component: ScanPage,
+  //   layout: "/app",
+  //   showInSidebar: true,
+  //   roles: [ADMIN, OPERATOR, MODERATOR],
+  // },
+  // {
+  //   path: "/job-queue/adminscanjobnew",
+  //   component: AdminScanJob,
+  //   layout: "/app",
+  //   showInSidebar: false,
+  //   roles: [ADMIN, OPERATOR, MODERATOR],
+  // },
 
   {
     path: "/omr-dashboard",
-        name: "OMR Scan",
+    name: "OMR Scan",
     component: OMRDashboard,
     layout: "/app",
-    showInSidebar: true,
+    showInSidebar: false,
     roles: [ADMIN, OPERATOR, MODERATOR],
   },
 
@@ -136,15 +136,15 @@ const routes = [
     showInSidebar: true,
     roles: [ADMIN, OPERATOR, MODERATOR],
   },
-  {
-    path: "/server-folder",
-    name: "Folder Management",
-    icon: <AiOutlineFolderOpen />,
-    component: FolderStructure,
-    layout: "/app",
-    showInSidebar: true,
-    roles: [ADMIN, OPERATOR, MODERATOR],
-  },
+  // {
+  //   path: "/server-folder",
+  //   name: "Folder Management",
+  //   icon: <AiOutlineFolderOpen />,
+  //   component: FolderStructure,
+  //   layout: "/app",
+  //   showInSidebar: true,
+  //   roles: [ADMIN, OPERATOR, MODERATOR],
+  // },
   {
     path: "/result-generation",
     name: "Result Generation",

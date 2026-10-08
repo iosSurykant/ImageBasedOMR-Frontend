@@ -231,19 +231,17 @@ const MappingForm = () => {
           </div>
 
           {!formData.allowMultiple ? (
-            <div className="mb-3">
-              <label className="form-label small text-muted font-weight-bold">
-                Multiple Value <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                className="form-control shadow-none"
-                placeholder="e.g. *"
-                name="multipleBubbleOutput"
-                value={formData.multipleBubbleOutput || ''}
-                onChange={handleChange}
-              />
-            </div>
+             <div className="mb-3">
+                <label className="form-label small text-muted font-weight-bold">Blank Value</label>
+                <input
+                  type="text"
+                  className="form-control shadow-none"
+                  placeholder="e.g. #"
+                  name="blankOutputSymbol"
+                  value={formData.blankOutputSymbol || ''}
+                  onChange={handleChange}
+                />
+              </div>
           ) : (
             <div className="row">
               <div className="col-6 mb-3">

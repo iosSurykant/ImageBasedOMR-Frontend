@@ -7,7 +7,9 @@ import { logout } from "helper/userManagment_helper";
 import { toast } from "react-toastify";
 
 const Sidebar = ({ routes }) => {
-  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 992);
+  // const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 992);
+  const {isCollapsed, setIsCollapsed} = useScan()
+
   const [glowStyle, setGlowStyle] = useState({ top: 20, opacity: 0 });
 
   const { isScanning } = useScan();

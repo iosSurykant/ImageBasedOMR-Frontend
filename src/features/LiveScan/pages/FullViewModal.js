@@ -1,5 +1,6 @@
-import React, {  useMemo } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import AccurateOMRSheet from "./AccurateOMRSheet";
+import { RxCross2 } from "react-icons/rx";
 
 // --- COMPONENT 6: Full Resolution View Modal Component ---
 function FullViewModal({
@@ -20,11 +21,13 @@ function FullViewModal({
   handleModalTouchStart,
   handleModalTouchMove,
   handleModalTouchEnd,
-  handleModalWheel,
+  // handleModalWheel,
   modalViewportRef,
   modalSheetRef,
-  
+  tId
 }) {
+  const [activeField, setActiveField] = useState(null);
+  const sheetRef = useRef(null);
 
   function processRowData(dataObject) {
     if (!dataObject || typeof dataObject !== 'object') {
@@ -36,30 +39,23 @@ function FullViewModal({
     let cleanFileName = '';
 
     Object.entries(dataObject).forEach(([key, value]) => {
-      // 1. Exclude 'Sr' key
       if (key === 'Sr') return;
 
-      // 2. Extract Questions (matches Q1, Q2, Q10, etc.)
       if (/^Q\d+$/i.test(key)) {
         questions.push({
           q: key,
           ans: value,
-          qNum: parseInt(key.replace(/\D/g, ''), 10) // Restored qNum so sorting works
+          qNum: parseInt(key.replace(/\D/g, ''), 10)
         });
-      }
-      // 3. Extract and clean FileName
-      else if (key === 'FileName') {
+      } else if (key === 'FileName') {
         cleanFileName = value ? value.split('/').pop() : '';
         metadata.FileName = cleanFileName;
         metadata.RawFilePath = value;
-      }
-      // 4. Extract all other dynamic metadata fields
-      else {
+      } else {
         metadata[key] = value;
       }
     });
 
-    // Sort questions naturally (Q1, Q2, Q3...)
     questions.sort((a, b) => a.qNum - b.qNum);
 
     return {
@@ -86,7 +82,13 @@ function FullViewModal({
     }
   };
 
-  console.log(selectedRow)
+  const handleFieldSelect = (fieldName) => {
+    setActiveField(fieldName);
+    if (sheetRef.current && sheetRef.current.zoomToField) {
+      sheetRef.current.zoomToField(fieldName);
+    }
+  };
+
   return (
     <div className="fullview-overlay" onClick={() => setShowFullViewModal(false)}>
       <div className="fullview-card" onClick={(e) => e.stopPropagation()}>
@@ -94,8 +96,8 @@ function FullViewModal({
           <div className="fullview-header-left">
             <div className="fullview-header-title-line">
               <span>#{selectedRow.Sr}</span>
-              <span style={{fontSize:"14px", fontWeight:"500", letterSpacing:"0.5px"}}><span style={{color:"gray"}}>FileName: </span>{cleanFileName}</span>
-              <span style={{letterSpacing:"0.5px"}}>{renderBadge(selectedRow.Status)}</span>
+              {/* <span style={{ fontSize: "14px", fontWeight: "500", letterSpacing: "0.5px" }}><span style={{ color: "gray" }}></span>{cleanFileName}</span> */}
+              <span style={{ letterSpacing: "0.5px" }}>{renderBadge(selectedRow.Status)}</span>
             </div>
             <div className="fullview-scanned-time">Scanned At: {selectedRow.LiveTime}</div>
           </div>
@@ -108,21 +110,13 @@ function FullViewModal({
               title={isModalPanMode ? "Disable Pan/Drag Mode" : "Enable Pan/Drag Mode"}
             >
               <i className="fas fa-hand-paper"></i>
-              <span>{isModalPanMode ? 'Pan Mode: ON' : 'Pan Mode'}</span>
+              <span>Pan Mode</span>
             </button>
 
             <div className="btn-modal-pill">
-              {/* <button
-                type="button"
-                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px', fontWeight: 'bold' }}
-                onClick={() => setModalZoom(prev => Math.max(prev - 15, 50))}
-                title="Zoom Out">
-                -
-              </button> */}
               <select
                 value={modalZoom}
-                onChange={(e) => setModalZoom(Number(e.target.value))}
-              >
+                onChange={(e) => setModalZoom(Number(e.target.value))}>
                 <option value={50}>50%</option>
                 <option value={75}>75%</option>
                 <option value={100}>100%</option>
@@ -132,22 +126,13 @@ function FullViewModal({
                 <option value={200}>200%</option>
                 <option value={250}>250%</option>
               </select>
-              {/* <button
-                type="button"
-                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px', fontWeight: 'bold' }}
-                onClick={() => setModalZoom(prev => Math.min(prev + 15, 300))}
-                title="Zoom In"
-              >
-                +
-              </button> */}
             </div>
 
             <button
               type="button"
               className="btn-icon-square"
               onClick={() => setModalRotation((r) => (r - 90 + 360) % 360)}
-              title="Rotate Left (90° CCW)"
-            >
+              title="Rotate Left (90° CCW)">
               <i className="fas fa-undo"></i>
             </button>
 
@@ -155,8 +140,7 @@ function FullViewModal({
               type="button"
               className="btn-icon-square"
               onClick={() => setModalRotation((r) => (r + 90) % 360)}
-              title="Rotate Right (90° CW)"
-            >
+              title="Rotate Right (90° CW)">
               <i className="fas fa-redo"></i>
             </button>
 
@@ -168,10 +152,10 @@ function FullViewModal({
                   setModalPan({ x: 0, y: 0 });
                   setModalZoom(100);
                   setModalRotation(0);
+                  setActiveField(null);
                 }}
                 title="Reset Zoom & Pan Position"
-                style={{ fontSize: '12px', padding: '4px 8px', color: '#3b82f6', borderColor: '#93c5fd' }}
-              >
+                style={{ fontSize: '12px', padding: '4px 8px', color: '#3b82f6', borderColor: '#93c5fd' }}>
                 <i className="fas fa-sync-alt mr-1"></i> Reset View
               </button>
             )}
@@ -180,9 +164,8 @@ function FullViewModal({
               type="button"
               className="btn-close-modal"
               onClick={() => setShowFullViewModal(false)}
-              title="Close"
-            >
-              <i className="fas fa-times"></i>
+              title="Close">
+              <RxCross2 size={28} />
             </button>
           </div>
         </div>
@@ -198,39 +181,55 @@ function FullViewModal({
             onTouchStart={handleModalTouchStart}
             onTouchMove={handleModalTouchMove}
             onTouchEnd={handleModalTouchEnd}
-            onWheel={handleModalWheel}
             style={{ cursor: isModalPanMode ? (isModalDragging ? 'grabbing' : 'grab') : 'default', position: 'relative', overflow: 'hidden' }}>
-            <div
-              ref={modalSheetRef}
-              className={`draggable-sheet-wrapper ${isModalDragging ? 'is-dragging' : ''}`}
+
+            <div ref={modalSheetRef} className={`draggable-sheet-wrapper ${isModalDragging ? 'is-dragging' : ''}`}
               style={{
                 transform: `translate(${modalPan.x}px, ${modalPan.y}px) rotate(${modalRotation}deg) scale(${modalZoom / 100})`,
-                transition: isModalDragging ? 'none' : 'transform 0.15s ease-out',
-                margin: 'auto'
+                transformOrigin: 'center center', transition: isModalDragging ? 'none' : 'transform 0.15s ease-out', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-              <AccurateOMRSheet row={selectedRow} />
+              <AccurateOMRSheet
+                ref={sheetRef}
+                row={selectedRow}
+                tId={tId}
+                activeField={activeField}
+                modalViewportRef={modalViewportRef}
+                setModalZoom={setModalZoom}
+                setModalPan={setModalPan}
+              />
             </div>
 
-            <div className="pan-hint-badge">
+            {/* <div className="pan-hint-badge">
               {isModalPanMode ? (
                 <span><i className="fas fa-hand-paper text-warning"></i> Pan Mode Active • Boundaries Locked • <b>Alt + Roller</b> to zoom</span>
               ) : (
                 <span><i className="fas fa-info-circle"></i> Click <b>Pan Mode</b> in top bar to enable drag • Hold <b>Alt + Roller</b> to zoom</span>
               )}
-            </div>
+            </div> */}
           </div>
 
           <div className="fullview-details-column">
-
             <div className="details-card-box">
               <div className="details-card-title">Scan Details</div>
-              <div className="details-grid" style={{height:"150px", overflowY:"scroll", scrollbarWidth:"none", zIndex:"9999"}}>
+              <div className="details-grid" style={{ height: "150px", overflowY: "scroll", scrollbarWidth: "none", zIndex: "9999" }}>
                 {Object.entries(metadata).map(([key, value]) => {
                   if (key === 'RawFilePath') return null;
+                  const isSelected = activeField === key;
                   return (
                     <React.Fragment key={key}>
-                      <div className="details-label">{key}</div>
-                      <div className="details-value">{String(value ?? '—')}</div>
+                      <div
+                        className="details-label"
+                        onClick={() => handleFieldSelect(key)}
+                        style={{ cursor: "pointer", color: isSelected ? "#ff453a" : "inherit", fontWeight: "normal" }}
+                        title="Click to zoom & highlight on sheet">
+                        {key}
+                      </div>
+                      <div
+                        className="details-value"
+                        onClick={() => handleFieldSelect(key)}
+                        style={{ cursor: "pointer", backgroundColor: isSelected ? "rgba(255, 69, 58, 0.1)" : "transparent", borderRadius: "4px", padding: "2px 4px" }} title="Click to zoom & highlight on sheet"                      >
+                        {String(value ?? '—')}
+                      </div>
                     </React.Fragment>
                   );
                 })}
@@ -238,17 +237,23 @@ function FullViewModal({
             </div>
 
             <div>
-              <div className="details-card-title" style={{ marginBottom: '12px' }}>Recognized Responses</div>
-              <div className="responses-grid" style={{height:"300px", overflowY:"scroll", scrollbarWidth:"none", zIndex:"9999"}}>
+              <div className="details-card-title" style={{ marginBottom: "12px" }}>
+                Recognized Responses
+              </div>
+
+              <div className="responses-grid">
                 {questions.map((item) => (
-                  <div key={item.q} className={`response-chip ${item.ans === "" ? 'needs-review-chip' : ''}`}>
+                  <div
+                    key={item.q}
+                    className={`response-chip ${item.ans === "" ? "needs-review-chip" : ""} ${activeField === item.q ? "active-chip" : ""}`}
+                    onClick={() => handleFieldSelect(item.q)}
+                    style={{ cursor: "pointer" }}>
                     <span className="response-q-num">{item.q}</span>
                     <span className="response-ans-val">{item.ans}</span>
                   </div>
                 ))}
               </div>
             </div>
-
             <div className="warning-alert-box">
               Some responses could not be confidently recognized.
             </div>
@@ -258,4 +263,4 @@ function FullViewModal({
     </div>
   );
 }
-export default FullViewModal
+export default FullViewModal;

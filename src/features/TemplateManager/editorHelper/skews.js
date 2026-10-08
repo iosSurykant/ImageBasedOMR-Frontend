@@ -12,7 +12,7 @@ const Skews = () => {
 
     const options = Object.keys(skewData)
 
-    console.log(options)
+    console.log(skewData)
 
     const handleSelect = (option) => {
         dispatch(toggleCornerSelection(option))
@@ -29,10 +29,7 @@ const Skews = () => {
 
     return (
         <div className="d-flex justify-content-center align-items-center">
-            <div
-                className="card border-0 shadow-lg px-3 py-3"
-                style={{ width: '240px', borderRadius: '12px' }}
-            >
+            <div className="card border-0 shadow-lg px-3 py-3" style={{ width: '240px', borderRadius: '12px' }}       >
                 {/* Header */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="m-0" style={{ color: '#4a5568' }}>
@@ -65,8 +62,7 @@ const Skews = () => {
                                     backgroundColor: isSelected ? '#e0f0e3' : 'transparent',
                                     borderRadius: '22px',
                                     transition: 'background-color 0.2s ease-in-out',
-                                }}
-                            >
+                                }}>
                                 {isSelected && (
                                     <span className="mx-2 font-weight-500">
                                         <LuCheck size={18} />

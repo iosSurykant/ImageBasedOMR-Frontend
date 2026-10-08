@@ -1,15 +1,14 @@
 import { useEffect, useRef, useCallback } from "react";
 
 export function useWebSocket({
-  baseUrl,
-  onMessage,
-  onError,
-  onOpen,
-  onClose,
+    baseUrl,
+    onMessage,
+    onError,
+    onOpen,
+    onClose,
 }) {
     const wsRef = useRef(null);
     const mountedRef = useRef(true);
-
 
     // Keep latest callbacks in refs
     const onMessageRef = useRef(onMessage);
@@ -33,73 +32,225 @@ export function useWebSocket({
         onCloseRef.current = onClose;
     }, [onClose]);
 
+    // --------------------------------------------------
+    // CONNECT
+    // --------------------------------------------------
+
     const connect = useCallback(() => {
-        if (!baseUrl) return;
-        console.log(baseUrl)
+        if (!baseUrl) {
+            console.warn("[LiveScan WS] baseUrl is missing");
+            return;
+        }
 
         try {
             const token = localStorage.getItem("token");
-            // Determine WebSocket protocol based on baseUrl
+
             let wsUrl = baseUrl;
-            if (baseUrl.startsWith('http://')) {
-                wsUrl = baseUrl.replace('http://', 'ws://');
-            } else if (baseUrl.startsWith('https://')) {
-                wsUrl = baseUrl.replace('https://', 'wss://');
+
+            if (baseUrl.startsWith("http://")) {
+                wsUrl = baseUrl.replace("http://", "ws://");
+            } else if (baseUrl.startsWith("https://")) {
+                wsUrl = baseUrl.replace("https://", "wss://");
             }
 
-            const ws = new WebSocket(`${wsUrl}ws?token=${token}`);
+            const ws = new WebSocket(
+                `${wsUrl}ws?token=${token}`
+            );
+
             wsRef.current = ws;
 
+            // --------------------------------------------------
+            // OPEN
+            // --------------------------------------------------
+
             ws.onopen = () => {
-                console.log("[LiveScan WS] connected");
+                console.log("[LiveScan WS] Connected");
+
                 onOpenRef.current?.();
             };
 
+            // --------------------------------------------------
+            // MESSAGE
+            // --------------------------------------------------
+
             ws.onmessage = (event) => {
                 let data;
+
                 try {
                     data = JSON.parse(event.data);
                 } catch {
-                    console.warn("[LiveScan WS] non-JSON message:", event.data);
+                    console.warn(
+                        "[LiveScan WS] Non-JSON message:",
+                        event.data
+                    );
+
                     return;
                 }
+
+                console.log(
+                    "[LiveScan WS] Received:",
+                    data
+                );
+
                 onMessageRef.current?.(data);
             };
 
+            // --------------------------------------------------
+            // ERROR
+            // --------------------------------------------------
+
             ws.onerror = (error) => {
-                console.error("[LiveScan WS] error:", error);
+                console.error(
+                    "[LiveScan WS] Error:",
+                    error
+                );
+
                 onErrorRef.current?.(error);
             };
 
+            // --------------------------------------------------
+            // CLOSE
+            // --------------------------------------------------
+
             ws.onclose = (event) => {
-                console.log("[LiveScan WS] closed", event);
+                console.log(
+                    "[LiveScan WS] Closed:",
+                    event
+                );
+
                 onCloseRef.current?.(event);
             };
-        } catch (err) {
-            console.error("[LiveScan WS] failed to create WebSocket:", err);
-            onErrorRef.current?.(err);
+
+        } catch (error) {
+            console.error(
+                "[LiveScan WS] Failed to create WebSocket:",
+                error
+            );
+
+            onErrorRef.current?.(error);
         }
     }, [baseUrl]);
 
+    // --------------------------------------------------
+    // CONNECT ON MOUNT
+    // --------------------------------------------------
+
     useEffect(() => {
         mountedRef.current = true;
+
         connect();
 
         return () => {
             mountedRef.current = false;
+
             if (wsRef.current) {
                 wsRef.current.close();
+                wsRef.current = null;
             }
         };
     }, [connect]);
 
+    // --------------------------------------------------
+    // INTERNAL SEND FUNCTION
+    // --------------------------------------------------
+
     const sendMessage = useCallback((data) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify(data));
-        } else {
-            console.warn("[LiveScan WS] WebSocket is not open. Cannot send message.");
+        const ws = wsRef.current;
+
+        if (!ws) {
+            console.warn(
+                "[LiveScan WS] WebSocket instance not found"
+            );
+
+            return false;
+        }
+
+        if (ws.readyState !== WebSocket.OPEN) {
+            console.warn(
+                "[LiveScan WS] WebSocket is not open"
+            );
+
+            return false;
+        }
+
+        try {
+            const message = JSON.stringify(data);
+
+            console.log(
+                "[LiveScan WS] Sending:",
+                data
+            );
+
+            ws.send(message);
+
+            return true;
+
+        } catch (error) {
+            console.error(
+                "[LiveScan WS] Failed to send message:",
+                error
+            );
+
+            return false;
         }
     }, []);
 
-    return { sendMessage };
+    // --------------------------------------------------
+    // GO / START SCANNING
+    // --------------------------------------------------
+    // Backend expects:
+    //
+    // {
+    //     action: "process",
+    //     folderPath: "EmpId/TestCaseName",
+    //     idTemp: 123
+    // }
+
+    const goScan = useCallback((data = {}) => {
+        return sendMessage(data);
+    }, [sendMessage]);
+
+    // --------------------------------------------------
+    // PAUSE
+    // --------------------------------------------------
+
+    const pauseScan = useCallback((data = {}) => {
+        return sendMessage({
+            ...data,
+            action: "PAUSE",
+        });
+    }, [sendMessage]);
+
+    // --------------------------------------------------
+    // RESUME
+    // --------------------------------------------------
+
+    const resumeScan = useCallback((data = {}) => {
+        return sendMessage({
+            ...data,
+            action: "RESUME",
+        });
+    }, [sendMessage]);
+
+    // --------------------------------------------------
+    // STOP
+    // --------------------------------------------------
+
+    const stopScan = useCallback((data = {}) => {
+        return sendMessage({
+            ...data,
+            action: "STOP",
+        });
+    }, [sendMessage]);
+
+    // --------------------------------------------------
+    // RETURN
+    // --------------------------------------------------
+
+    return {
+        goScan,
+        pauseScan,
+        resumeScan,
+        stopScan,
+    };
 }

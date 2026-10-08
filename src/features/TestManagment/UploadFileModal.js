@@ -6,7 +6,7 @@ import { GoCheck } from 'react-icons/go';
 import { uploadImagesFiles } from 'helper/TemplateHelper';
 import getBaseUrl from 'services/BackendApi';
 import { toast } from 'react-toastify';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { fetchTestList } from 'redux/reducers/testSlice';
 import { useNavigate } from 'react-router-dom';
 
@@ -237,7 +237,7 @@ const UploadFileModal = ({
 
     const handleNaviage = () => {
         if (onFinishScan) onFinishScan(); else setUploadModal(false);
-        navigate(`/app/omr-dashboard?tstId=${testId}&tstName=${testName}&tId=${rowData?.templateId || ''}`);
+        navigate(`/app/omr-dashboard?tstId=${testId}&tstName=${testName}&tId=${rowData?.templateId}&timgs=${rowData.totalImages}`);
     }
 
     const modalContent = (

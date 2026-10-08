@@ -128,7 +128,7 @@ const boxSlice = createSlice({
             if (copyBoxDetails) {
                 let newFieldName = copyBoxDetails.fieldName;
 
-                if (copyBoxDetails.fieldType === "QuestionField") {
+                if (copyBoxDetails.fieldType === "questionfield") {
                     const match = copyBoxDetails.fieldName?.match(/^Q(\d+)-Q(\d+)$/i);
 
                     if (match) {

@@ -6,10 +6,6 @@ import FullViewModal from './pages/FullViewModal';
 import "./OMRDashboard.css"
 import { useScan } from 'context/ScanningContext';
 import { useWebSocket } from './WebSocket/useWebSocket';
-import { scanFiles } from 'helper/Booklet32Page_helper';
-import { pauseScanning } from 'helper/Booklet32Page_helper';
-import { resumeScanning } from 'helper/Booklet32Page_helper';
-import { resetScanApi } from 'helper/Booklet32Page_helper';
 
 export default function OMRScanningDashboard() {
   const [liveData, setLiveData] = useState([]);
@@ -19,15 +15,13 @@ export default function OMRScanningDashboard() {
   const totalCount = parseInt(params.get("timgs"), 10);
   const tstName = params.get("tstName");
   const tId = params.get("tId");
-  const userData = JSON.parse(localStorage.getItem("userData"))
 
   const [processedCount, setProcessedCount] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  // const [activePage, setActivePage] = useState(1);
 
   const [selectedRow, setSelectedRow] = useState(null);
   const [showFullViewModal, setShowFullViewModal] = useState(false);
-  const [modalZoom, setModalZoom] = useState(100);
+  const [modalZoom, setModalZoom] = useState(75);
   const [modalRotation, setModalRotation] = useState(0);
 
   const [isModalPanMode, setIsModalPanMode] = useState(false);
@@ -41,7 +35,9 @@ export default function OMRScanningDashboard() {
   const modalDragStartRef = useRef({ x: 0, y: 0 });
   const modalPanStartRef = useRef({ x: 0, y: 0 });
 
-  const [startTime, setStartTime] = useState(null); // timestamp in milliseconds for calculation
+  const [startTime, setStartTime] = useState(null);
+  const [isScanFinished, setIsScanFinished] = useState(false); // NEW
+  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
 
   // Reset scanning state when entering the page to ensure no auto-start
   useEffect(() => {
@@ -49,75 +45,153 @@ export default function OMRScanningDashboard() {
     setProcessedCount(0);
     setElapsedSeconds(0);
     setStartTime(null);
+    setIsScanFinished(false);
   }, [setIsLiveScanning, setProcessedCount, setElapsedSeconds, setStartTime]);
 
 
-  // WebSocket connection for live data
-  useWebSocket({
+
+  const handleWebSocketMessage = (data) => {
+    console.log("[LiveScan] Received:", data);
+    // Handle received scan data here
+    setLiveData(prev => [data, ...prev]);
+    setProcessedCount(prev => Math.min(prev + 1, totalCount));
+  };
+
+  const handleWebSocketError = (error) => {
+    console.error("[LiveScan] WebSocket error:", error);
+    setIsWebSocketConnected(false);
+    // Reset scanning state when WebSocket errors
+    setIsLiveScanning(false);
+    setIsScanFinished(false);
+  };
+
+  const handleWebSocketOpen = () => {
+    console.log("[LiveScan] WebSocket connected");
+    setIsWebSocketConnected(true);
+  };
+
+  const handleWebSocketClose = (event) => {
+    console.log("[LiveScan] WebSocket closed:", event);
+    setIsWebSocketConnected(false);
+    // Reset scanning state when WebSocket closes
+    setIsLiveScanning(false);
+    setIsScanFinished(false);
+  };
+
+  const { goScan, pauseScan, resumeScan, stopScan, } = useWebSocket({
     baseUrl: process.env.REACT_APP_BACKEND_URL,
-    onMessage: (data) => {
-      console.log("Received WebSocket data:", data);
-      setLiveData(prev => [...prev, data]);
-      setProcessedCount(prev => Math.min(prev + 1, totalCount));
-    },
-    onError: (error) => {
-      console.error("WebSocket error:", error);
-    },
-    onOpen: () => {
-      console.log("WebSocket connection opened");
-    },
-    onClose: () => {
-      console.log("WebSocket connection closed");
-    },
+    onMessage: handleWebSocketMessage,
+    onError: handleWebSocketError,
+    onOpen: handleWebSocketOpen,
+    onClose: handleWebSocketClose,
   });
 
-
-  const handleStart = async () => {
+  const handleStart = () => {
     setIsLiveScanning(true);
     setProcessedCount(0);
     setElapsedSeconds(0);
+    setStartTime(Date.now());
+    setIsScanFinished(false);
 
-    // Store start timestamp for elapsed calculation
-    const startTimestamp = Date.now();
-    setStartTime(startTimestamp);
-
-    const userId = userData?.empid;
-    const makePath = `${userId}\\${tstName}`;
     try {
-      const res = await scanFiles({ makePath, tId });
-      console.log(res);
+      const folderPath = tstName
+      const idTemp = parseInt(tId, 10);
+
+      if (Number.isNaN(idTemp)) {
+        console.error("Invalid Template ID:", tId);
+        setIsLiveScanning(false);
+        setStartTime(null);
+        return;
+      }
+
+      const sent = goScan({
+        action: "process",
+        folderPath: folderPath,
+        idTemp: idTemp,
+        token: localStorage.getItem("token")
+      });
+
+      console.log(
+        "[LiveScan] Process request sent:",
+        sent
+      );
+
+      if (!sent) {
+        setIsLiveScanning(false);
+        setStartTime(null);
+      }
+
     } catch (error) {
-      console.error(error);
-    }
-  };
+      console.error(
+        "[LiveScan] Error starting scan:",
+        error
+      );
 
-  const handleStop = async () => {
-    try {
-      await resetScanApi()
       setIsLiveScanning(false);
       setProcessedCount(0);
       setElapsedSeconds(0);
       setStartTime(null);
-    } catch (error) {
-      console.error("Error stopping scan:", error);
+      setIsScanFinished(false);
     }
   };
 
-  const handlePause = async () => {
+  const handleStop = () => {
     try {
-      await pauseScanning();
-      setIsLiveScanning(false);
+      const sent = stopScan();
+
+      console.log(
+        "[LiveScan] Stop request sent:",
+        sent
+      );
+
+      if (sent) {
+        setIsLiveScanning(false);
+        setProcessedCount(0);
+        setElapsedSeconds(0);
+        setStartTime(null);
+        setIsScanFinished(false);
+      }
+
     } catch (error) {
-      console.error("Error pausing scan:", error);
+      console.error(
+        "[LiveScan] Error stopping scan:",
+        error
+      );
     }
   };
 
-  const handleResume = async () => {
+  const handlePause = () => {
     try {
-      await resumeScanning();
-      setIsLiveScanning(true);
+      const sent = pauseScan();
+
+      console.log(
+        "[LiveScan] Pause request sent:",
+        sent
+      );
+
+      if (sent) {
+        setIsLiveScanning(false);
+      }
+
     } catch (error) {
-      console.error("Error resuming scan:", error);
+      console.error(
+        "[LiveScan] Error pausing scan:",
+        error
+      );
+    }
+  };
+
+  const handleResume = () => {
+    try {
+      const sent = resumeScan();
+      console.log("[LiveScan] Resume request sent:", sent);
+      if (sent) { setIsLiveScanning(true) }
+
+    } catch (error) {
+      console.error(
+        "[LiveScan] Error resuming scan:",
+        error
+      );
     }
   };
 
@@ -177,13 +251,52 @@ export default function OMRScanningDashboard() {
     setIsModalDragging(false);
   };
 
-  const handleModalWheel = (e) => {
-    if (e.altKey) {
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 15 : -15;
-      setModalZoom(prev => Math.min(Math.max(prev + delta, 50), 300));
+  // const handleModalWheel = (e) => {
+  //   if (e.altKey) {
+  //     e.preventDefault();
+  //     const delta = e.deltaY < 0 ? 15 : -15;
+  //     setModalZoom(prev => Math.min(Math.max(prev + delta, 50), 250));
+  //   }
+  // };
+
+  // NEW ADDITION 1: Native wheel listener to stop page scrolling
+  
+  useEffect(() => {
+    const viewport = modalViewportRef.current;
+    if (!viewport) return;
+
+    const handleNativeWheel = (e) => {
+      if (e.altKey) {
+        e.preventDefault(); // This now forces the page to stop scrolling
+        const delta = e.deltaY < 0 ? 15 : -15;
+        setModalZoom((prev) => Math.min(Math.max(prev + delta, 50), 250));
+      }
+    };
+
+    viewport.addEventListener('wheel', handleNativeWheel, { passive: false });
+
+    return () => {
+      viewport.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [setModalZoom, modalViewportRef]); 
+
+
+  // NEW ADDITION 2: Re-center/clamp the image when zooming out
+  useEffect(() => {
+    if (modalViewportRef.current && modalSheetRef.current) {
+      setModalPan((prevPan) => 
+        getClampedPan(
+          prevPan.x, 
+          prevPan.y, 
+          modalViewportRef.current, 
+          modalSheetRef.current, 
+          modalZoom / 100, 
+          true
+        )
+      );
     }
-  };
+  }, [modalZoom, setModalPan, modalViewportRef, modalSheetRef]);
+
 
   const handleModalTouchStart = (e) => {
     if (!isModalPanMode) return;
@@ -209,6 +322,7 @@ export default function OMRScanningDashboard() {
     isModalDraggingRef.current = false;
     setIsModalDragging(false);
   };
+
   useEffect(() => {
     let timer;
 
@@ -244,7 +358,6 @@ export default function OMRScanningDashboard() {
     totalCount,
   ]);
 
-
   // Auto-stop scanning when all sheets are processed
   useEffect(() => {
     if (
@@ -270,23 +383,21 @@ export default function OMRScanningDashboard() {
     setIsLiveScanning,
   ]);
 
-
-  // Reset modal state whenever full-view modal opens
+  // Reset modal state when full-view modal closes
   useEffect(() => {
-    if (showFullViewModal) {
+    if (!showFullViewModal) {
       setModalZoom(100);
       setModalRotation(0);
       setModalPan({ x: 0, y: 0 });
       setIsModalPanMode(false);
     }
+    // Note: We intentionally don't reset when opening to preserve user zoom settings
   }, [showFullViewModal]);
-
 
   const handleRowViewClick = (row) => {
     setSelectedRow(row);
     setShowFullViewModal(true)
   };
-
 
   return (
     <div className="dashboard-outer-wrapper">
@@ -309,6 +420,8 @@ export default function OMRScanningDashboard() {
             minute: '2-digit',
             hour12: true
           }) : null}
+          isScanFinished={isScanFinished} // NEW
+          isWebSocketConnected={isWebSocketConnected}
         />
 
         <div className="row">
@@ -324,6 +437,7 @@ export default function OMRScanningDashboard() {
 
       {showFullViewModal && selectedRow && (
         <FullViewModal
+          tId={tId}
           selectedRow={selectedRow}
           setShowFullViewModal={setShowFullViewModal}
           isModalPanMode={isModalPanMode}
@@ -341,7 +455,7 @@ export default function OMRScanningDashboard() {
           handleModalTouchStart={handleModalTouchStart}
           handleModalTouchMove={handleModalTouchMove}
           handleModalTouchEnd={handleModalTouchEnd}
-          handleModalWheel={handleModalWheel}
+          // handleModalWheel={handleModalWheel}
           modalViewportRef={modalViewportRef}
           modalSheetRef={modalSheetRef}
         />

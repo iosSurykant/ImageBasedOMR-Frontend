@@ -208,6 +208,7 @@ return (
                     <input
                         type="text"
                         name="name"
+                        maxLength={35}
                         className="form-control"
                         placeholder="Enter template name"
                         value={formData.name}

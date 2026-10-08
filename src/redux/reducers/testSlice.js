@@ -29,7 +29,7 @@ export const createTestAsync = createAsyncThunk(
 export const fetchTestList = createAsyncThunk(
   "tests/fetchTestList",
   async (arg, { rejectWithValue }) => {
-    const { search = "", page = 1, range = 5 } = arg || {};
+    const { search = "", page = 1, range = 6 } = arg || {};
     try {
       const response = await getTestList(search, page, range);
 

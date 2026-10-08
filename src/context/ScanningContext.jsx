@@ -9,6 +9,8 @@ export const ScanProvider = ({ children }) => {
   const [isPausedContext, setIsPausedContext] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
 
+  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 992);
+
   return (
     <ScanContext.Provider
       value={{
@@ -20,7 +22,9 @@ export const ScanProvider = ({ children }) => {
         setIsStarting,
 
         isLiveScanning,
-        setIsLiveScanning
+        setIsLiveScanning,
+        isCollapsed,
+        setIsCollapsed
       }}
     >
       {children}

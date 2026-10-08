@@ -1,4 +1,5 @@
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   font-family: "outfit", sans-serif;
@@ -27,6 +28,7 @@ body, html {
 /* 1. Top Metadata Bar */
 .top-meta-card {
   padding: 12px 20px;
+  background: #F3F4F6;
 }
 
 .top-meta-text {
@@ -55,7 +57,7 @@ body, html {
 }
 
 .total-images-highlight {
-  color: #3b82f6;
+  color: #3C5CFB;
   font-weight: 800;
 }
 
@@ -63,6 +65,7 @@ body, html {
 .progress-card {
   padding: 20px 24px;
 }
+
 
 .scanning-title {
   font-size: 11.5px;
@@ -92,6 +95,7 @@ body, html {
   color: #3b82f6;
   line-height: 1;
   letter-spacing: -1px;
+  white-space: nowrap;
 }
 
 .progress-track {
@@ -109,6 +113,7 @@ body, html {
   transition: width 0.4s ease;
 }
 
+/* Footer & Responsive Stats Layout */
 .progress-footer-stats {
   font-size: 12.5px;
   color: #6b7280;
@@ -131,14 +136,19 @@ body, html {
 
 .btn-pause-custom {
   background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  border: 1px solid #D1D5DB;
   color: #374151;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   padding: 6px 14px;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 .btn-pause-custom:hover {
@@ -149,14 +159,18 @@ body, html {
 
 .btn-stop-custom {
   background-color: #ffffff;
-  border: 1px solid #fca5a5;
+  border: 1px solid #EF4444;
   color: #dc2626;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   padding: 6px 14px;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .btn-stop-custom:hover {
@@ -166,38 +180,23 @@ body, html {
 }
 
 .btn-start-custom {
-  background-color: #15B05A;
+  background-color: #14924d;
   border: 1px solid #15B05A;
   letter-spacing: 0.5px;
   color: #ffffff;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 500;
   padding: 6px 14px;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .btn-start-custom:hover {
-  background-color: #177C5E;
-  border-color: #177C5E;
-  color: #ffffff;
-}
-.btn-stop-custom {
-  background-color: #EF4444;
-  border: 1px solid #EF4444;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 6px 14px;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease-in-out;
-}
-
-.btn-stop-custom:hover {
-  background-color: #177C5E;
+  background-color: #296e5a;
   border-color: #177C5E;
   color: #ffffff;
 }
@@ -308,9 +307,11 @@ body, html {
 .sticky-table-header th {
   position: sticky;
   top: 0;
-  background-color: #f8f9fa; /* Matches table header background */
+  background-color: #f8f9fa;
+  /* Matches table header background */
   z-index: 2;
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* Optional bottom border line */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+  /* Optional bottom border line */
 }
 
 .table-omr thead th:first-child {
@@ -341,11 +342,6 @@ body, html {
 .sr-no-cell {
   color: #9ca3af;
   font-weight: 500;
-}
-
-.file-name-cell {
-  font-weight: 700;
-  color: #1f2937;
 }
 
 .live-time-cell {
@@ -394,7 +390,8 @@ body, html {
   transition: all 0.15s ease-in-out;
 }
 
-.btn-action-view:hover, .btn-action-view.active-view-btn {
+.btn-action-view:hover,
+.btn-action-view.active-view-btn {
   background-color: #3b82f6;
   color: #ffffff;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
@@ -410,11 +407,9 @@ body, html {
 
 .omr-sheet-paper-accurate {
   background-color: #ffffff;
-  width: 100%;
-  max-width: 460px;
+  max-width: 450px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
   border: 1px solid #cbd5e1;
-  padding: 12px;
   position: relative;
   font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
@@ -444,10 +439,26 @@ body, html {
   background-color: #000000;
   position: absolute;
 }
-.corner-top-left { top: 6px; left: 12px; }
-.corner-top-right { top: 6px; right: 12px; }
-.corner-bottom-left { bottom: 6px; left: 12px; }
-.corner-bottom-right { bottom: 6px; right: 12px; }
+
+.corner-top-left {
+  top: 6px;
+  left: 12px;
+}
+
+.corner-top-right {
+  top: 6px;
+  right: 12px;
+}
+
+.corner-bottom-left {
+  bottom: 6px;
+  left: 12px;
+}
+
+.corner-bottom-right {
+  bottom: 6px;
+  right: 12px;
+}
 
 .table-footer-container {
   display: flex;
@@ -524,6 +535,7 @@ body, html {
     opacity: 0;
     transform: translateX(12px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -616,7 +628,7 @@ body, html {
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .btn-reset-pan {
@@ -717,13 +729,25 @@ body, html {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalPop {
-  from { transform: scale(0.97); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.97);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .fullview-card {
@@ -902,10 +926,10 @@ body, html {
 }
 
 .details-card-box {
-  background-color: #f8fafc;
+  background-color: #EFF0F2;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
 }
 
 .details-card-title {
@@ -913,6 +937,7 @@ body, html {
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 8px;
+  letter-spacing: 0.5px;
 }
 
 .details-grid {
@@ -924,53 +949,93 @@ body, html {
 }
 
 .details-label {
-  color: #64748b;
-  font-weight: 500;
+  color: #757575;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .details-value {
   color: #0f172a;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
+/* 1. Container Grid Layout (5 items per row) */
 .responses-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
 }
 
+/* 2. Main Chip Wrapper */
 .response-chip {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 6px 10px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Clips inner background colors to the rounded corners */
   transition: all 0.15s ease;
+  user-select: none;
 }
 
-.response-chip.needs-review-chip {
-  background-color: #fffbeb;
-  border-color: #fcd34d;
-  box-shadow: 0 0 0 1px #fcd34d;
+/* Hover & Active States */
+.response-chip:hover {
+  border-color: #cbd5e1;
 }
 
+.response-chip.active-chip {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* 3. Left Side: Question Label (Q1, Q2...) */
 .response-q-num {
-  font-size: 12px;
-  font-weight: 600;
+  background-color: #f1f5f9;
+  /* Soft light gray background */
   color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 0;
+  flex: 1;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+  /* Optional divider line */
 }
 
+/* 4. Right Side: Answer Value (0, 1, 2...) */
 .response-ans-val {
-  font-size: 13.5px;
-  font-weight: 800;
+  background-color: #ffffff;
+  /* Clean white background */
   color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 0;
+  flex: 1;
+  text-align: center;
 }
 
-.response-chip.needs-review-chip .response-q-num,
-.response-chip.needs-review-chip .response-ans-val {
+/* 5. Warning State (Q8 - Needs Review) */
+.response-chip.needs-review-chip {
+  border-color: #f59e0b;
+  /* Orange border */
+}
+
+.response-chip.needs-review-chip .response-q-num {
+  background-color: #fef3c7;
+  /* Pale cream/yellow tint */
   color: #d97706;
+  /* Amber text */
+  border-right-color: #fde68a;
+}
+
+.response-chip.needs-review-chip .response-ans-val {
+  background-color: #ffffff;
+  color: #ef4444;
+  /* Red text for dash (-) or empty values */
 }
 
 .warning-alert-box {

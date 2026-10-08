@@ -1,10 +1,16 @@
+import axiosApi from 'Interceptor/axios';
 import { post, get } from './api_helper';
 import * as url from './url_helper';
 
-export const scanFiles = async ({makePath, tId}) => {
+export const scanFiles = async ({ makePath, tId }) => {
   const urls = await url.getUrls();
-  return post(
-    `${urls.SCAN_FILES}?folderPath=${makePath}&token=${localStorage.getItem('token')}&idTemp=${tId}&IsSaveDb=${true}`,);
+  const body = {
+    folderPath: makePath,
+    idTemp: tId,
+    isSaveDb: true,
+    Token:localStorage.getItem("token")
+  }
+  return axiosApi.post(urls.SCAN_FILES, body);
 };
 
 export const getLastScannedFiles = async (tempId) => {
